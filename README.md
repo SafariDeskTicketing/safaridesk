@@ -1,46 +1,38 @@
 # SafariDesk
 
-Open-source help desk software for teams that want modern ticket operations, clear reporting, and a self-hosted deployment path that does not require stitching multiple repositories together.
-
-SafariDesk brings the frontend, backend, deployment assets, Docker Compose stack, and self-hosting documentation into one repository so teams can run, update, back up, and support their installation from a single place.
+Open-source help desk software for teams that need ticket operations, mailbox visibility, SLA reporting, and a clean self-hosted deployment path.
 
 <p>
   <a href="https://docs.safaridesk.io/installation">Installation</a>
-  ·
+  |
   <a href="https://docs.safaridesk.io/production">Production</a>
-  ·
+  |
   <a href="https://docs.safaridesk.io/configuration">Configuration</a>
-  ·
-  <a href="https://docs.safaridesk.io/update">Updates</a>
-  ·
+  |
+  <a href="https://docs.safaridesk.io/docker-images-and-releases">Docker Images</a>
+  |
   <a href="https://docs.safaridesk.io/troubleshooting">Troubleshooting</a>
 </p>
 
 ![SafariDesk dashboard overview](docs/assets/dashboard-overview-light.png)
 
-## What SafariDesk Includes
+SafariDesk combines a modern support workspace with a self-hosting-friendly deployment model. The monorepo includes the React frontend, Django backend, Docker Compose stack, Nginx routing, operational scripts, and local documentation sources used for the public docs site.
 
-- Ticket management for support queues, ownership, departments, categories, and SLA operations.
-- Operational dashboards for backlog, unassigned tickets, breached SLA queues, workload distribution, CSAT, reopened tickets, and mailbox health.
-- Knowledge base, task tracking, reporting, user management, and configuration workflows.
-- Mailbox and integration health visibility for connected support channels.
-- Optional AI-provider configuration for deployments that enable AI-assisted workflows.
-- A production-oriented self-hosted stack with Django, React, PostgreSQL, Redis, Celery, Channels, and Nginx.
+## Features
 
-## Why This Repository Exists
+- Ticket queues with ownership, departments, categories, and SLA-aware operations.
+- Real-time operational dashboards for backlog, unassigned work, SLA breaches, workload distribution, reopened tickets, CSAT, and mailbox health.
+- Knowledge base, task tracking, reporting, user management, and workspace configuration.
+- Mailbox and integration health monitoring for connected support channels.
+- WebSocket support for live notification and chat workflows.
+- Background job processing with Celery and Redis.
+- PostgreSQL with pgvector support for data and AI-enabled workflows.
+- Docker Compose deployment with Nginx, frontend, backend, Channels, worker, beat, Redis, and PostgreSQL services.
+- Two application images for self-hosting: `safaridesk/safaridesk-frontend` and `safaridesk/safaridesk-backend`.
 
-SafariDesk was previously split across separate frontend and backend repositories. This monorepo is designed for self-hosting:
+## Getting Started
 
-- One repository to clone.
-- One root `.env` file.
-- One root Docker Compose stack.
-- One release version for frontend and backend.
-- One documentation path for installation, configuration, updates, backup, and troubleshooting.
-- Two SafariDesk application images published for deployment.
-
-## Quick Start
-
-Start from the repository root.
+Run SafariDesk locally from the repository root:
 
 ```bash
 cp .env.example .env
@@ -53,221 +45,57 @@ docker compose exec backend python manage.py safari
 docker compose exec backend python manage.py sync_email_templates
 ```
 
-Open:
+Open SafariDesk at `http://localhost`.
 
-```text
-http://localhost
-```
-
-For production, read the full guide first:
-
-```text
-https://docs.safaridesk.io/installation
-```
-
-## Docker Images
-
-SafariDesk publishes two application images:
-
-```text
-safaridesk/safaridesk-frontend
-safaridesk/safaridesk-backend
-```
-
-The backend image is reused by four services:
-
-- `backend`
-- `channels`
-- `worker`
-- `beat`
-
-The first official release is tagged:
-
-```text
-v1.0.0
-```
-
-Production deployments should pin `SAFARIDESK_IMAGE_TAG` instead of relying on `latest`.
-
-```env
-DOCKERHUB_NAMESPACE=safaridesk
-SAFARIDESK_IMAGE_TAG=v1.0.0
-```
-
-## Architecture
-
-The default self-hosted deployment keeps only Nginx public.
-
-```text
-Browser
-  |
-  v
-nginx
-  |-- /          -> frontend
-  |-- /api/      -> backend
-  |-- /ws/       -> channels
-  |-- /uploads/  -> backend media
-  |-- /static/   -> collected static files
-  |
-  v
-private Docker network
-  |-- PostgreSQL with pgvector
-  |-- Redis
-  |-- Celery worker
-  |-- Celery beat
-```
-
-Default services:
-
-| Service | Purpose | Public |
-|---|---|---:|
-| `nginx` | Reverse proxy for frontend, API, WebSockets, uploads, and static files | Yes |
-| `frontend` | Built React/Vite application | No |
-| `backend` | Django API via Gunicorn | No |
-| `channels` | Django Channels WebSocket server via Daphne | No |
-| `worker` | Celery background jobs | No |
-| `beat` | Celery scheduled jobs | No |
-| `db` | PostgreSQL with pgvector | No |
-| `redis` | Redis for Celery, cache, and Channels | No |
-
-Read more:
-
-```text
-https://docs.safaridesk.io/architecture
-```
+For a production-ready setup, read the [installation guide](https://docs.safaridesk.io/installation) and [production deployment guide](https://docs.safaridesk.io/production) before exposing the service publicly.
 
 ## Screenshots
 
-### Operations Dashboard
+### Dashboard Overview
+
+![SafariDesk dashboard overview in dark mode](docs/assets/dashboard-overview-dark.png)
+
+### Operations View
 
 ![SafariDesk operations dashboard](docs/assets/dashboard-operations-light.png)
 
-### Dark Mode
+## Self-Hosting
 
-![SafariDesk dark dashboard](docs/assets/dashboard-overview-dark.png)
-
-## Repository Layout
+SafariDesk is designed to run from one repository and one root Compose file.
 
 ```text
-frontend/       React + Vite frontend
-backend/        Django API, Channels, Celery, migrations, templates
-deploy/         Nginx configs and operational scripts
-docs/           Self-hosting and development documentation
-data/           Local bind-mount targets for backups and runtime data
-.github/        CI, Docker image build, and release workflows
+frontend/  React and Vite application
+backend/   Django API, Channels, Celery, migrations, and templates
+deploy/    Nginx configs and operational scripts
+docs/      Source files for the public documentation site
+data/      Local backup and runtime data targets
 ```
 
-## Configuration
+The default deployment keeps only `nginx` public. Backend, Channels, PostgreSQL, Redis, worker, and beat stay private on the Docker network.
 
-SafariDesk self-hosting uses a single root `.env` file.
+Use the [configuration reference](https://docs.safaridesk.io/configuration) for environment variables, domains, secrets, email, OAuth, AI providers, licensing, and Docker image tags.
 
-Important configuration groups:
+## Docker Images
 
-- Domains and URLs
-- Security secrets
-- PostgreSQL
-- Redis and Celery
-- Frontend public build-time config
-- Email and SMTP
-- Admin bootstrap
-- OAuth and mail integrations
-- AI providers
-- Billing and licensing
-- Docker image tags
-
-Full reference:
+The first official release is `v1.0.0`.
 
 ```text
-https://docs.safaridesk.io/configuration
+safaridesk/safaridesk-frontend:v1.0.0
+safaridesk/safaridesk-backend:v1.0.0
 ```
 
-## Production Notes
+The backend image is reused by the `backend`, `channels`, `worker`, and `beat` services with different commands.
 
-Before exposing SafariDesk publicly:
+Read the [Docker images and releases guide](https://docs.safaridesk.io/docker-images-and-releases) for image tags, release versioning, upgrades, and rollback notes.
 
-- Set `DEBUG=false`.
-- Replace all default secrets.
-- Pin `SAFARIDESK_IMAGE_TAG`.
-- Configure `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, and `CSRF_TRUSTED_ORIGINS`.
-- Keep PostgreSQL, Redis, backend, Channels, worker, and beat private.
-- Put TLS in front of the root Nginx service.
-- Back up PostgreSQL, uploads, and `.env`.
+## Contributing
 
-Production guide:
+Contributions are welcome. Read the [contributing guide](CONTRIBUTING.md) before opening issues or pull requests.
 
-```text
-https://docs.safaridesk.io/production
-```
+## Security
 
-## Documentation
-
-| Topic | Link |
-|---|---|
-| Installation | <https://docs.safaridesk.io/installation> |
-| Architecture | <https://docs.safaridesk.io/architecture> |
-| Configuration | <https://docs.safaridesk.io/configuration> |
-| Docker images and releases | <https://docs.safaridesk.io/docker-images-and-releases> |
-| Production deployment | <https://docs.safaridesk.io/production> |
-| Updates | <https://docs.safaridesk.io/update> |
-| Backup and restore | <https://docs.safaridesk.io/backup-restore> |
-| Troubleshooting | <https://docs.safaridesk.io/troubleshooting> |
-
-Local copies live under:
-
-```text
-docs/self-hosting/
-```
-
-## Development
-
-Build from source:
-
-```bash
-docker compose up -d --build
-```
-
-Run backend maintenance commands:
-
-```bash
-sh deploy/scripts/migrate.sh
-sh deploy/scripts/collectstatic.sh
-sh deploy/scripts/create-admin.sh
-```
-
-Follow logs:
-
-```bash
-docker compose logs -f --tail=200
-```
-
-Validate Compose:
-
-```bash
-docker compose config --quiet
-```
-
-## Release
-
-The monorepo uses one SafariDesk version for frontend and backend together.
-
-Recommended release tag format:
-
-```text
-v1.0.0
-```
-
-Docker publishing is handled by:
-
-```text
-.github/workflows/docker-build.yml
-```
-
-Required GitHub settings:
-
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
-- `DOCKERHUB_NAMESPACE`
+Please read the [security policy](SECURITY.md) before reporting vulnerabilities.
 
 ## License
 
-See [LICENSE](LICENSE).
+SafariDesk is released under the terms in the [license](LICENSE).

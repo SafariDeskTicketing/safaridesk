@@ -16,4 +16,4 @@ Docker Hub images:
 - `safaridesk/safaridesk-frontend:<version>`
 - `safaridesk/safaridesk-backend:<version>`
 
-Docker Hub publishing requires GitHub secret `DOCKERHUB_USERNAME`, GitHub secret `DOCKERHUB_TOKEN`, and optional GitHub variable `DOCKERHUB_NAMESPACE`.
+Docker Hub publishing is manual for the open-source repository.

@@ -149,7 +149,7 @@ SafariDesk uses Docker volumes for persistent and shared data.
 | `staticfiles` | `backend`, `channels`, `nginx` | Django collected static files |
 | `gunicorn_logs` | `backend` | Gunicorn logs |
 | `celery_logs` | `worker`, `beat` | Celery logs |
-| `backups` | scripts / future backup workflows | Backup storage |
+| `backups` | scripts / future backup jobs | Backup storage |
 
 The backend media root is configured through:
 

@@ -87,54 +87,30 @@ Both modes use the same Compose file.
 
 ---
 
-## GitHub Actions Publishing
+## Publishing Model
 
-Docker Hub publishing is defined in:
+SafariDesk application images are built and published manually by maintainers:
 
-```text
-.github/workflows/docker-build.yml
-```
+- `safaridesk/safaridesk-frontend`
+- `safaridesk/safaridesk-backend`
 
-The workflow builds:
-
-- `safaridesk-frontend`
-- `safaridesk-backend`
-
-Required GitHub repository settings:
-
-| Type | Name | Purpose |
-|---|---|---|
-| Secret | `DOCKERHUB_USERNAME` | Docker Hub username used for publishing. |
-| Secret | `DOCKERHUB_TOKEN` | Docker Hub access token. |
-| Variable | `DOCKERHUB_NAMESPACE` | Docker Hub namespace. Defaults to `safaridesk` when unset. |
-
-Placeholder links:
-
-- [Docker Hub access token setup](../TODO-dockerhub-token.md)
-- [GitHub repository secrets](../TODO-github-secrets.md)
+This keeps the public repository simple and avoids requiring contributors or forks to configure Docker Hub credentials.
 
 ---
 
 ## Tagging Rules
 
-The Docker workflow currently generates tags from:
-
-- Branch name
-- Git tag
-- Commit SHA with `sha-` prefix
-- `latest` on the default branch
-
-Examples:
+Publish version tags for releases:
 
 ```text
-safaridesk/safaridesk-frontend:main
 safaridesk/safaridesk-frontend:v1.0.0
-safaridesk/safaridesk-frontend:sha-abcdef1
-safaridesk/safaridesk-frontend:latest
-
-safaridesk/safaridesk-backend:main
 safaridesk/safaridesk-backend:v1.0.0
-safaridesk/safaridesk-backend:sha-abcdef1
+```
+
+Publish `latest` only when the release should become the default:
+
+```text
+safaridesk/safaridesk-frontend:latest
 safaridesk/safaridesk-backend:latest
 ```
 
@@ -150,15 +126,9 @@ Avoid `latest` for production because it can change between deployments.
 
 ---
 
-## Release Workflow
+## Release Process
 
-GitHub releases are created by:
-
-```text
-.github/workflows/release.yml
-```
-
-The workflow runs when a Git tag matching `v*` is pushed.
+Create a Git tag for the release.
 
 Example:
 
@@ -241,11 +211,9 @@ sh deploy/scripts/healthcheck.sh http://localhost
 
 ---
 
-## Manual Docker Hub Publishing
+## Docker Hub Publishing
 
-Use the GitHub workflow for normal publishing.
-
-If manual publishing is needed:
+Build and push the release images:
 
 ```bash
 docker login
