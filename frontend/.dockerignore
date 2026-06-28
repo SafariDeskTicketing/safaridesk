@@ -1,0 +1,7 @@
+node_modules
+dist
+.git
+.github
+.gitlab-ci.yml
+npm-debug.log*
+yarn-error.log*

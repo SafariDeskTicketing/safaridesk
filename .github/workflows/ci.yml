@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  frontend:
+    name: Frontend lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Lint imported frontend
+        continue-on-error: true
+        run: npm run lint
+      - run: npm run build
+
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: safaridesk
+          POSTGRES_USER: safaridesk
+          POSTGRES_PASSWORD: safaridesk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U safaridesk -d safaridesk"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: dev
+      DJANGO_SETTINGS_MODULE: RNSafarideskBack.settings.dev
+      DEBUG: "true"
+      SECRET_KEY: ci-secret
+      SECRET_ENCRYPTION_KEY: ""
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: safaridesk
+      DB_USER: safaridesk
+      DB_PASSWORD: safaridesk
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/0
+      FILE_BASE_URL: http://localhost
+      FRONTEND_URL: http://localhost
+      FRONTEND_URL_BASE: http://localhost
+      API_BASE_URL: http://localhost
+      DOMAIN_NAME: localhost
+      MEDIA_URL: /uploads/
+      MEDIA_ROOT: /tmp/safaridesk-media
+      FILE_URL: http://localhost/uploads/files
+      AVATARS_URL: http://localhost/uploads/avatars
+      TASK_FILE_URL: http://localhost/uploads/task-files
+      KB_IMAGE_URL: http://localhost/uploads/kb/images
+      EMAIL_HOST: localhost
+      EMAIL_PORT: "1025"
+      EMAIL_USE_TLS: "false"
+      EMAIL_USE_SSL: "false"
+      EMAIL_HOST_USER: ""
+      EMAIL_HOST_PASSWORD: ""
+      DEFAULT_FROM_EMAIL: noreply@example.com
+      DEFAULT_FROM_NAME: SafariDesk
+      SUPERUSER_USERNAME: admin
+      SUPERUSER_PASSWORD: password
+      SUPERUSER_EMAIL: admin@example.com
+      SUPERUSER_FIRST_NAME: Admin
+      SUPERUSER_LAST_NAME: User
+      SUPERUSER_PHONE_NUMBER: ""
+      CORE_USERNAME: core
+      CORE_PASSWORD: password
+      CORE_EMAIL: core@example.com
+      CORE_FIRST_NAME: Core
+      CORE_LAST_NAME: User
+      CORE_PHONE_NUMBER: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: python manage.py check
+      - run: python manage.py makemigrations --check --dry-run
+
+  compose:
+    name: Compose validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose config

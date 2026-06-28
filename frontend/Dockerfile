@@ -1,0 +1,41 @@
+FROM node:22.13.0 AS builder
+WORKDIR /app
+
+ARG VITE_API_URL=/api/v1
+ARG VITE_WS_NOTIFICATIONS_URL=
+ARG VITE_CHAT_WS_BASE=
+ARG VITE_SITE_URL=/site
+ARG VITE_ALLOW_OTP=false
+
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_WS_NOTIFICATIONS_URL=$VITE_WS_NOTIFICATIONS_URL
+ENV VITE_CHAT_WS_BASE=$VITE_CHAT_WS_BASE
+ENV VITE_SITE_URL=$VITE_SITE_URL
+ENV VITE_ALLOW_OTP=$VITE_ALLOW_OTP
+
+# Copy package manifests and install reproducibly.
+COPY package*.json ./
+RUN npm ci
+
+# Copy the source code (includes .env.production)
+COPY . ./
+
+# Vite automatically uses .env.production for production builds
+RUN npm run build
+
+# Stage 2: Serve 
+FROM nginx:alpine
+
+
+# Remove default NGINX config and copy the custom config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy the React app build from the builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+ENV REACT_APP_ENV=prod
+
+# Expose the port NGINX will serve on
+EXPOSE 80
+
+# Start NGINX
+CMD ["nginx", "-g", "daemon off;"]

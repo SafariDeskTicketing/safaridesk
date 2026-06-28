@@ -1,0 +1,69 @@
+{% extends "email/base.html" %}
+
+{% block title %}New comment on a ticket{% endblock %}
+
+{% block header %}
+<p class="eyebrow">Ticket update</p>
+<h1 class="headline">New comment added</h1>
+{% endblock %}
+
+{% block email_body %}
+{% firstof reply_url ticket_url as comment_action_url %}
+<p>Hello {{ recipient_name|default:"there" }},</p>
+<p><strong>{{ commenter_name|default:"A team member" }}</strong> added a comment on a ticket you are watching.</p>
+
+<table role="presentation" class="data-table" cellpadding="0" cellspacing="0" width="100%" style="margin-top:24px;">
+  <tr>
+    <td class="data-label">Ticket</td>
+    <td class="data-value"><strong>{{ ticket_id }}</strong>&nbsp;&mdash;&nbsp;{{ ticket_title|default:"Untitled ticket" }}</td>
+  </tr>
+  <tr>
+    <td class="data-label">Status</td>
+    <td class="data-value">{{ status|default:"Open" }}</td>
+  </tr>
+  <tr>
+    <td class="data-label">Priority</td>
+    <td class="data-value"><span class="badge badge-{{ priority|lower|default:'medium' }}">{{ priority|default:"Medium"|title }}</span></td>
+  </tr>
+  <tr class="data-row-last">
+    <td class="data-label">Commented</td>
+    <td class="data-value">{{ comment_date }}{% if comment_time %} at {{ comment_time }}{% endif %}</td>
+  </tr>
+</table>
+
+<div class="panel-white" style="margin-top:20px;">
+  <p style="margin:0 0 8px;color:#111827;font-weight:600;">{{ commenter_name }}{% if commenter_role %} <span class="muted" style="font-weight:400;">&middot; {{ commenter_role }}</span>{% endif %}</p>
+  <p style="margin:0;color:#4B5563;">{{ comment_text }}</p>
+</div>
+
+<div class="btn-wrap">
+  <!--[if mso]>
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ comment_action_url }}" style="height:44px;v-text-anchor:middle;width:180px;" arcsize="18%" stroke="f" fillcolor="{{ brand_primary|default:'#13343B' }}">
+  <w:anchorlock/>
+  <center style="color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:14px;font-weight:700;">Reply to comment</center>
+  </v:roundrect>
+  <![endif]-->
+  <!--[if !mso]><!-->
+  <a href="{{ comment_action_url }}" class="btn-primary">Reply to comment</a>
+  <!--<![endif]-->
+</div>
+
+{% endblock %}
+
+{% block secondary_cta %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
+  <tr>
+    <td align="center">
+      <table role="presentation" class="mob-full" cellpadding="0" cellspacing="0" align="center" width="600">
+        <tr>
+          <td class="mob-pad" style="padding:16px 40px 24px;text-align:center;">
+            <p style="margin:0;color:#9CA3AF;font-size:13px;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+              You received this because you are watching this ticket.{% if unwatch_url %} <a href="{{ unwatch_url }}" style="color:#6B7280;font-weight:600;text-decoration:underline;">Stop watching</a>{% endif %}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{% endblock %}

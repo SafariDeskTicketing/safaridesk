@@ -1,0 +1,176 @@
+import {
+	LayoutDashboard,
+	Ticket,
+	BookOpen,
+	ClipboardCheck,
+	Package,
+	Users,
+	UserCheck2,
+	Settings,
+	Lock,
+	SlidersHorizontal,
+	Building2,
+	Tags,
+	Tag,
+	ShieldCheck,
+	HeartHandshake,
+	LifeBuoy,
+	Mail,
+	Plug,
+	Globe,
+	CreditCard,
+	BarChart3,
+	FileText,
+} from "lucide-react";
+import type { NavigationItem } from "../types";
+// import AssetManagementPage from "../pages/asset-management/AssetManagementPage";
+
+export const navigationItems: NavigationItem[] = [
+	{
+		name: "Dashboard",
+		href: "/dashboard",
+		icon: LayoutDashboard,
+		role: ["customer", "admin", "agent"],
+	},
+	{
+		name: (role: string) => (role === "admin" ? "Tickets" : "My Tickets"),
+		href: "/tickets",
+		icon: Ticket,
+		role: ["customer", "admin", "agent"],
+	},
+	{
+		name: (role: string) => (role === "admin" ? "Tasks" : "My Tasks"),
+		href: "/tasks",
+		icon: ClipboardCheck,
+		role: ["customer", "admin", "agent"],
+	},
+	{
+		name: (role: string) => (role === "admin" ? "Assets" : "My Assets"),
+		href: "/assets",
+		icon: Package,
+		role: ["customer", "admin", "agent"],
+	},
+	{
+		name: "Knowledge Base",
+		href: "/knowledge",
+		icon: BookOpen,
+		role: ["customer", "admin", "agent"],
+	},
+	{
+		name: "User Management",
+		icon: Users,
+		role: ["admin"],
+		children: [
+			{ name: "Agents", href: "/users/agents", icon: Users, role: ["admin"] },
+			{
+				name: "Contacts",
+				href: "/users/customers",
+				icon: UserCheck2,
+				role: ["admin"],
+			},
+			{
+				name: "Role & Permissions",
+				href: "/users/roles",
+				icon: Lock,
+				role: ["admin"],
+			},
+			{
+				name: "Audit Logs",
+				href: "/users/audit-logs",
+				icon: FileText,
+				role: ["admin"],
+			},
+		],
+	},
+	{
+		name: "Reports",
+		icon: BarChart3,
+		role: ["admin"],
+		children: [
+			{
+				name: "Tickets",
+				href: "/reports/tickets",
+				icon: Ticket,
+				role: ["admin"],
+			},
+			{
+				name: "Tasks",
+				href: "/reports/tasks",
+				icon: ClipboardCheck,
+				role: ["admin"],
+			},
+			{ name: "Agents", href: "/reports/agents", icon: Users, role: ["admin"] },
+		],
+	},
+	{
+		name: "Configurations",
+		icon: Settings,
+		role: ["admin"],
+		children: [
+			{
+				name: "General",
+				href: "/config/general",
+				icon: SlidersHorizontal,
+				role: ["admin"],
+			},
+			{
+				name: "Departments",
+				href: "/config/departments",
+				icon: Building2,
+				role: ["admin"],
+			},
+			{
+				name: "Ticket Categories",
+				href: "/config/categories",
+				icon: Tags,
+				role: ["admin"],
+			},
+			{ name: "Labels", href: "/config/labels", icon: Tag, role: ["admin"] },
+			{ name: "SLA", href: "/config/sla", icon: ShieldCheck, role: ["admin"] },
+			{
+				name: "Email Settings",
+				href: "/config/email",
+				icon: Mail,
+				role: ["admin"],
+			},
+			{
+				name: "CSAT",
+				href: "/config/csat",
+				icon: HeartHandshake,
+				role: ["admin"],
+			},
+			{
+				name: "Knowledge Base",
+				href: "/config/knowledge-base",
+				icon: BookOpen,
+				role: ["admin"],
+			},
+			{
+				name: "Chat Bot Settings",
+				href: "/config/help-center",
+				icon: LifeBuoy,
+				role: ["admin"],
+			},
+			{
+				name: "Integrations",
+				href: "/config/integrations",
+				icon: Plug,
+				role: ["admin"],
+			},
+			{
+				name: "Custom Domain",
+				href: "/config/domains",
+				icon: Globe,
+				role: ["admin"],
+			},
+			{
+				name: "Billing",
+				href: "/config/billing",
+				icon: CreditCard,
+				role: ["admin"],
+			},
+		],
+	},
+	// REMOVED: Request workflow has been removed from the system
+	// { name: 'Requests', href: '/requests', icon: List, role: ['admin'] },
+];

@@ -1,0 +1,429 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment {{ status|title }}</title>
+    <style>
+        /* ===== Payment Result Page ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: "#ffffff";
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Success Colors - Green Shades */
+        .header.success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #FFFFFF;
+        }
+
+        .status-icon.success {
+            background: #10b981;
+            border-color: #34d399;
+        }
+
+        .status-badge.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #34d399;
+        }
+
+        .amount.success {
+            color: #059669;
+        }
+
+        /* Error/Cancelled Colors - Red Shades */
+        .header.cancelled,
+        .header.failed {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: #FFFFFF;
+        }
+
+        .status-icon.cancelled,
+        .status-icon.failed {
+            background: #ef4444;
+            border-color: #f87171;
+        }
+
+        .status-badge.cancelled,
+        .status-badge.failed {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #f87171;
+        }
+
+        .amount.cancelled,
+        .amount.failed {
+            color: #dc2626;
+        }
+
+        /* Header Styles */
+        .header {
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
+        }
+
+        .status-icon-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid;
+            animation: scaleIn 0.5s ease-out 0.2s both;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .status-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            color: white;
+        }
+
+        /* Content Styles */
+        .content {
+            padding: 32px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 24px;
+        }
+
+        .amount {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .currency {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #6b7280;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .details {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #111827;
+            font-weight: 600;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .session-id {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 24px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Button Styles */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* Metadata Section */
+        .metadata {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .metadata-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metadata-item {
+            font-size: 13px;
+            color: #374151;
+            padding: 4px 0;
+        }
+
+        .footer {
+            padding: 20px 32px;
+            background: #f9fafb;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                border-radius: 16px;
+            }
+
+            .header {
+                padding: 32px 24px;
+            }
+
+            .content {
+                padding: 24px;
+            }
+
+            .amount {
+                font-size: 36px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with status -->
+        <div class="header {{ status_class }}">
+            <div class="status-icon-wrapper">
+                <div class="status-icon {{ status_class }}">
+                    {% if status == 'success' %}
+                    <!-- Success Checkmark -->
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                    {% else %}
+                    <!-- Error/Cancel X -->
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                    {% endif %}
+                </div>
+            </div>
+            <h1>
+                {% if status == 'success' %}
+                    Payment Successful!
+                {% else %}
+                    Payment {{ status|title }}
+                {% endif %}
+            </h1>
+            <p>
+                {% if status == 'success' %}
+                    Your payment has been processed successfully
+                {% else %}
+                    Your payment was not completed
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div style="text-align: center;">
+                <span class="status-badge {{ status_class }}">{{ payment_status|upper }}</span>
+            </div>
+
+            {% if amount_total %}
+            <div style="text-align: center;">
+                <div class="amount {{ status_class }}">${{ amount_in_dollars }}</div>
+                <div class="currency">{{ currency }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Payment Details -->
+            {% if payment_details %}
+            <div class="details">
+                {% if customer_email %}
+                <div class="detail-row">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">{{ customer_email }}</span>
+                </div>
+                {% endif %}
+
+                {% if metadata.plan %}
+                <div class="detail-row">
+                    <span class="detail-label">Plan</span>
+                    <span class="detail-value">{{ metadata.plan|title }}</span>
+                </div>
+                {% endif %}
+
+                {% if metadata.user_email %}
+                <div class="detail-row">
+                    <span class="detail-label">Account</span>
+                    <span class="detail-value">{{ metadata.user_email }}</span>
+                </div>
+                {% endif %}
+
+                <div class="detail-row">
+                    <span class="detail-label">Transaction Date</span>
+                    <span class="detail-value">{{ transaction_date }}</span>
+                </div>
+
+                {% if metadata %}
+                <div class="metadata">
+                    <div class="metadata-title">Additional Information</div>
+                    {% for key, value in metadata.items %}
+                    {% if key not in 'user_email,user_id' %}
+                    <div class="metadata-item">
+                        <strong>{{ key|title }}:</strong> {{ value }}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Session ID -->
+            {% if session_id %}
+            <div class="session-id">
+                Transaction ID: {{ session_id }}
+            </div>
+            {% endif %}
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button onclick="window.close()" class="btn btn-primary" style="width: 100%;">
+                    Close Window
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Thank you for your payment. If you have any questions, please contact support.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+📩 Ticket Email Notification Triggers
+1. Creation & Assignment
+
+Ticket Created → Notify customer (confirmation) & notify support team/agent.
+
+Ticket Assigned / Reassigned → Notify assigned agent or team.
+
+2. Status Changes
+
+Status Updated (e.g., from Open → In Progress, Resolved, Closed).
+
+Ticket Reopened (after being resolved/closed).
+
+On Hold / Pending → Notify customer with reason or request for more info.
+
+3. Priority & SLA
+
+Priority Changed (Normal → High, etc.).
+
+SLA Breach / SLA Warning (first response due soon, resolution overdue, etc.).
+
+4. Customer & Agent Communication
+
+New Public Reply (by Agent) → Notify customer.
+
+New Public Reply (by Customer) → Notify assigned agent/team.
+
+Private Note Added (internal) → Notify internal staff (optional, usually not customers).
+
+New Attachment Added (by either side).
+
+5. Escalations & Transfers
+
+Ticket Escalated (to manager, higher tier, or different department).
+
+Ticket Transferred (moved between departments).
+
+6. Resolution
+
+Ticket Resolved → Notify customer with resolution summary.
+
+Ticket Closed → Final closure notification.
+
+Feedback/Survey Request after resolution.
+
+7. Other Useful Triggers
+
+Watcher/CC Added → Notify watchers when they’re added.
+
+Due Date Changed → Notify assigned agent.

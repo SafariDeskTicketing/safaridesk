@@ -1,0 +1,114 @@
+{
+  "navigation": [
+    {
+      "title": "Getting Started",
+      "items": [
+        {
+          "title": "Installation Guide",
+          "slug": "getting-started/installation",
+          "description": "Install SafariDesk and verify prerequisites."
+        },
+        {
+          "title": "Quick Setup",
+          "slug": "getting-started/quick-setup",
+          "description": "Stand up your workspace in minutes."
+        },
+        {
+          "title": "Basic Configuration",
+          "slug": "getting-started/configuration",
+          "description": "Configure users, channels, and defaults."
+        }
+      ]
+    },
+    {
+      "title": "Tickets",
+      "items": [
+        {
+          "title": "Creating Tickets",
+          "slug": "tickets/creating-tickets",
+          "description": "Create and categorize tickets effectively."
+        },
+        {
+          "title": "Managing Workflows",
+          "slug": "tickets/workflows",
+          "description": "Design workflows that match your team."
+        },
+        {
+          "title": "Automation Rules",
+          "slug": "tickets/automation",
+          "description": "Automate assignments, SLAs, and notifications."
+        }
+      ]
+    },
+    {
+      "title": "Knowledge Base",
+      "items": [
+        {
+          "title": "Article Management",
+          "slug": "knowledge-base/articles",
+          "description": "Create and publish help articles."
+        },
+        {
+          "title": "Categories & Tags",
+          "slug": "knowledge-base/organization",
+          "description": "Organize content for fast discovery."
+        },
+        {
+          "title": "Search & Discovery",
+          "slug": "knowledge-base/search",
+          "description": "Improve findability with search best practices."
+        }
+      ]
+    },
+    {
+      "title": "API Reference",
+      "items": [
+        {
+          "title": "Authentication",
+          "slug": "api/authentication",
+          "description": "Authenticate with API tokens and scopes."
+        },
+        {
+          "title": "Tickets API",
+          "slug": "api/tickets",
+          "description": "List, create, and update tickets via API."
+        },
+        {
+          "title": "Users API",
+          "slug": "api/users",
+          "description": "Manage users and roles via API."
+        }
+      ]
+    },
+    {
+      "title": "Design System",
+      "items": [
+        {
+          "title": "Frontend Audit",
+          "slug": "design-system/frontend-audit",
+          "description": "Compare the current frontend against the SafariDesk Figma system and track exact mismatches."
+        },
+        {
+          "title": "Component Spec",
+          "slug": "design-system/component-spec",
+          "description": "Document the SafariDesk tokens, primitives, and component behaviors used in code."
+        },
+        {
+          "title": "Implementation Checklist",
+          "slug": "design-system/implementation-checklist",
+          "description": "Use a Figma-to-code checklist to roll the design system through the rest of the app."
+        },
+        {
+          "title": "Spacing Rules",
+          "slug": "design-system/spacing-rules",
+          "description": "Lock page-level spacing to shared shell classes and ban one-off wrapper padding."
+        },
+        {
+          "title": "Frontend Standards",
+          "slug": "design-system/frontend-standards",
+          "description": "Give the team one shared frontend standard for shells, spacing, primitives, and responsive behavior."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+/.env
+/.env.*
+!/.env.example
+
+data/uploads/*
+!data/uploads/.gitkeep
+data/backups/*
+!data/backups/.gitkeep
+
+frontend/node_modules/
+frontend/dist/
+backend/__pycache__/
+backend/**/*.pyc
+backend/.pytest_cache/
+backend/staticfiles/
+backend/media/

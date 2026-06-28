@@ -1,0 +1,32 @@
+# Email Blocklist - Spam/Auto-Reply Patterns
+# One regex pattern per line. Lines starting with # are comments.
+# Patterns are matched against the sender email (case-insensitive)
+
+# No-reply addresses
+^no[-_.]?reply@
+^do[-_.]?not[-_.]?reply@
+^noreply-
+
+# System/bounce addresses
+^mailer[-_.]?daemon@
+^postmaster@
+^bounce@
+^bounces?[-_.]?
+
+# Automated notifications
+^notifications?@
+^alerts?@
+^newsletter@
+^news@
+^updates?@
+
+# Auto-generated
+^auto[-_.]?confirm@
+^automated@
+^system@
+^admin@.*\.automated
+
+# Marketing/bulk senders
+^marketing@
+^promo@
+^campaigns?@

@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-04-14T16:09:34.795Z",
+  "scopeRoots": [
+    "src/components/config",
+    "src/components/settings",
+    "src/pages/config",
+    "src/pages/users",
+    "src/pages/sla"
+  ],
+  "allowedPx": [
+    12,
+    14,
+    16,
+    18,
+    24,
+    28,
+    32
+  ],
+  "entries": [
+    "src/components/settings/EmailFilters.tsx:153:arbitrary-px-out-of-scale:text-[10px]",
+    "src/components/settings/EmailFilters.tsx:278:arbitrary-px-out-of-scale:text-[10px]",
+    "src/pages/sla/mini/BusinessHoursComponent.tsx:192:arbitrary-px-out-of-scale:text-[10px]"
+  ]
+}

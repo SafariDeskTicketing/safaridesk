@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!--[if mso]>
+  <noscript>
+    <xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+  </noscript>
+  <![endif]-->
+  <title>{% block title %}{{ headline|default:"SafariDesk" }}{% endblock %}</title>
+  <style>
+    /* === Resets === */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; display: block; }
+    table { border-collapse: collapse !important; }
+
+    /* === Shell === */
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      background-color: #F3F4F6;
+      color: #111827;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .email-shell { width: 100%; background-color: #F3F4F6; }
+    .email-container { width: 100%; max-width: 600px; margin: 0 auto; }
+
+    /* === Brand header — full-width colour band === */
+    .brand-band { background-color: {{ brand_primary|default:"#13343B" }}; }
+    .brand-name {
+      color: #ffffff;
+      font-size: 16px;
+      line-height: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .brand-sub {
+      color: rgba(255,255,255,0.55);
+      font-size: 11px;
+      line-height: 16px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      margin-top: 1px;
+    }
+    .brand-logo {
+      display: block;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+
+    /* === Content area === */
+    .email-card { background-color: #ffffff; }
+    .email-body-bg { background-color: #F9FAFB; }
+
+    /* === Typography === */
+    .eyebrow {
+      margin: 0 0 10px;
+      color: {{ brand_primary|default:"#13343B" }};
+      font-size: 11px;
+      line-height: 16px;
+      font-weight: 700;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+    }
+    .headline {
+      margin: 0;
+      color: #111827;
+      font-size: 26px;
+      line-height: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .body-copy {
+      color: #4B5563;
+      font-size: 15px;
+      line-height: 25px;
+    }
+    .body-copy p { margin: 0 0 16px; }
+    .body-copy p:last-child { margin-bottom: 0; }
+    .body-copy a { color: {{ brand_primary|default:"#13343B" }}; font-weight: 600; text-decoration: none; }
+    .body-copy strong { color: #111827; font-weight: 600; }
+
+    /* === CTA button === */
+    .btn-primary {
+      display: inline-block;
+      background-color: {{ brand_primary|default:"#13343B" }};
+      color: #ffffff !important;
+      text-decoration: none !important;
+      border-radius: 8px;
+      padding: 13px 28px;
+      font-size: 15px;
+      line-height: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      mso-padding-alt: 0;
+    }
+    .btn-wrap { margin: 28px 0 0; }
+
+    /* === Data table === */
+    .data-table {
+      width: 100%;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      overflow: hidden;
+      border-spacing: 0;
+    }
+    .data-label {
+      width: 36%;
+      padding: 12px 16px;
+      border-bottom: 1px solid #E5E7EB;
+      background-color: #F9FAFB;
+      color: #6B7280;
+      font-size: 12px;
+      line-height: 18px;
+      font-weight: 600;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    .data-value {
+      padding: 12px 16px;
+      border-bottom: 1px solid #E5E7EB;
+      color: #111827;
+      font-size: 14px;
+      line-height: 20px;
+      vertical-align: top;
+    }
+    .data-row-last .data-label,
+    .data-row-last .data-value { border-bottom: 0; }
+
+    /* === Badges === */
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      line-height: 17px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .badge-high   { color: #B42318; border-color: #FECDCA; background-color: #FEF3F2; }
+    .badge-medium { color: #B54708; border-color: #FEE5A0; background-color: #FFFAEB; }
+    .badge-low    { color: #067647; border-color: #ABEFC6; background-color: #ECFDF3; }
+    .badge-open   { color: #1D4ED8; border-color: #BFDBFE; background-color: #EFF6FF; }
+    .badge-closed { color: #374151; border-color: #D1D5DB; background-color: #F9FAFB; }
+
+    /* === Panels === */
+    .panel {
+      border: 1px solid #E5E7EB;
+      border-left: 3px solid {{ brand_primary|default:"#13343B" }};
+      border-radius: 8px;
+      background-color: #F9FAFB;
+      padding: 14px 18px;
+    }
+    .panel-white {
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      background-color: #ffffff;
+      padding: 18px;
+    }
+    .panel p, .panel-white p { margin: 0 0 8px; }
+    .panel p:last-child, .panel-white p:last-child { margin: 0; }
+
+    /* === Inline code === */
+    .code {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid #E5E7EB;
+      border-radius: 5px;
+      background-color: #F9FAFB;
+      color: #111827;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    /* === OTP code === */
+    .otp-code {
+      display: inline-block;
+      padding: 16px 24px;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 12px;
+      background-color: #F9FAFB;
+      color: #111827;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 32px;
+      line-height: 40px;
+      font-weight: 800;
+      letter-spacing: 8px;
+    }
+
+    /* === Utility === */
+    .muted   { color: #9CA3AF; }
+    .small   { font-size: 12px; line-height: 18px; }
+    .divider { border: 0; border-top: 1px solid #E5E7EB; }
+
+    /* === Footer === */
+    .email-footer { background-color: #F9FAFB; border-top: 1px solid #E5E7EB; }
+    .footer-text { color: #9CA3AF; font-size: 12px; line-height: 19px; }
+    .footer-text a { color: #9CA3AF; text-decoration: underline; }
+
+    /* === Signature === */
+    .signature-name  { color: #111827; font-size: 14px; font-weight: 600; margin: 0; }
+    .signature-label { color: #9CA3AF; font-size: 12px; margin: 0 0 4px; }
+
+    /* === Mobile === */
+    @media screen and (max-width: 620px) {
+      .mob-pad   { padding-left: 24px !important; padding-right: 24px !important; }
+      .mob-full  { width: 100% !important; max-width: 100% !important; }
+      .mob-hpad  { padding: 20px 24px !important; }
+      .headline  { font-size: 22px !important; line-height: 29px !important; }
+      .data-label, .data-value { display: block !important; width: 100% !important; white-space: normal !important; }
+      .data-label { border-bottom: 0 !important; padding-bottom: 4px !important; }
+      .data-value { padding-top: 0 !important; }
+      .btn-primary { display: block !important; text-align: center !important; }
+    }
+  </style>
+</head>
+<body>
+  {% firstof business_name organization_name company_name "SafariDesk" as email_brand_name %}
+  {% firstof business_logo business_logo_url as email_logo_url %}
+
+  {% block preheader %}{% if preheader %}<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;color:transparent;line-height:0;">{{ preheader }}&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</div>{% endif %}{% endblock %}
+
+  {# ── Zone 1: Visible utility strip ── #}
+  {% block preheader_strip %}{% if view_in_browser_url %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6;border-bottom:1px solid #E5E7EB;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="mob-full" cellpadding="0" cellspacing="0" align="center" width="600">
+          <tr>
+            <td style="padding:7px 40px;text-align:right;">
+              <a href="{{ view_in_browser_url }}" style="color:#6B7280;font-size:12px;line-height:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;text-decoration:none;">View in browser</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  {% endif %}{% endblock %}
+
+  {# ── Full-width brand header ── #}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:{{ brand_primary|default:'#13343B' }};">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="mob-full" cellpadding="0" cellspacing="0" align="center" width="600">
+          <tr>
+            <td class="mob-hpad" style="padding: 22px 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  {% if email_logo_url %}
+                  <td style="padding-right:14px;vertical-align:middle;">
+                    <img src="{{ email_logo_url }}" width="40" height="40" alt="{{ email_brand_name }}" class="brand-logo">
+                  </td>
+                  {% endif %}
+                  <td style="vertical-align:middle;">
+                    <div class="brand-name">{{ email_brand_name }}</div>
+                    {% if email_brand_name != "SafariDesk" %}
+                    <div class="brand-sub">Powered by SafariDesk</div>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  {# ── Content card ── #}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="email-card mob-full" cellpadding="0" cellspacing="0" align="center" width="600">
+
+          {# Header section #}
+          <tr>
+            <td class="mob-pad" style="padding: 40px 40px 0;">
+              {% block header %}
+              {% if eyebrow %}<p class="eyebrow">{{ eyebrow }}</p>{% endif %}
+              {% if headline %}<h1 class="headline">{{ headline }}</h1>{% endif %}
+              {% endblock %}
+            </td>
+          </tr>
+
+          {# Body #}
+          <tr>
+            <td class="mob-pad body-copy" style="padding: 24px 40px 40px;">
+              {% block email_body %}
+              {{ body_html|safe }}
+
+              {% if cta_url %}
+              <div class="btn-wrap">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ cta_url }}" style="height:46px;v-text-anchor:middle;width:200px;" arcsize="18%" stroke="f" fillcolor="{{ brand_primary|default:'#13343B' }}">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:700;">{{ cta_label|default:"Open SafariDesk" }}</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="{{ cta_url }}" class="btn-primary">{{ cta_label|default:"Open SafariDesk" }}</a>
+                <!--<![endif]-->
+              </div>
+              {% endif %}
+              {% endblock %}
+
+              {% if signature_name %}
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:32px;">
+                <tr>
+                  <td style="border-top:1px solid #E5E7EB;padding-top:20px;">
+                    <p class="signature-label">{{ signature_greeting|default:"Regards," }}</p>
+                    <p class="signature-name">{{ signature_name }}</p>
+                  </td>
+                </tr>
+              </table>
+              {% endif %}
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  {# ── Zone 5: Secondary CTA / escape hatch ── #}
+  {% block secondary_cta %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="mob-full" cellpadding="0" cellspacing="0" align="center" width="600">
+          <tr>
+            <td class="mob-pad" style="padding:16px 40px 24px;text-align:center;">
+              <p style="margin:0;color:#9CA3AF;font-size:13px;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+                Need help? <a href="{{ support_url|default:'#' }}" style="color:#6B7280;font-weight:600;text-decoration:underline;">Contact support</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  {% endblock %}
+
+  {# ── Footer ── #}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-footer" style="background-color:#F9FAFB;border-top:1px solid #E5E7EB;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="mob-full" cellpadding="0" cellspacing="0" align="center" width="600">
+          <tr>
+            <td class="mob-pad" style="padding: 24px 40px 32px;">
+              {% block footer %}
+              {% if support_text %}
+              <p class="footer-text" style="margin:0 0 6px;">{{ support_text }}</p>
+              {% endif %}
+              <p class="footer-text" style="margin:0 0 6px;">You received this because you have a {{ email_brand_name }} account or are part of a support workflow.</p>
+              {% if physical_address %}
+              <p class="footer-text" style="margin:0 0 6px;">{{ physical_address }}</p>
+              {% endif %}
+              <p class="footer-text" style="margin:0;">&copy; {% now "Y" %} {{ email_brand_name }}. All rights reserved.</p>
+              {% endblock %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

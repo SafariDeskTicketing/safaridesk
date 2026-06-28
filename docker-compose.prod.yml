@@ -1,0 +1,24 @@
+services:
+  nginx:
+    restart: always
+
+  frontend:
+    restart: always
+
+  backend:
+    restart: always
+
+  channels:
+    restart: always
+
+  worker:
+    restart: always
+
+  beat:
+    restart: always
+
+  db:
+    restart: always
+
+  redis:
+    restart: always

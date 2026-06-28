@@ -1,0 +1,16 @@
+services:
+  backend:
+    environment:
+      PYTHONUNBUFFERED: "1"
+
+  channels:
+    environment:
+      PYTHONUNBUFFERED: "1"
+
+  worker:
+    environment:
+      PYTHONUNBUFFERED: "1"
+
+  beat:
+    environment:
+      PYTHONUNBUFFERED: "1"

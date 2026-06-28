@@ -1,0 +1,36 @@
+{% extends "email/base.html" %}
+
+{% block title %}Your verification code{% endblock %}
+
+{% block header %}
+<p class="eyebrow">Security verification</p>
+<h1 class="headline">Your verification code</h1>
+{% endblock %}
+
+{% block email_body %}
+<p>Hi {{ name|default:"there" }},</p>
+<p>Use the code below to complete your verification. It expires in a few minutes — do not share it with anyone.</p>
+
+<p style="margin:28px 0 28px;">
+  <span class="otp-code">{{ otp }}</span>
+</p>
+
+{% endblock %}
+
+{% block secondary_cta %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
+  <tr>
+    <td align="center">
+      <table role="presentation" class="mob-full" cellpadding="0" cellspacing="0" align="center" width="600">
+        <tr>
+          <td class="mob-pad" style="padding:16px 40px 24px;text-align:center;">
+            <p style="margin:0;color:#6B7280;font-size:13px;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+              If you did not request this code, someone may be attempting to access your account. You can safely ignore this email — no action is required.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{% endblock %}

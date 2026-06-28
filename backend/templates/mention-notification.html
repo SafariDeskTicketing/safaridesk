@@ -1,0 +1,46 @@
+{% extends "email/base.html" %}
+
+{% block title %}You were mentioned in a ticket{% endblock %}
+
+{% block header %}
+<p class="eyebrow">Mention</p>
+<h1 class="headline">You were mentioned in a ticket</h1>
+{% endblock %}
+
+{% block email_body %}
+{% firstof comment_excerpt comment_text as mention_excerpt %}
+{% firstof reply_url ticket_url as mention_action_url %}
+<p>Hi {{ recipient_name|default:"there" }},</p>
+<p><strong>{{ mentioned_by_name|default:"A teammate" }}</strong> mentioned you in a ticket conversation and may need your input.</p>
+
+<table role="presentation" class="data-table" cellpadding="0" cellspacing="0" width="100%" style="margin-top:24px;">
+  <tr>
+    <td class="data-label">Ticket</td>
+    <td class="data-value"><strong>{{ ticket_id }}</strong>&nbsp;&mdash;&nbsp;{{ ticket_title|default:"Untitled ticket" }}</td>
+  </tr>
+  <tr>
+    <td class="data-label">Status</td>
+    <td class="data-value">{% firstof ticket_status status "Open" %}</td>
+  </tr>
+  <tr class="data-row-last">
+    <td class="data-label">Mentioned</td>
+    <td class="data-value">{{ comment_date }}</td>
+  </tr>
+</table>
+
+<div class="panel-white" style="margin-top:20px;">
+  <p style="margin:0;color:#4B5563;">{{ mention_excerpt }}</p>
+</div>
+
+<div class="btn-wrap">
+  <!--[if mso]>
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ mention_action_url }}" style="height:44px;v-text-anchor:middle;width:180px;" arcsize="18%" stroke="f" fillcolor="{{ brand_primary|default:'#13343B' }}">
+  <w:anchorlock/>
+  <center style="color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:14px;font-weight:700;">Open conversation</center>
+  </v:roundrect>
+  <![endif]-->
+  <!--[if !mso]><!-->
+  <a href="{{ mention_action_url }}" class="btn-primary">Open conversation</a>
+  <!--<![endif]-->
+</div>
+{% endblock %}

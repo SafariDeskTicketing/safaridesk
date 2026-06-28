@@ -1,0 +1,75 @@
+.onboardingStepItem {
+  min-width: 96px;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+@media (min-width: 640px) {
+  .onboardingStepItem {
+    min-width: 110px;
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+}
+/* Increased connector line length for mobile */
+/* Further increase connector line length for mobile */
+/* Restore mobile connector line to previous value */
+.onboardingStepRowConnector {
+  align-self: center;
+  height: 4px;
+  min-width: 64px;
+  margin: 0 2px;
+  border-radius: 2px;
+  transition: background 0.2s;
+  position: relative;
+  top: 0;
+}
+@media (min-width: 640px) {
+  .onboardingStepRowConnector {
+    min-width: 120px;
+    height: 4px;
+    margin: 0 8px;
+  }
+}
+.onboardingStepRowScroll {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.onboardingStepRowScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.onboardingStepRowFade {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  z-index: 2;
+  transition: opacity 0.2s;
+  opacity: 0;
+}
+/* Remove left fade entirely */
+.onboardingStepRowFade.left {
+  display: none !important;
+}
+/* Remove right fade always */
+.onboardingStepRowFade.right {
+  display: none !important;
+}
+.onboardingStepRowFade.visible {
+  opacity: 1;
+}
+
+@media (min-width: 640px) {
+  .onboardingStepRowScroll {
+    overflow-x: visible !important;
+  }
+  .onboardingStepRowFade {
+    display: none !important;
+  }
+}

@@ -1,0 +1,1689 @@
+/* SafariDesk Editor - Complete Theme Support with Proper Text Colors */
+
+/* Base editor container - CRITICAL: These classes must match the editor's className */
+.ProseMirror {
+  outline: none !important;
+  border: none !important;
+  padding: 1rem !important;
+  color: #374151 !important; /* gray-700 for light mode */
+  background: transparent !important;
+  min-height: 400px !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Dark mode for ProseMirror - MOST IMPORTANT FIX */
+.dark .ProseMirror {
+  color: #e5e7eb !important; /* gray-200 for dark mode */
+}
+
+/* Additional safety selectors for text content */
+.safaridesk-editor-content,
+.ProseMirror-focused,
+.editor-content {
+  color: #374151 !important; /* gray-700 */
+}
+
+.dark .safaridesk-editor-content,
+.dark .ProseMirror-focused,
+.dark .editor-content {
+  color: #e5e7eb !important; /* gray-200 */
+}
+
+/* Headings with proper hierarchy and dark mode support */
+/* CONSTRAINT: Max sizes to prevent GPT-pasted content from breaking layout */
+.ProseMirror h1 {
+  font-size: 2rem !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  margin: 2rem 0 1rem 0 !important;
+  color: #1f2937 !important; /* gray-800 */
+  border-bottom: 4px solid #e5e7eb !important; /* gray-200 */
+  padding-bottom: 0.5rem !important;
+}
+
+.dark .ProseMirror h1 {
+  color: #f9fafb !important; /* gray-50 */
+  border-bottom-color: #374151 !important; /* gray-700 */
+}
+
+.ProseMirror h2 {
+  font-size: 1.625rem !important;
+  line-height: 1.25 !important;
+  font-weight: 600 !important;
+  margin: 1.75rem 0 0.875rem 0 !important;
+  color: #1f2937 !important; /* gray-800 */
+  border-bottom: 2px solid #e5e7eb !important; /* gray-200 */
+  padding-bottom: 0.375rem !important;
+}
+
+.dark .ProseMirror h2 {
+  color: #f9fafb !important; /* gray-50 */
+  border-bottom-color: #374151 !important; /* gray-700 */
+}
+
+.ProseMirror h3 {
+  font-size: 1.375rem !important;
+  line-height: 1.3 !important;
+  font-weight: 600 !important;
+  margin: 1.5rem 0 0.75rem 0 !important;
+  color: #374151 !important; /* gray-700 */
+}
+
+.dark .ProseMirror h3 {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+.ProseMirror h4 {
+  font-size: 1.1875rem !important;
+  line-height: 1.3 !important;
+  font-weight: 600 !important;
+  margin: 1.25rem 0 0.625rem 0 !important;
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.dark .ProseMirror h4 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+.ProseMirror h5 {
+  font-size: 1.05rem !important;
+  line-height: 1.4 !important;
+  font-weight: 600 !important;
+  margin: 1rem 0 0.5rem 0 !important;
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.dark .ProseMirror h5 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+.ProseMirror h6 {
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+  font-weight: 600 !important;
+  margin: 1rem 0 0.5rem 0 !important;
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.dark .ProseMirror h6 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+/* Paragraphs - CRITICAL FOR TEXT COLOR and SIZE CONSTRAINTS */
+.ProseMirror p {
+  margin: 0.75rem 0 !important;
+  line-height: inherit !important;
+  color: #374151 !important; /* gray-700 */
+  font-size: inherit !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.dark .ProseMirror p {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+/* Lists - FIXED STYLING */
+.ProseMirror ul {
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+  list-style: disc !important;
+}
+
+.ProseMirror ol {
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+  list-style: decimal !important;
+}
+
+.ProseMirror li {
+  margin: 0.5rem 0 !important;
+  line-height: inherit !important;
+  color: #374151 !important; /* gray-700 */
+  display: list-item !important;
+}
+
+.dark .ProseMirror li {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+.ProseMirror li p {
+  margin: 0.25rem 0 !important;
+  display: inline !important;
+}
+
+.ProseMirror ul ul,
+.ProseMirror ol ol,
+.ProseMirror ul ol,
+.ProseMirror ol ul {
+  margin: 0.25rem 0 !important;
+}
+
+/* Nested list styling */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex !important;
+  align-items: flex-start !important;
+}
+
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"] {
+  margin-right: 0.5rem !important;
+  margin-top: 0.125rem !important;
+}
+
+/* Blockquotes */
+.ProseMirror blockquote {
+  margin: 1.5rem 0 !important;
+  padding: 1rem 1.5rem !important;
+  background: #f8fafc !important; /* slate-50 */
+  border-left: 4px solid #20b8cd !important; /* primary-500 green */
+  border-radius: 0 0.375rem 0.375rem 0 !important;
+  font-style: italic !important;
+  position: relative !important;
+}
+
+.dark .ProseMirror blockquote {
+  background: var(--hover-bg) !important;
+  border-left-color: #4fd2e0 !important; /* primary-400 green */
+}
+
+.ProseMirror blockquote p {
+  margin: 0 !important;
+  color: #475569 !important; /* slate-600 */
+  font-size: 1.125rem !important;
+}
+
+.dark .ProseMirror blockquote p {
+  color: #cbd5e1 !important; /* slate-300 */
+}
+
+/* Code inline */
+.ProseMirror code {
+  background: #f1f5f9 !important; /* slate-100 */
+  color: #e11d48 !important; /* rose-600 */
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.25rem !important;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+.dark .ProseMirror code {
+  background: #334155 !important; /* slate-700 */
+  color: #fb7185 !important; /* rose-400 */
+}
+
+/* Code blocks */
+.ProseMirror pre {
+  background: #1e293b !important; /* slate-800 */
+  color: #e2e8f0 !important; /* slate-200 */
+  border: 2px solid #334155 !important; /* slate-700 */
+  border-radius: 0.5rem !important;
+  padding: 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  overflow-x: auto !important;
+  position: relative !important;
+}
+
+.dark .ProseMirror pre {
+  background: #0f172a !important; /* slate-900 */
+  border-color: #1e293b !important; /* slate-800 */
+}
+
+.ProseMirror pre code {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-size: inherit !important;
+}
+
+/* Tables */
+.ProseMirror table {
+  margin: 2rem 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 2px solid #d1d5db !important; /* gray-300 */
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1), 0 2px 2px -2px rgb(0 0 0 / 0.1) !important;
+  width: 100% !important;
+}
+
+.dark .ProseMirror table {
+  border-color: #374151 !important; /* gray-700 */
+}
+
+.ProseMirror th {
+  background: #f8fafc !important; /* slate-50 */
+  font-weight: 600 !important;
+  color: #374151 !important; /* gray-700 */
+  padding: 0.875rem 1rem !important;
+  border-bottom: 2px solid #d1d5db !important; /* gray-300 */
+  border-right: 2px solid #d1d5db !important; /* gray-300 */
+  text-align: left !important;
+}
+
+.dark .ProseMirror th {
+  background: #1f2937 !important; /* gray-800 */
+  color: #e5e7eb !important; /* gray-200 */
+  border-bottom-color: #374151 !important; /* gray-700 */
+  border-right-color: #374151 !important; /* gray-700 */
+}
+
+.ProseMirror td {
+  padding: 0.875rem 1rem !important;
+  border-bottom: 2px solid #e5e7eb !important; /* gray-200 */
+  border-right: 2px solid #e5e7eb !important; /* gray-200 */
+  color: #374151 !important; /* gray-700 */
+  background: #ffffff !important; /* white */
+}
+
+.dark .ProseMirror td {
+  border-bottom-color: #4b5563 !important; /* gray-600 */
+  border-right-color: #4b5563 !important; /* gray-600 */
+  color: #d1d5db !important; /* gray-300 */
+  background: #111827 !important; /* gray-900 */
+}
+
+.ProseMirror tr:last-child td {
+  border-bottom: none !important;
+}
+
+.ProseMirror td:last-child,
+.ProseMirror th:last-child {
+  border-right: none !important;
+}
+
+/* Images */
+.ProseMirror img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.5rem !important;
+  margin: 1.5rem 0 !important;
+  box-shadow: 0 4px 6px -2px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Links */
+.ProseMirror a {
+  color: #20b8cd !important; /* primary-500 green */
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  border-bottom: 2px solid transparent !important;
+  transition: all 0.2s ease !important;
+}
+
+.ProseMirror a:hover {
+  color: #218090 !important; /* primary-600 green */
+  border-bottom-color: #20b8cd !important; /* primary-500 green */
+}
+
+.dark .ProseMirror a {
+  color: #4fd2e0 !important; /* primary-400 green */
+}
+
+.dark .ProseMirror a:hover {
+  color: #7fdfeb !important; /* primary-300 green */
+  border-bottom-color: #4fd2e0 !important; /* primary-400 green */
+}
+
+/* Text formatting */
+.ProseMirror strong {
+  font-weight: 700 !important;
+  color: #1f2937 !important; /* gray-800 */
+}
+
+.dark .ProseMirror strong {
+  color: #f9fafb !important; /* gray-50 */
+}
+
+.ProseMirror em {
+  font-style: italic !important;
+  color: #4b5563 !important; /* gray-600 */
+}
+
+.dark .ProseMirror em {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+.ProseMirror u {
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+
+.ProseMirror s {
+  text-decoration: line-through !important;
+}
+
+/* Text alignment — TipTap TextAlign puts the style on p/heading nodes, not the container */
+.ProseMirror p[style*="text-align: center"],
+.ProseMirror h1[style*="text-align: center"],
+.ProseMirror h2[style*="text-align: center"],
+.ProseMirror h3[style*="text-align: center"] {
+  text-align: center !important;
+}
+
+.ProseMirror p[style*="text-align: right"],
+.ProseMirror h1[style*="text-align: right"],
+.ProseMirror h2[style*="text-align: right"],
+.ProseMirror h3[style*="text-align: right"] {
+  text-align: right !important;
+}
+
+.ProseMirror p[style*="text-align: justify"],
+.ProseMirror h1[style*="text-align: justify"],
+.ProseMirror h2[style*="text-align: justify"],
+.ProseMirror h3[style*="text-align: justify"] {
+  text-align: justify !important;
+}
+
+/* Focus styles */
+.ProseMirror:focus-visible {
+  outline: none !important;
+}
+
+/* Placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder) !important;
+  float: left !important;
+  color: #9ca3af !important; /* gray-400 */
+  pointer-events: none !important;
+  height: 0 !important;
+}
+
+.dark .ProseMirror p.is-editor-empty:first-child::before {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* Font-size from pasted content is stripped via transformPastedHTML in the editor config.
+   User-applied sizes (via FontSize extension) are intentional and must NOT be overridden. */
+
+/* Selection */
+.ProseMirror ::selection {
+  background: #d8f5fa !important; /* primary-100 green */
+}
+
+.dark .ProseMirror ::selection {
+  background: #1c6c7a !important; /* primary-700 green */
+}
+
+/* Table selection styles */
+.ProseMirror .selectedCell {
+  background: #d8f5fa !important; /* primary-100 green */
+  border: 2px solid #20b8cd !important; /* primary-500 green */
+}
+
+.dark .ProseMirror .selectedCell {
+  background: #1c6c7a !important; /* primary-700 green */
+  border-color: #4fd2e0 !important; /* primary-400 green */
+}
+
+/* Column resize handle */
+.ProseMirror .column-resize-handle {
+  background-color: #20b8cd !important; /* primary-500 green */
+  bottom: -2px !important;
+  position: absolute !important;
+  right: -2px !important;
+  top: 0 !important;
+  width: 4px !important;
+  border-radius: 2px !important;
+}
+
+/* Horizontal rule */
+.ProseMirror hr {
+  border: none !important;
+  border-top: 2px solid #e5e7eb !important; /* gray-200 */
+  margin: 2rem 0 !important;
+}
+
+.dark .ProseMirror hr {
+  border-top-color: #374151 !important; /* gray-700 */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ProseMirror {
+    padding: 1rem !important;
+  }
+  
+  .ProseMirror h1 {
+    font-size: 1.875rem !important;
+    line-height: 2.25rem !important;
+  }
+  
+  .ProseMirror h2 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+  
+  .ProseMirror h3 {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+  
+  .ProseMirror td,
+  .ProseMirror th {
+    padding: 0.5rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Smooth transitions */
+.ProseMirror * {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
+}
+
+/* Child elements inherit color from parent — no !important so inline style="color:X" wins */
+.ProseMirror * {
+  color: inherit;
+}
+
+/* SafariDesk Editor Toolbar and Icon Styling */
+
+/* Toolbar container styling */
+.safaridesk-editor-toolbar {
+  background: #ffffff !important; /* white */
+  border-bottom: 2px solid #e5e7eb !important; /* gray-200 */
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 0.7rem 0.7rem 0 0 !important; /* clips toolbar bg at wrapper's top corners */
+}
+
+.dark .safaridesk-editor-toolbar {
+  background: var(--card-bg) !important;
+  border-bottom-color: var(--border-color) !important;
+  border-radius: 0.7rem 0.7rem 0 0 !important;
+}
+
+/* Button base styling - Override Tailwind classes */
+.safaridesk-editor-toolbar button {
+  height: 2rem !important; /* h-8 */
+  width: 2rem !important; /* w-8 */
+  padding: 0 !important;
+  border-radius: 0.375rem !important; /* rounded-md */
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid transparent !important;
+  background: transparent !important;
+  color: #6b7280 !important; /* gray-500 - muted foreground */
+}
+
+.dark .safaridesk-editor-toolbar button {
+  color: #9ca3af !important; /* gray-400 - dark muted foreground */
+}
+
+/* Button hover states */
+.safaridesk-editor-toolbar button:hover {
+  background: #f3f4f6 !important; /* gray-100 - accent */
+  color: #374151 !important; /* gray-700 - accent foreground */
+}
+
+.dark .safaridesk-editor-toolbar button:hover {
+  background: var(--hover-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Active button states */
+.safaridesk-editor-toolbar button.active,
+.safaridesk-editor-toolbar button[data-active="true"] {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+.dark .safaridesk-editor-toolbar button.active,
+.dark .safaridesk-editor-toolbar button[data-active="true"] {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+/* ── Toolbar separator ── */
+.sd-sep {
+  width: 1px !important;
+  height: 1.25rem !important;
+  background: #e5e7eb !important;
+  margin: 0 0.125rem !important;
+  flex-shrink: 0 !important;
+}
+
+.dark .sd-sep {
+  background: var(--border-color) !important;
+}
+
+/* ── Paragraph-style trigger button ── */
+.safaridesk-editor-toolbar .dropdown-button {
+  height: 2rem !important;
+  width: auto !important;
+  min-width: 4rem !important;
+  padding: 0 0.625rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  gap: 0.3rem !important;
+  border: 1.5px solid #d1d5db !important;
+  border-radius: 0.4rem !important;
+  color: #374151 !important;
+  background: transparent !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.dark .safaridesk-editor-toolbar .dropdown-button {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.safaridesk-editor-toolbar .dropdown-button:hover {
+  background: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+
+.dark .safaridesk-editor-toolbar .dropdown-button:hover {
+  background: var(--hover-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+.safaridesk-editor-toolbar .dropdown-button.active {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+.sd-style-label {
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  min-width: 4.5rem !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+
+/* ── Icon sizing ── */
+.safaridesk-editor-toolbar button svg,
+.safaridesk-editor-toolbar .dropdown-button svg {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  color: inherit !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+/* ── Colour trigger buttons ── */
+.sd-color-btn {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  height: 2rem !important;
+  width: 2rem !important;
+}
+
+.sd-color-swatch {
+  display: block !important;
+  width: 0.625rem !important;
+  height: 0.1875rem !important;
+  border-radius: 1px !important;
+  margin-top: 1px !important;
+}
+
+/* ── Base dropdown shell ── */
+.safaridesk-editor-dropdown {
+  position: absolute !important;
+  top: calc(100% + 4px) !important;
+  left: 0 !important;
+  z-index: 200 !important;
+  background: #ffffff !important;
+  border: 1.5px solid #e5e7eb !important;
+  border-radius: 0.6rem !important;
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.12), 0 4px 8px -4px rgb(0 0 0 / 0.08) !important;
+  padding: 0.25rem !important;
+  min-width: 10rem !important;
+  overflow: hidden !important;
+}
+
+.dark .safaridesk-editor-dropdown {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* ── Heading style dropdown ── */
+.sd-heading-dropdown {
+  min-width: 14rem !important;
+  padding: 0.375rem 0 !important;
+  overflow: hidden !important;
+}
+
+.sd-dropdown-hint {
+  font-size: 0.6875rem !important;
+  color: #9ca3af !important;
+  padding: 0.3rem 1rem 0.3rem !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  margin-bottom: 0.25rem !important;
+  user-select: none !important;
+}
+
+.dark .sd-dropdown-hint {
+  color: var(--text-muted) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+.sd-style-item {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  padding: 0.6rem 1rem !important;
+  gap: 0.625rem !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  transition: background 0.1s ease !important;
+  line-height: 1.3 !important;
+}
+
+.sd-style-item:hover {
+  background: #f9fafb !important;
+}
+
+.dark .sd-style-item:hover {
+  background: var(--hover-bg) !important;
+}
+
+.sd-style-item.active {
+  background: #f0fdf4 !important;
+}
+
+.dark .sd-style-item.active {
+  background: rgba(32, 184, 205, 0.08) !important;
+}
+
+.sd-style-name {
+  flex: 1 !important;
+  font-size: 0.8125rem !important;
+  font-weight: 400 !important;
+  color: #374151 !important;
+  text-align: left !important;
+  line-height: 1 !important;
+}
+
+.dark .sd-style-name {
+  color: var(--text-primary) !important;
+}
+
+.sd-style-sample {
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  color: #374151 !important;
+}
+
+.dark .sd-style-sample {
+  color: var(--text-secondary) !important;
+}
+
+.sd-style-check {
+  flex-shrink: 0 !important;
+  width: 0.75rem !important;
+  height: 0.75rem !important;
+  margin-left: 0.25rem !important;
+  color: #16a34a !important;
+}
+
+/* ── Colour picker dropdown ── */
+.sd-color-dropdown {
+  min-width: 9rem !important;
+}
+
+.sd-color-item {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  padding: 0.4rem 0.875rem !important;
+  gap: 0.5rem !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0.3rem !important;
+  text-align: left !important;
+  font-size: 0.8125rem !important;
+  color: #374151 !important;
+  cursor: pointer !important;
+  justify-content: flex-start !important;
+  line-height: 1.4 !important;
+}
+
+.dark .sd-color-item {
+  color: var(--text-primary) !important;
+}
+
+.sd-color-item:hover {
+  background: #f3f4f6 !important;
+}
+
+.dark .sd-color-item:hover {
+  background: var(--hover-bg) !important;
+}
+
+.sd-color-dot {
+  display: inline-block !important;
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+}
+
+/* Table modal styling */
+.safaridesk-editor-table-modal {
+  background: #ffffff !important;
+  border: 2px solid #d1d5db !important;
+  border-radius: 0.5rem !important;
+  padding: 1rem !important;
+  box-shadow: 0 20px 26px -6px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+}
+
+.dark .safaridesk-editor-table-modal {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Status bar styling */
+.safaridesk-editor-status {
+  padding: 0.75rem 1rem !important;
+  background: #f9fafb !important; /* gray-50 */
+  border-top: 2px solid #e5e7eb !important; /* gray-200 */
+  border-radius: 0 0 0.7rem 0.7rem !important; /* clips status bg at wrapper's bottom corners */
+  font-size: 0.75rem !important; /* text-xs */
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.dark .safaridesk-editor-status {
+  background: var(--hover-bg) !important;
+  border-top-color: var(--border-color) !important;
+  border-radius: 0 0 0.7rem 0.7rem !important;
+  color: var(--text-muted) !important;
+}
+
+/* Draft restore banner — topmost element when visible; clip its bg at wrapper's top corners */
+.safaridesk-editor-draft-banner {
+  border-radius: 0.7rem 0.7rem 0 0 !important;
+  overflow: hidden !important;
+}
+
+/* When draft banner is present the toolbar is no longer the top element */
+.safaridesk-editor-draft-banner ~ .safaridesk-editor-toolbar {
+  border-radius: 0 !important;
+}
+
+/* Editor container wrapper */
+.safaridesk-editor-wrapper {
+  border: 2px solid #d1d5db !important; /* gray-300 */
+  border-radius: 0.85rem !important;
+  overflow: visible !important;
+  background: #ffffff !important;
+}
+
+.dark .safaridesk-editor-wrapper {
+  border-color: var(--border-color) !important;
+  background: var(--card-bg) !important;
+}
+
+.safaridesk-editor-wrapper:focus-within {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2) !important;
+}
+
+.dark .safaridesk-editor-wrapper:focus-within {
+  border-color: var(--border-color) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Force icon colors for all Lucide icons */
+.safaridesk-editor-toolbar [data-lucide] {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+/* ResizableImage Component Styles */
+.resizable-image-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 1rem 0;
+}
+
+.resizable-image-wrapper.selected {
+  box-shadow: 0 0 0 2px #20b8cd;
+  border-radius: 4px;
+}
+
+.resizable-image-wrapper img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.resizable-image-wrapper:hover img {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.resizable-image-wrapper .resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background: #20b8cd;
+  cursor: nw-resize;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.resizable-image-wrapper .resize-handle:hover {
+  opacity: 1;
+}
+
+.resizable-image-wrapper .image-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  padding: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resizable-image-wrapper:hover .image-controls,
+.resizable-image-wrapper.selected .image-controls {
+  opacity: 1;
+}
+
+.resizable-image-wrapper .image-controls button {
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.resizable-image-wrapper .image-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.resizable-image-wrapper .image-controls button.active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.resizable-image-wrapper .image-controls button:hover.delete {
+  background: #ef4444;
+}
+
+.resizable-image-wrapper .image-caption {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+  font-style: italic;
+}
+
+.dark .resizable-image-wrapper .image-caption {
+  color: #9ca3af;
+}
+
+.resizable-image-wrapper .caption-input {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.875rem;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  resize: none;
+  font-family: inherit;
+}
+
+.dark .resizable-image-wrapper .caption-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.resizable-image-wrapper .caption-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.resizable-image-wrapper .caption-actions button {
+  padding: 4px 12px;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.resizable-image-wrapper .caption-save {
+  background: #20b8cd;
+  color: white;
+}
+
+.resizable-image-wrapper .caption-save:hover {
+  background: #218090;
+}
+
+.resizable-image-wrapper .caption-cancel {
+  background: #6b7280;
+  color: white;
+}
+
+.resizable-image-wrapper .caption-cancel:hover {
+  background: #4b5563;
+}
+
+/* Image alignment styles */
+.resizable-image-wrapper.alignment-left {
+  float: left;
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.resizable-image-wrapper.alignment-right {
+  float: right;
+  margin-left: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.resizable-image-wrapper.alignment-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.resizable-image-wrapper.alignment-full {
+  display: block;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.resizable-image-wrapper.alignment-full img {
+  width: 100%;
+}
+
+/* Ensure proper text wrapping around floating images */
+.ProseMirror p {
+  clear: none;
+}
+
+.ProseMirror .resizable-image-wrapper.alignment-left + p,
+.ProseMirror .resizable-image-wrapper.alignment-right + p {
+  margin-top: 0;
+}
+
+/* Fix for proper image positioning in the editor */
+.safaridesk-editor-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* ===========================================
+   PROSE CLASS - For rendering editor content
+   Used when displaying description via dangerouslySetInnerHTML
+   Matches ProseMirror styles for consistent display
+   =========================================== */
+
+/* Base prose container */
+.prose {
+  color: #374151 !important; /* gray-700 for light mode */
+  line-height: 1.6 !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.dark .prose,
+.prose.dark\:prose-invert {
+  color: #e5e7eb !important; /* gray-200 for dark mode */
+}
+
+/* Prose Headings */
+.prose h1 {
+  font-size: 2.25rem !important;
+  line-height: 2.5rem !important;
+  font-weight: 700 !important;
+  margin: 2rem 0 1rem 0 !important;
+  color: #1f2937 !important; /* gray-800 */
+  border-bottom: 4px solid #e5e7eb !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.dark .prose h1 {
+  color: #f9fafb !important; /* gray-50 */
+  border-bottom-color: #374151 !important;
+}
+
+.prose h2 {
+  font-size: 1.875rem !important;
+  line-height: 2.25rem !important;
+  font-weight: 600 !important;
+  margin: 1.75rem 0 0.875rem 0 !important;
+  color: #1f2937 !important;
+  border-bottom: 2px solid #e5e7eb !important;
+  padding-bottom: 0.375rem !important;
+}
+
+.dark .prose h2 {
+  color: #f9fafb !important;
+  border-bottom-color: #374151 !important;
+}
+
+.prose h3 {
+  font-size: 1.5rem !important;
+  line-height: 2rem !important;
+  font-weight: 600 !important;
+  margin: 1.5rem 0 0.75rem 0 !important;
+  color: #374151 !important;
+}
+
+.dark .prose h3 {
+  color: #d1d5db !important;
+}
+
+.prose h4 {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+  font-weight: 600 !important;
+  margin: 1.25rem 0 0.625rem 0 !important;
+  color: #6b7280 !important;
+}
+
+.dark .prose h4 {
+  color: #9ca3af !important;
+}
+
+.prose h5 {
+  font-size: 1.125rem !important;
+  line-height: 1.75rem !important;
+  font-weight: 600 !important;
+  margin: 1rem 0 0.5rem 0 !important;
+  color: #6b7280 !important;
+}
+
+.dark .prose h5 {
+  color: #9ca3af !important;
+}
+
+.prose h6 {
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
+  font-weight: 600 !important;
+  margin: 1rem 0 0.5rem 0 !important;
+  color: #6b7280 !important;
+}
+
+.dark .prose h6 {
+  color: #9ca3af !important;
+}
+
+/* Prose Paragraphs */
+.prose p {
+  margin: 1rem 0 !important;
+  line-height: inherit !important;
+  color: #374151 !important;
+  font-size: inherit !important;
+  max-width: 100% !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.dark .prose p {
+  color: #d1d5db !important;
+}
+
+/* Prose Lists */
+.prose ul {
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+  list-style: disc !important;
+}
+
+.prose ol {
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+  list-style: decimal !important;
+}
+
+.prose li {
+  margin: 0.5rem 0 !important;
+  line-height: 1.75 !important;
+  color: #374151 !important;
+  display: list-item !important;
+}
+
+.dark .prose li {
+  color: #d1d5db !important;
+}
+
+.prose li p {
+  margin: 0.25rem 0 !important;
+  display: inline !important;
+}
+
+.prose ul ul,
+.prose ol ol,
+.prose ul ol,
+.prose ol ul {
+  margin: 0.25rem 0 !important;
+}
+
+/* Prose Blockquotes */
+.prose blockquote {
+  margin: 1.5rem 0 !important;
+  padding: 1rem 1.5rem !important;
+  background: #f8fafc !important;
+  border-left: 4px solid #20b8cd !important;
+  border-radius: 0 0.375rem 0.375rem 0 !important;
+  font-style: italic !important;
+}
+
+.dark .prose blockquote {
+  background: #1e293b !important;
+  border-left-color: #4fd2e0 !important;
+}
+
+.prose blockquote p {
+  margin: 0 !important;
+  color: #475569 !important;
+  font-size: 1.125rem !important;
+}
+
+.dark .prose blockquote p {
+  color: #cbd5e1 !important;
+}
+
+/* Prose Code inline */
+.prose code {
+  background: #f1f5f9 !important;
+  color: #e11d48 !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.25rem !important;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+.dark .prose code {
+  background: #334155 !important;
+  color: #fb7185 !important;
+}
+
+/* Prose Code blocks */
+.prose pre {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border: 2px solid #334155 !important;
+  border-radius: 0.5rem !important;
+  padding: 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  overflow-x: auto !important;
+}
+
+.dark .prose pre {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+.prose pre code {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-size: inherit !important;
+}
+
+/* Prose Tables */
+.prose table {
+  margin: 2rem 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 2px solid #d1d5db !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1), 0 2px 2px -2px rgb(0 0 0 / 0.1) !important;
+  width: 100% !important;
+}
+
+.dark .prose table {
+  border-color: #374151 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Final overrides: keep editor aligned with app light/dark theme tokens      */
+/* -------------------------------------------------------------------------- */
+.safaridesk-editor-wrapper {
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+
+.dark .safaridesk-editor-wrapper {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+.safaridesk-editor-toolbar {
+  background: #ffffff !important;
+  border-bottom-color: #e5e7eb !important;
+  padding: 0.375rem 0.625rem !important;
+}
+
+.dark .safaridesk-editor-toolbar {
+  background: var(--card-bg) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+.safaridesk-editor-toolbar button {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+}
+
+/* Specificity (0,2,0) beats .safaridesk-editor-toolbar button (0,1,1) — these must not be clamped to 1.75rem */
+.safaridesk-editor-toolbar .sd-style-item {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 2.75rem !important;
+}
+
+.safaridesk-editor-toolbar .sd-color-btn {
+  width: 2rem !important;
+  height: 2rem !important;
+}
+
+.safaridesk-editor-toolbar .sd-color-item {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 2rem !important;
+}
+
+.safaridesk-editor-toolbar button svg,
+.safaridesk-editor-toolbar .dropdown-button svg {
+  width: 0.8125rem !important;
+  height: 0.8125rem !important;
+}
+
+.safaridesk-editor-toolbar .dropdown-button {
+  min-height: 1.75rem !important;
+  min-width: 6.5rem !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.8125rem !important;
+}
+
+.ProseMirror {
+  background: transparent !important;
+  color: #374151 !important;
+}
+
+.dark .ProseMirror {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+.safaridesk-editor-status {
+  background: #f9fafb !important;
+  border-top-color: #e5e7eb !important;
+}
+
+.dark .safaridesk-editor-status {
+  background: var(--hover-bg) !important;
+  border-top-color: var(--border-color) !important;
+}
+
+.prose th {
+  background: #f8fafc !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  padding: 0.875rem 1rem !important;
+  border-bottom: 2px solid #d1d5db !important;
+  border-right: 2px solid #d1d5db !important;
+  text-align: left !important;
+}
+
+.dark .prose th {
+  background: #1f2937 !important;
+  color: #e5e7eb !important;
+  border-bottom-color: #374151 !important;
+  border-right-color: #374151 !important;
+}
+
+.prose td {
+  padding: 0.875rem 1rem !important;
+  border-bottom: 2px solid #e5e7eb !important;
+  border-right: 2px solid #e5e7eb !important;
+  color: #374151 !important;
+  background: #ffffff !important;
+}
+
+.dark .prose td {
+  border-bottom-color: #4b5563 !important;
+  border-right-color: #4b5563 !important;
+  color: #d1d5db !important;
+  background: #111827 !important;
+}
+
+.prose tr:last-child td {
+  border-bottom: none !important;
+}
+
+.prose td:last-child,
+.prose th:last-child {
+  border-right: none !important;
+}
+
+/* Prose Images */
+.prose img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.5rem !important;
+  margin: 1.5rem 0 !important;
+  box-shadow: 0 4px 6px -2px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Prose Links */
+.prose a {
+  color: #20b8cd !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  border-bottom: 2px solid transparent !important;
+  transition: all 0.2s ease !important;
+}
+
+.prose a:hover {
+  color: #218090 !important;
+  border-bottom-color: #20b8cd !important;
+}
+
+.dark .prose a {
+  color: #4fd2e0 !important;
+}
+
+.dark .prose a:hover {
+  color: #7fdfeb !important;
+  border-bottom-color: #4fd2e0 !important;
+}
+
+/* Prose Text formatting */
+.prose strong {
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+}
+
+.dark .prose strong {
+  color: #f9fafb !important;
+}
+
+.prose em {
+  font-style: italic !important;
+  color: #4b5563 !important;
+}
+
+.dark .prose em {
+  color: #d1d5db !important;
+}
+
+.prose u {
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+
+.prose s {
+  text-decoration: line-through !important;
+}
+
+/* Prose Horizontal Rule */
+.prose hr {
+  margin: 2rem 0 !important;
+  border: none !important;
+  border-top: 2px solid #e5e7eb !important;
+}
+
+.dark .prose hr {
+  border-top-color: #374151 !important;
+}
+
+/* Prose Task Lists */
+.prose ul[data-type="taskList"] {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.prose ul[data-type="taskList"] li {
+  display: flex !important;
+  align-items: flex-start !important;
+}
+
+.prose ul[data-type="taskList"] li input[type="checkbox"] {
+  margin-right: 0.5rem !important;
+  margin-top: 0.125rem !important;
+}
+
+/* Image alignment in prose */
+.prose .resizable-image-wrapper.alignment-left {
+  float: left;
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose .resizable-image-wrapper.alignment-right {
+  float: right;
+  margin-left: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose .resizable-image-wrapper.alignment-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.prose .resizable-image-wrapper.alignment-full {
+  display: block;
+  width: 100%;
+}
+
+.prose .resizable-image-wrapper.alignment-full img {
+  width: 100%;
+}
+
+/* ===========================================
+   PROSE-SM - Compact prose for description views
+   Smaller font sizes and tighter spacing
+   =========================================== */
+
+.prose-sm,
+.prose.prose-sm {
+  font-size: 0.8125rem !important; /* 14px */
+  line-height: 1.5 !important;
+}
+
+.prose-sm h1 {
+  font-size: 1.5rem !important;
+  line-height: 1.75rem !important;
+  margin: 1rem 0 0.5rem 0 !important;
+}
+
+.prose-sm h2 {
+  font-size: 1.25rem !important;
+  line-height: 1.5rem !important;
+  margin: 0.875rem 0 0.5rem 0 !important;
+}
+
+.prose-sm h3 {
+  font-size: 1.125rem !important;
+  line-height: 1.5rem !important;
+  margin: 0.75rem 0 0.375rem 0 !important;
+}
+
+.prose-sm h4,
+.prose-sm h5,
+.prose-sm h6 {
+  font-size: 1rem !important;
+  line-height: 1.25rem !important;
+  margin: 0.625rem 0 0.25rem 0 !important;
+}
+
+.prose-sm p {
+  margin: 0.5rem 0 !important;
+  line-height: 1.5 !important;
+  font-size: 0.8125rem !important; /* 14px */
+}
+
+.prose-sm ul,
+.prose-sm ol {
+  margin: 0.5rem 0 !important;
+  padding-left: 1.25rem !important;
+}
+
+.prose-sm li {
+  margin: 0.25rem 0 !important;
+  line-height: 1.5 !important;
+  font-size: 0.8125rem !important;
+}
+
+.prose-sm blockquote {
+  margin: 0.75rem 0 !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+}
+
+.prose-sm pre {
+  margin: 0.75rem 0 !important;
+  padding: 0.75rem !important;
+  font-size: 0.75rem !important;
+}
+
+.prose-sm code {
+  font-size: 0.75rem !important;
+  padding: 0.1rem 0.25rem !important;
+}
+
+.prose-sm table {
+  margin: 0.75rem 0 !important;
+  font-size: 0.8125rem !important;
+}
+
+.prose-sm th,
+.prose-sm td {
+  padding: 0.5rem 0.75rem !important;
+}
+
+.prose-sm img {
+  margin: 0.75rem 0 !important;
+  max-height: 200px !important;
+  object-fit: contain !important;
+}
+
+.prose-sm hr {
+  margin: 1rem 0 !important;
+}
+
+/* ── Bubble menu (floating toolbar on text selection) ── */
+.safaridesk-bubble-menu {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.14), 0 2px 6px -2px rgb(0 0 0 / 0.1);
+  padding: 0.2rem;
+}
+
+.dark .safaridesk-bubble-menu {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+.bubble-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  border-radius: 0.3rem !important;
+  color: #374151 !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 0.1s ease, color 0.1s ease !important;
+}
+
+.dark .bubble-btn {
+  color: var(--text-primary) !important;
+}
+
+.bubble-btn:hover {
+  background: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+.dark .bubble-btn:hover {
+  background: var(--hover-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+.bubble-btn.active {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.bubble-btn svg {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+.bubble-divider {
+  width: 1px;
+  height: 1rem;
+  background: #e5e7eb;
+  margin: 0 0.1rem;
+}
+
+.dark .bubble-divider {
+  background: var(--border-color);
+}

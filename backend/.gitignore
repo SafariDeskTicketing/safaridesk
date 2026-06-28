@@ -1,0 +1,43 @@
+# Ignore virtual environments
+venv/
+env/
+.venv/
+
+# Ignore IDE and editor-specific files
+.idea/
+.vscode/
+*.iml
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore Django migration files
+*.log
+
+# Ignore environment variables and secrets
+.env
+*.env
+
+# Ignore compiled files
+*.pyc
+*.pyo
+
+# Ignore everything inside the media directory
+/media/*
+
+# But keep the media folder itself
+!/media/.gitignore
+
+# Ignore Django static files (if collected separately)
+staticfiles/
+
+# Ignore node_modules if using frontend dependencies
+node_modules/
+
+# Ignore database files if using SQLite
+db.sqlite3
+temp_github_base.py
+
+RNSafarideskBack/settings/local_prod.py
+celerybeat-schedule
