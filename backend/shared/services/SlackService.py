@@ -6,6 +6,11 @@ from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 from tenant.models import Ticket
 from shared.models import SlackIntegration
+from shared.services.channel_ticket_service import (
+    AttachmentPayload,
+    ChannelTicketService,
+    NormalizedChannelMessage,
+)
 
 class SlackService:
     def __init__(self, integration=None):
@@ -58,7 +63,6 @@ class SlackService:
                     channel_id=channel_id,
                     user_id=user_id,
                     message_text=message_text,
-                    user_full_name=self._get_slack_user_name(user_id),
                     thread_ts=thread_ts,
                     event=event
                 )
@@ -102,16 +106,17 @@ class SlackService:
                 return True
             
             # Get or create user
-            slack_username = self._get_slack_user_name(user_id)
-            user = Users.objects.filter(email__iexact=f"{user_id}@slack.users").first()
-            
+            slack_username, slack_email = self._get_slack_user_info(user_id)
+            synthetic_email = slack_email or f"{user_id}@slack.users"
+            user = Users.objects.filter(email__iexact=synthetic_email).first()
+
             # Create comment
             comment = TicketComment.objects.create(
                 ticket=ticket,
                 content=message_text,
                 is_internal=False,
                 creator_name=slack_username,
-                creator_email=f"{user_id}@slack.users" if not user else user.email,
+                creator_email=synthetic_email if not user else user.email,
                 author=user
             )
             
@@ -140,7 +145,6 @@ class SlackService:
                         channel_id=channel_id,
                         user_id=user_id,
                         message_text=f"Created via command: {argument}",
-                        user_full_name=self._get_slack_user_name(user_id),
                         event=event
                     )
                     return True
@@ -148,40 +152,90 @@ class SlackService:
         except Exception as e:
             logger.error(f"Error processing Slack app mention event: {str(e)}")
             return False
-    
-    def _get_slack_user_name(self, slack_user_id: str) -> str:
-        """Get the full name of a Slack user by ID"""
+
+    def _get_slack_user_info(self, slack_user_id: str) -> Tuple[str, Optional[str]]:
+        """Look up a Slack user's display name and email via the users.info API."""
+        if not slack_user_id or not self.integration or not self.integration.access_token:
+            return "Slack User", None
         try:
-            # Simplified implementation - in practice query Slack API
-            return "Slack User"
-        except Exception:
-            return "Slack User"
-    
-    def _create_ticket_from_message(self, channel_id: str, user_id: str, message_text: str, 
-                                  user_full_name: str = "", thread_ts: Optional[str] = None,
+            response = requests.get(
+                f"{self.BASE_URL}/users.info",
+                headers={'Authorization': f'Bearer {self.integration.access_token}'},
+                params={'user': slack_user_id},
+                timeout=5,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not data.get('ok'):
+                logger.warning(f"Slack users.info failed for {slack_user_id}: {data.get('error')}")
+                return "Slack User", None
+
+            user_data = data.get('user', {})
+            profile = user_data.get('profile', {})
+            name = user_data.get('real_name') or profile.get('display_name') or profile.get('real_name') or "Slack User"
+            email = profile.get('email')
+            return name, email
+        except Exception as e:
+            logger.warning(f"Error fetching Slack user info for {slack_user_id}: {str(e)}")
+            return "Slack User", None
+
+    def _get_slack_user_name(self, slack_user_id: str) -> str:
+        """Get the display name of a Slack user by ID (name-only convenience wrapper)."""
+        name, _ = self._get_slack_user_info(slack_user_id)
+        return name
+
+    def _download_slack_file(self, file_info: dict) -> Optional[AttachmentPayload]:
+        """Download a Slack-hosted file (from a message event's 'files' list) for attaching to a ticket."""
+        url_private = file_info.get('url_private')
+        if not url_private or not self.integration or not self.integration.access_token:
+            return None
+        try:
+            response = requests.get(
+                url_private,
+                headers={'Authorization': f'Bearer {self.integration.access_token}'},
+                timeout=15,
+            )
+            response.raise_for_status()
+            return AttachmentPayload(
+                filename=file_info.get('name') or 'slack-attachment',
+                content=response.content,
+                content_type=file_info.get('mimetype'),
+            )
+        except Exception as e:
+            logger.warning(f"Error downloading Slack file {file_info.get('name')}: {str(e)}")
+            return None
+
+    def _create_ticket_from_message(self, channel_id: str, user_id: str, message_text: str,
+                                  thread_ts: Optional[str] = None,
                                   event: dict = None) -> Ticket:
         """Create a ticket from a Slack message"""
         # Generate title from message
         title_lines = [line.strip() for line in message_text.split('\n') if line.strip()]
-        title = title_lines[0][:100] if title_lines else "New Slack Message"
-        
-        # Create ticket
-        ticket_data = {
-            'business': self.business,
-            'ticket_id': f"SLACK-{channel_id[:8].upper()}",
-            'title': title,
-            'description': message_text,
-            'creator_name': user_full_name or "Slack User",
-            'creator_email': None,
-            'category': None,
-            'department': None,
-            'priority': 'medium',
-            'status': 'open',
-            'source': 'api',
-        }
-        
-        ticket = Ticket.objects.create(**ticket_data)
-        
+        title_hint = title_lines[0][:100] if title_lines else "New Slack Message"
+
+        user_full_name, user_email = self._get_slack_user_info(user_id)
+        synthetic_email = user_email or (f"{user_id}@slack.users" if user_id else None)
+
+        attachments = [
+            attachment
+            for attachment in (
+                self._download_slack_file(file_info) for file_info in (event or {}).get('files', [])
+            )
+            if attachment
+        ]
+
+        ticket = ChannelTicketService.create_ticket(
+            NormalizedChannelMessage(
+                source='slack',
+                business=self.business,
+                title_hint=title_hint,
+                body=message_text,
+                sender_display_name=user_full_name,
+                sender_email=synthetic_email,
+                attachments=attachments,
+            )
+        )
+
         # Create Slack ticket mapping for two-way sync
         from shared.models.SlackTicketMapping import SlackTicketMapping
         SlackTicketMapping.objects.create(
@@ -192,7 +246,7 @@ class SlackService:
             slack_team_id=self.integration.team_id if self.integration else '',
             created_by_event=True
         )
-        
+
         logger.info(f"Created ticket {ticket.ticket_id} from Slack message in channel {channel_id}")
         return ticket
 
