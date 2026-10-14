@@ -104,6 +104,8 @@ class Ticket(BaseEntity):
         ('internal', 'Internal/Staff-created'),
         ('customer_portal', 'Customer Portal'),
         ('whatsapp', 'WhatsApp'),
+        ('slack', 'Slack'),
+        ('telegram', 'Telegram'),
     ]
 
 
