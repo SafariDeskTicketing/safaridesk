@@ -15,7 +15,7 @@ from shared.serializers.TelegramSerializer import (
     TelegramChatSerializer
 )
 from users.models.BusinessModel import Business
-from tenant.services.tickets.naming import generate_ticket_id, render_ticket_title
+from shared.services.channel_ticket_service import ChannelTicketService, NormalizedChannelMessage
 import logging
 
 logger = logging.getLogger(__name__)
@@ -606,33 +606,19 @@ Just send a message to create or update your support ticket."""
     ):
         """Create a new ticket from Telegram message"""
         try:
-            from tenant.models import Ticket
-            
-            # Generate ticket ID
-            ticket_id_code = generate_ticket_id(business=integration.business)
-            
-            # Generate title
-            ticket_title = render_ticket_title(
-                summary=parsed['text'][:100],
-                ticket_id=ticket_id_code,
-                source='telegram',
-                business=integration.business,
-            )
-            
             with transaction.atomic():
-                # Create ticket
-                ticket = Ticket.objects.create(
-                    business=integration.business,
-                    ticket_id=ticket_id_code,
-                    title=ticket_title,
-                    description=parsed['text'],
-                    priority=integration.default_priority,
-                    source='telegram',
-                    creator_name=chat.display_name,
-                    creator_email=f"telegram_{chat.user_id}@telegram.local",
-                    customer_tier='standard'
+                ticket = ChannelTicketService.create_ticket(
+                    NormalizedChannelMessage(
+                        source='telegram',
+                        business=integration.business,
+                        title_hint=parsed['text'][:100],
+                        body=parsed['text'],
+                        sender_display_name=chat.display_name,
+                        sender_email=f"telegram_{chat.user_id}@telegram.local",
+                        priority=integration.default_priority,
+                    )
                 )
-                
+
                 # Link chat to ticket
                 chat.ticket = ticket
                 chat.save()

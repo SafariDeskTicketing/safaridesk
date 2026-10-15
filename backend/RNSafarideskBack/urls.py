@@ -61,6 +61,7 @@ urlpatterns = [
     path("api/v1/integrations/twilio/", include("shared.routes.twilio")),
     path("api/v1/integrations/whatsapp/", include("shared.routes.whatsapp")),
     path("api/v1/integrations/safari-sms/", include("shared.routes.safari_sms")),
+    path("api/v1/integrations/telegram/", include("shared.routes.telegram")),
 
     path("mailgun/inbound/", MailgunInboundWebhookView.as_view(), name="mailgun-inbound"),
     path("mailgun/inbound/mime", MailgunInboundWebhookView.as_view(), name="mailgun-inbound-mime"),
