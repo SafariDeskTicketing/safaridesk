@@ -232,6 +232,15 @@ class SlackIntegrationDetailView(APIView):
 
             integration.save()
 
+            # Auto-join the selected default channel so tickets start flowing
+            # without requiring a manual /invite (private channels still need one;
+            # Slack never lets apps self-join those).
+            if 'default_channel' in serializer.validated_data and integration.default_channel:
+                try:
+                    SlackService.join_channel(integration.access_token, integration.default_channel)
+                except Exception as e:
+                    logger.warning(f"Could not auto-join Slack channel {integration.default_channel}: {str(e)}")
+
             return Response({
                 'success': True,
                 'message': 'Configuration updated successfully',
