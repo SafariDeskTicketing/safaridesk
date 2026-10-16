@@ -143,6 +143,22 @@ class SlackOAuthCallbackView(APIView):
             action = 'connected' if created else 'updated'
             logger.info(f"Slack integration {action} for business {business.name}")
 
+            # Auto-join every public channel so ticket creation works immediately
+            # without a manual /invite in each one. Private channels are skipped --
+            # Slack never allows apps to self-join those, a human must invite the
+            # bot explicitly for any private channel.
+            try:
+                token = slack_integration.access_token
+                for channel in SlackService.get_channels(token):
+                    if channel.get('is_private') or channel.get('is_member'):
+                        continue
+                    try:
+                        SlackService.join_channel(token, channel['id'])
+                    except Exception as join_error:
+                        logger.warning(f"Could not auto-join Slack channel {channel.get('name')}: {str(join_error)}")
+            except Exception as e:
+                logger.warning(f"Could not auto-join Slack channels for business {business.name}: {str(e)}")
+
             from util.Helper import Helper
             helper = Helper()
             url = helper.build_integration_url("slack", request, business, team)
