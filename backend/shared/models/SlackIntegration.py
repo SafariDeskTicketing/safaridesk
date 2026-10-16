@@ -1,13 +1,14 @@
 from django.db import models
 from .BaseModel import BaseEntity
+from util.security.encryption import decrypt_value, encrypt_value
 
 
 class SlackIntegration(BaseEntity):
     # Business reference - this allows multi-tenant support
     business = models.ForeignKey('users.Business', on_delete=models.CASCADE, related_name='slack_integrations')
-    
-    # Slack OAuth data
-    access_token = models.TextField()
+
+    # Slack OAuth data (encrypted at rest)
+    access_token_encrypted = models.TextField(blank=True, default="")
     team_id = models.CharField(max_length=50)
     team_name = models.CharField(max_length=255)
     workspace_url = models.URLField()
@@ -49,6 +50,14 @@ class SlackIntegration(BaseEntity):
             )
         ]
         db_table = 'slack_integrations'
-        
+
     def __str__(self):
         return f"Slack integration for {self.business.name} - {self.team_name}"
+
+    @property
+    def access_token(self) -> str:
+        return decrypt_value(self.access_token_encrypted, default="") or ""
+
+    @access_token.setter
+    def access_token(self, value: str) -> None:
+        self.access_token_encrypted = encrypt_value(value)

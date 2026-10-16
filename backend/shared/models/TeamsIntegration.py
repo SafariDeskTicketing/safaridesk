@@ -1,16 +1,17 @@
 from django.db import models
 from .BaseModel import BaseEntity
+from util.security.encryption import decrypt_value, encrypt_value
 
 
 class TeamsIntegration(BaseEntity):
     """Microsoft Teams integration model for multi-tenant support"""
-    
+
     # Business reference - this allows multi-tenant support
     business = models.ForeignKey('users.Business', on_delete=models.CASCADE, related_name='teams_integrations')
-    
-    # Microsoft OAuth data
-    access_token = models.TextField()
-    refresh_token = models.TextField(blank=True, null=True)
+
+    # Microsoft OAuth data (encrypted at rest)
+    access_token_encrypted = models.TextField(blank=True, default="")
+    refresh_token_encrypted = models.TextField(blank=True, default="")
     token_expires_at = models.DateTimeField(blank=True, null=True)
     
     # Tenant info (Microsoft organization)
@@ -54,3 +55,19 @@ class TeamsIntegration(BaseEntity):
         if not self.token_expires_at:
             return True
         return timezone.now() >= self.token_expires_at
+
+    @property
+    def access_token(self) -> str:
+        return decrypt_value(self.access_token_encrypted, default="") or ""
+
+    @access_token.setter
+    def access_token(self, value: str) -> None:
+        self.access_token_encrypted = encrypt_value(value)
+
+    @property
+    def refresh_token(self) -> str:
+        return decrypt_value(self.refresh_token_encrypted, default="") or ""
+
+    @refresh_token.setter
+    def refresh_token(self, value: str) -> None:
+        self.refresh_token_encrypted = encrypt_value(value)
