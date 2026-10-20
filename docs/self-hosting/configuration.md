@@ -21,6 +21,7 @@ Related pages:
 - [Architecture](./architecture.md)
 - [Production Deployment](./production.md)
 - [Docker Images and Releases](./docker-images-and-releases.md)
+- [Slack Integration Setup](./slack-integration.md)
 - [Troubleshooting](./troubleshooting.md)
 
 ---
@@ -363,6 +364,7 @@ Placeholder provider links:
 | `SLACK_CLIENT_SECRET` | Optional | Yes | Slack OAuth secret. |
 | `SLACK_SIGNING_SECRET` | Optional | Yes | Slack request signing secret. |
 | `SLACK_REDIRECT_URI` | Optional | No | Slack OAuth redirect URI. |
+| `SLACK_OAUTH_SCOPES` | Optional | No | Comma-separated bot scopes requested on connect. Must include `channels:history` or inbound messages will never create tickets — see [Slack Integration Setup](./slack-integration.md). |
 | `TEAMS_APPLICATION_ID` | Optional | No | Microsoft Teams app ID. |
 | `TEAMS_DIRECTORY_ID` | Optional | No | Microsoft directory ID. |
 | `TEAMS_CLIENT_SECRET` | Optional | Yes | Teams client secret. |

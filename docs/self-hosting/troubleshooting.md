@@ -14,6 +14,7 @@ Related pages:
 - [Configuration](./configuration.md)
 - [Production Deployment](./production.md)
 - [Backup and Restore](./backup-restore.md)
+- [Slack Integration Setup](./slack-integration.md)
 
 ---
 
@@ -440,6 +441,36 @@ Placeholder provider links:
 
 - [SMTP setup](../TODO-smtp.md)
 - [Mailgun setup](../TODO-mailgun.md)
+
+---
+
+## Slack Events Not Creating Tickets
+
+The Slack OAuth connect succeeds, the Request URL verifies, but messages sent in Slack never produce a ticket. There is no error shown anywhere — Slack simply never calls the webhook again after the initial verification. Check these in order; in practice it has always been one of the first two.
+
+**1. `SLACK_OAUTH_SCOPES` is missing `channels:history`.**
+
+```bash
+docker compose exec backend python manage.py shell -c "from django.conf import settings; print(settings.SLACK_OAUTH_SCOPES)"
+```
+
+If `channels:history` isn't in the output, add it to `.env`, recreate the backend containers (`docker compose up -d --force-recreate backend worker channels` — a plain `restart` does not reread `.env`), then disconnect and reconnect Slack from SafariDesk's integration settings. See [Slack Integration Setup](./slack-integration.md#3-set-slack_oauth_scopes--this-is-the-step-that-gets-missed) for why this specific scope is easy to miss even when Slack's own dashboard shows the event as correctly subscribed.
+
+**2. Socket Mode is enabled on the Slack app.**
+
+If Socket Mode is on, Slack delivers events over a WebSocket connection instead of calling your Request URL, and SafariDesk only implements the HTTP path. Check **Socket Mode** in the Slack app's sidebar — it must be off. See [Slack Integration Setup](./slack-integration.md#4-leave-socket-mode-off).
+
+**3. The bot isn't a member of the channel.**
+
+Public channels are auto-joined when a business connects Slack, but only channels that existed at connect time. For a channel created afterward, or any private channel, invite the bot manually: `/invite @your-bot-name`.
+
+**4. Confirm nothing is reaching the server at all.**
+
+```bash
+grep "slack/events" /var/log/nginx/access.log | tail -20
+```
+
+A `200` response with a small body (~20 bytes) is a normal processed event. If there's no entry at all for your test message, Slack never attempted delivery — that points back to #1, #2, or #3, not to anything in SafariDesk's own code.
 
 ---
 
