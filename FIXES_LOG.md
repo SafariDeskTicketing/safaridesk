@@ -142,6 +142,11 @@ Before deleting anything, I traced the actual logic in each candidate rather tha
 **Action:** Deleted.
 **Verified:** `python manage.py check` passes (nothing referenced it).
 
+### Dead tenant-resolution middleware (`shared/middleware/DomainMiddleware.py`) — deleted
+**Investigation:** the original architecture audit flagged this as "two competing tenant-resolution middlewares" (`CustomDomainMiddleware` live, `DomainMiddleware` dead-but-still-referenced-elsewhere). Checked precisely with a word-boundary grep (`\bDomainMiddleware\b` excluding `CustomDomainMiddleware`): **zero references anywhere in the codebase**, including in the files the original audit cited (`domain_tasks.py`, `custom_domain_signals.py`, `CustomDomainView.py`) — those all import and use `CustomDomainMiddleware`, not `DomainMiddleware`. The original claim was a substring-grep false positive.
+**Action:** Deleted `shared/middleware/DomainMiddleware.py` outright.
+**Verified:** `python manage.py check` passes on a fresh rebuild.
+
 ### Telegram integration — reconnected, not deleted
 **Investigation:** this one went the other way. 6 complete backend views (connect, detail, test-connection, send-test-message, webhook, chats), each correctly `IsAuthenticated` + scoped by `request.user.business` (verified myself, not just trusted the sweep's note) except the webhook (`AllowAny` — correct by design, that's how Telegram itself calls in). Matching frontend: `telegram-setup.tsx`, `TelegramIntegration.tsx` card component, a dedicated API service file, **and** it turned out the frontend route already existed (nested inside `src/pages/config.tsx`'s sub-router, which I missed on a first pass checking only `App.tsx`/`Routes.ts`) and is linked from `IntegrationsPage.tsx`'s integration-cards list. The *only* missing piece was the backend `include()` line in `urls.py` — everything else was already fully wired and just waiting for the backend to come online.
 **Action:** Added `path("api/v1/integrations/telegram/", include("shared.routes.telegram"))` to `urls.py`. No frontend changes needed.
