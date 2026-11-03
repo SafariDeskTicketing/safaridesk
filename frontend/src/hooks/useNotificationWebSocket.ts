@@ -34,6 +34,10 @@ export const useNotificationWebSocket = (): UseNotificationWebSocketReturn => {
   const reconnectTimeout = useRef<number>();
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const pingIntervalRef = useRef<number>();
+  // Set right before an intentional close (unmount), checked in onclose so it
+  // never schedules a reconnect for a component that no longer exists.
+  const isUnmountingRef = useRef(false);
   const { user } = useAuthStore();
 
   const [isConnected, setIsConnected] = useState(false);
@@ -66,11 +70,15 @@ export const useNotificationWebSocket = (): UseNotificationWebSocketReturn => {
         setConnectionStatus('connected');
         reconnectAttempts.current = 0;
 
-        const pingInterval = setInterval(() => {
+        // Clear any interval from a prior connection before starting a new one —
+        // the old self-clearing check compared against ws.current, which already
+        // points at this new socket after a reconnect, so it never fired.
+        if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+        pingIntervalRef.current = setInterval(() => {
           if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
           } else {
-            clearInterval(pingInterval);
+            clearInterval(pingIntervalRef.current);
           }
         }, 30000);
       };
@@ -103,6 +111,10 @@ export const useNotificationWebSocket = (): UseNotificationWebSocketReturn => {
       ws.current.onclose = (event) => {
         setIsConnected(false);
         setConnectionStatus('disconnected');
+
+        if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+
+        if (isUnmountingRef.current) return;
 
         if (reconnectAttempts.current < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
@@ -153,10 +165,13 @@ export const useNotificationWebSocket = (): UseNotificationWebSocketReturn => {
   };
 
   useEffect(() => {
+    isUnmountingRef.current = false;
     if (user) connect();
 
     return () => {
+      isUnmountingRef.current = true;
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       if (ws.current) ws.current.close();
     };
   }, [connect, user]);

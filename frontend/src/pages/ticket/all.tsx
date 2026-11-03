@@ -277,6 +277,13 @@ export default function TicketManagementSystem() {
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('activity');
   const [searchQuery, setSearchQuery] = useState('');
+  // Debounced so fast typing doesn't fire a server request per keystroke; the
+  // local `filteredTickets` memo below still updates instantly off `searchQuery`.
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
@@ -1294,7 +1301,15 @@ export default function TicketManagementSystem() {
   };
 
 
+  const fetchTicketsAbortRef = useRef<AbortController | null>(null);
+
   const fetchTickets = React.useCallback(async (page: number = 1, view: string = 'all_unresolved', limitOverride?: number) => {
+    // Cancel any in-flight request so a late-arriving stale response (e.g. from
+    // a filter the user already changed away from) can't overwrite newer state.
+    fetchTicketsAbortRef.current?.abort();
+    const abortController = new AbortController();
+    fetchTicketsAbortRef.current = abortController;
+
     setIsLoading(true);
     const effectiveLimit = limitOverride ?? limit;
 
@@ -1313,7 +1328,7 @@ export default function TicketManagementSystem() {
         params.sort_direction = viewSortState.direction;
       }
 
-      const parsedSearch = parseSearchQuery(searchQuery);
+      const parsedSearch = parseSearchQuery(debouncedSearchQuery);
       if (parsedSearch.cleanedQuery) {
         params.search = parsedSearch.cleanedQuery;
       }
@@ -1353,25 +1368,32 @@ export default function TicketManagementSystem() {
         setTimeout(() => setIsLoading(false), 100);
       }
 
-      const response = await http.get<ApiResponse>(APIS.LIST_TICKETS, { params });
+      const response = await http.get<ApiResponse>(APIS.LIST_TICKETS, { params, signal: abortController.signal });
       queryClient.setQueryData(cacheKey, response.data);
       const transformedTickets = response.data.results.map(transformApiTicket);
       setTickets(transformedTickets);
       setTotalCount(response.data.count || 0);
       setCurrentPage(page);
     } catch (error: unknown) {
+      if ((error as { code?: string; name?: string })?.code === 'ERR_CANCELED' ||
+          (error as { code?: string; name?: string })?.name === 'CanceledError') {
+        // A newer fetchTickets call superseded this one — not a real error.
+        return;
+      }
       const errorMsg = error instanceof Error ? error.message : 'An error occurred while fetching tickets';
       errorNotification(errorMsg);
     } finally {
-      setTimeout(() => setIsLoading(false), 100);
+      if (fetchTicketsAbortRef.current === abortController) {
+        setTimeout(() => setIsLoading(false), 100);
+      }
     }
-  }, [limit, searchQuery, statusFilter, priorityFilter, assigneeFilter, departmentFilter, categoryFilter, labelFilterIds, dateFromFilter, dateToFilter, sortStateByView]);
+  }, [limit, debouncedSearchQuery, statusFilter, priorityFilter, assigneeFilter, departmentFilter, categoryFilter, labelFilterIds, dateFromFilter, dateToFilter, sortStateByView]);
 
   const fetchTicketCounts = async () => {
     try {
       const params: Record<string, string> = {};
 
-      const parsedSearch = parseSearchQuery(searchQuery);
+      const parsedSearch = parseSearchQuery(debouncedSearchQuery);
       if (parsedSearch.cleanedQuery) {
         params.search = parsedSearch.cleanedQuery;
       }

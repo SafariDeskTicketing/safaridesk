@@ -105,6 +105,34 @@ http.interceptors.request.use(
   },
 )
 
+// Single-flight guard: if N requests 401 at once (e.g. right after token expiry),
+// only the first triggers an actual refresh call. The rest await the same promise
+// instead of each spending the refresh token — if the backend rotates refresh
+// tokens on use, concurrent independent calls would invalidate each other and log
+// out a session that was actually still valid.
+let refreshPromise: Promise<string> | null = null;
+
+const refreshAccessToken = (refreshToken: string): Promise<string> => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${BASE_URL}/auth/token/refresh/`, { refresh: refreshToken })
+      .then(async (response) => {
+        const newToken = response.data.access;
+        localStorage.setItem('token', newToken);
+
+        const { setTokens, fetchCurrentUserProfile } = useAuthStore.getState();
+        setTokens(newToken, refreshToken);
+        await fetchCurrentUserProfile();
+
+        return newToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+};
+
 // Response interceptor
 http.interceptors.response.use(
   (response) => response,
@@ -126,20 +154,7 @@ http.interceptors.response.use(
         // Try to refresh the token
         if (refreshToken) {
           try {
-            // BASE_URL already includes the /api/v1 prefix — don't double it up.
-            const response = await axios.post(`${BASE_URL}/auth/token/refresh/`, {
-              refresh: refreshToken
-            });
-
-            const newToken = response.data.access;
-            localStorage.setItem('token', newToken);
-
-            // Update tokens in auth store
-            const { setTokens, fetchCurrentUserProfile } = useAuthStore.getState();
-            setTokens(newToken, refreshToken);
-
-            // Fetch fresh user profile data from backend (avatar and other user-specific data)
-            await fetchCurrentUserProfile();
+            const newToken = await refreshAccessToken(refreshToken);
 
             // Retry the original request with new token
             originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
