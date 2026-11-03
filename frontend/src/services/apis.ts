@@ -152,7 +152,6 @@ export const APIS: Record<string, string> = {
 	LOAD_CUSTOMER_TICKETS: `${BASE_URL}/ticket/customer/list/`,
 	LOAD_CUSTOMER_ANALYSIS: `${BASE_URL}/ticket/customer/analysis/`,
 	SEARCH_TICKET: `${BASE_URL}/public/search/ticket/`,
-	CREATE_REQUEST: `${BASE_URL}/public/request/new/`,
 	CREATE_CUSTOMER_TICKET: `${BASE_URL}/public/create/`,
 	PUBLIC_CSAT_SURVEY: `${BASE_URL}/public/csat/s/`,
 	LIST_REQUESTS: `${BASE_URL}/requests/`,

@@ -261,8 +261,6 @@
 //               </Route>
 
 //               {/* Non-ticket/task routes without PersistentNav */}
-//               {/* REMOVED: Request workflow route has been disabled */}
-//               {/* <Route path="requests" element={<RequestsPage />} /> */}
 //               <Route path="knowledge/*" element={<KnowledgePage />} />
 //               <Route path="settings/*" element={<SettingsPage />} />
 //               <Route path="integrations/*" element={<IntegrationsPage />} />
