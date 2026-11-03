@@ -1326,7 +1326,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     def like_comment(self, request, pk=None, comment_id=None):
         """Like or unlike a task comment"""
         try:
-            comment = get_object_or_404(TaskComment, id=comment_id, task_id=pk)
+            comment = get_object_or_404(
+                TaskComment, id=comment_id, task_id=pk, task__business=request.user.business
+            )
 
             # Check if user already liked this comment
             existing_like = TaskCommentLike.objects.filter(comment=comment, user=request.user).first()
@@ -1359,7 +1361,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     def flag_comment(self, request, pk=None, comment_id=None):
         """Flag or unflag a task comment"""
         try:
-            comment = get_object_or_404(TaskComment, id=comment_id, task_id=pk)
+            comment = get_object_or_404(
+                TaskComment, id=comment_id, task_id=pk, task__business=request.user.business
+            )
 
             # Toggle the flagged status
             comment.flagged = not comment.flagged
@@ -1377,7 +1381,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     def reply_to_comment(self, request, pk=None, comment_id=None):
         """Create a reply to a task comment"""
         try:
-            parent_comment = get_object_or_404(TaskComment, id=comment_id, task_id=pk)
+            parent_comment = get_object_or_404(
+                TaskComment, id=comment_id, task_id=pk, task__business=request.user.business
+            )
             content = request.data.get('content')
             is_internal = True
 

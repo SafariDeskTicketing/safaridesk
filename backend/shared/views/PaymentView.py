@@ -506,13 +506,13 @@ class PaymentListView(APIView):
         Get paginated list of payments.
         """
         try:
-            # Get queryset - filter by user's business if available
-            queryset = Payment.objects.all()
-            
-            # Filter by business if user has one
-            if hasattr(request.user, 'business') and request.user.business:
-                queryset = queryset.filter(business=request.user.business)
-            
+            # Fail closed: a user with no business must see no payments, never every
+            # tenant's payments (session_id, customer_email, amount, metadata).
+            if not getattr(request.user, 'business', None):
+                queryset = Payment.objects.none()
+            else:
+                queryset = Payment.objects.filter(business=request.user.business)
+
             # Filter by payment status
             payment_status = request.query_params.get('payment_status')
             if payment_status:
@@ -571,14 +571,16 @@ class PaymentDetailView(APIView):
         Get single payment by ID.
         """
         try:
-            # Get payment
-            queryset = Payment.objects.all()
-            
-            # Filter by business if user has one
-            if hasattr(request.user, 'business') and request.user.business:
-                queryset = queryset.filter(business=request.user.business)
-            
-            payment = queryset.filter(id=payment_id).first()
+            # Fail closed: a user with no business must see no payments.
+            if not getattr(request.user, 'business', None):
+                return Response(
+                    {'error': 'Payment not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            payment = Payment.objects.filter(
+                business=request.user.business, id=payment_id
+            ).first()
             
             if not payment:
                 return Response(

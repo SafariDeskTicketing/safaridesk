@@ -433,6 +433,10 @@ class AssetViewSet(viewsets.ModelViewSet):
         if not user_id:
             return Response({'detail': 'User is required'}, status=status.HTTP_400_BAD_REQUEST)
 
+        from users.models import Users
+        if not Users.objects.filter(id=user_id, business=asset.business).exists():
+            return Response({'detail': 'User not found in this business'}, status=status.HTTP_404_NOT_FOUND)
+
         # Check for existing assignment with same role (if this is an active assignment)
         if is_active:
             existing_assignment = AssetUserMapping.objects.filter(
@@ -506,6 +510,10 @@ class AssetViewSet(viewsets.ModelViewSet):
         relationship_type = data.get('relationship_type', 'related')
         if not ticket_id:
             return Response({'detail': 'Ticket is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from tenant.models import Ticket
+        if not Ticket.objects.filter(id=ticket_id, business=asset.business).exists():
+            return Response({'detail': 'Ticket not found in this business'}, status=status.HTTP_404_NOT_FOUND)
 
         # Create linkage
         from tenant.models.AssetModel import AssetTicket

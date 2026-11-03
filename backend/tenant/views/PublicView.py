@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 from RNSafarideskBack import settings
 from RNSafarideskBack.settings import FILE_URL
-from tenant.models import Department, TicketCategories, Ticket, SLAPolicy, SLATracker, TicketAttachment, Requests
+from tenant.models import Department, TicketCategories, Ticket, TicketAttachment
 from tenant.services.contact_linker import link_or_create_contact
 from tenant.services.tickets.duplicate_detection import DuplicateDetectionService
 from tenant.serializers.DepartmentSerializer import DepartmentSerializer
@@ -23,7 +23,6 @@ from tenant.serializers.DomainValidationSerializer import DomainValidationSerial
 from tenant.serializers.TicketSerializer import TicketCategorySerializer, TicketSerializer
 from users.models import Business, Customer, CustomDomains
 from util.Constants import PRIORITY_DURATION
-from util.SlaUtil import SLACalculator
 from shared.tasks import  send_ticket_notification
 from tenant.services.tickets.naming import generate_ticket_id, render_ticket_title
 
@@ -129,7 +128,14 @@ class PublicView(viewsets.ModelViewSet):  # or ModelViewSet if you're using it
 
             if resolved_business is None:
                 resolved_business = self._resolve_business_from_host(request.get_host().split(":")[0])
-            
+
+            if resolved_business is None:
+                # Fail closed: without a resolved business, category/department lookups below
+                # would otherwise run unscoped across every tenant (this endpoint is AllowAny).
+                return Response({
+                    "message": "Unable to determine the business for this request."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             raw_title = request.data.get('title')
             creator_name = request.data.get('creator_name')
             creator_phone = request.data.get('creator_phone')
@@ -267,52 +273,39 @@ class PublicView(viewsets.ModelViewSet):  # or ModelViewSet if you're using it
                     ticket.contact = contact
                     ticket.save(update_fields=["contact"])
 
-                # Set Up SLA Tracker
-                # sla_policy = instance.get_applicable_sla_policy()
-                sla_policy = SLAPolicy.objects.filter(
-                    priority=priority,
-                    # customer_tier=ticket.customer_tier,
-                    # category=self.category,
-                    is_active=True,
-                    business=ticket_business
-                ).first()
+                # Auto-assign SLA to the ticket, same logic as the authenticated
+                # ticket-creation path in TicketView.create() (the old SLAPolicy/
+                # SLATracker system this used to call is unreachable dead code —
+                # ticket.sla_analysis()/get_sla_status() only ever read ticket.sla).
+                applicable_sla = None
+                try:
+                    from tenant.models.SlaXModel import SLA, SLAConfiguration
+                    sla_config = SLAConfiguration.objects.filter(business=ticket_business).first()
+                    if sla_config and sla_config.sla_enabled:
+                        applicable_sla = SLA.objects.filter(
+                            business=ticket_business,
+                            is_active=True,
+                            auto_apply=True,
+                            targets__priority=priority
+                        ).first()
+                        if not applicable_sla:
+                            applicable_sla = SLA.objects.filter(
+                                business=ticket_business,
+                                is_active=True,
+                                targets__priority=priority
+                            ).first()
+                        if applicable_sla:
+                            ticket.sla = applicable_sla
+                            ticket.save(update_fields=['sla'])
+                except Exception as e:
+                    logger.error(f"Error auto-assigning SLA to ticket {ticket_id}: {str(e)}")
 
-                # print(f"Creating SLA tracker for Ticket #{ticket.ticket_id} with policy: {sla_policy}")
-
-                if sla_policy:
-                    calculator = SLACalculator()
-
-                    # Calculate due dates
-                    first_response_due = calculator.calculate_due_date(
-                        ticket.created_at,
-                        sla_policy.first_response_time,
-                        sla_policy.business_hours_only
-                    )
-
-                    resolution_due = calculator.calculate_due_date(
-                        ticket.created_at,
-                        sla_policy.resolution_time,
-                        sla_policy.business_hours_only
-                    )
-
-                    # Create SLA tracker
-                    SLATracker.objects.create(
-                        ticket=ticket,
-                        sla_policy=sla_policy,
-                        first_response_due=first_response_due,
-                        resolution_due=resolution_due,
-                        business=ticket_business
-                    )
-
-                # The SLA tracker will be created automatically by the post_save signal
-                # Check if SLA was properly applied
-                if hasattr(ticket, 'sla_tracker'):
-                    logger.info(f"SLA tracker created for ticket {ticket_id}")
-                    # Get the calculated due date from SLA tracker
-                    due_date = ticket.sla_tracker.resolution_due
+                if applicable_sla:
+                    sla_due_times = ticket.calculate_sla_due_times()
+                    due_date = sla_due_times['resolution_due'] if sla_due_times else None
                 else:
-                    logger.warning(f"No SLA policy found for ticket {ticket_id}")
-                    # Fallback to old method if no SLA policy exists
+                    logger.warning(f"No SLA found for ticket {ticket_id}")
+                    # Fallback to old method if no SLA applies
                     try:
                         priority_dict = dict(PRIORITY_DURATION)
                         priority_hours_str = priority_dict.get(priority)
@@ -427,13 +420,13 @@ class PublicView(viewsets.ModelViewSet):  # or ModelViewSet if you're using it
                     response_data["created_ticket_id"] = ticket.ticket_id
 
             # Add SLA information if available
-            if hasattr(ticket, 'sla_tracker'):
-                sla_info = ticket.sla_status
-                if sla_info:
+            if ticket.sla:
+                sla_due_times = ticket.calculate_sla_due_times()
+                if sla_due_times:
                     response_data["sla_info"] = {
-                        "first_response_due": sla_info['first_response_due'].isoformat(),
-                        "resolution_due": sla_info['resolution_due'].isoformat(),
-                        "policy_name": ticket.sla_tracker.sla_policy.name
+                        "first_response_due": sla_due_times['first_response_due'].isoformat(),
+                        "resolution_due": sla_due_times['resolution_due'].isoformat(),
+                        "policy_name": ticket.sla.name
                     }
 
             # Set up customer only when email is provided.
@@ -552,43 +545,3 @@ class PublicView(viewsets.ModelViewSet):  # or ModelViewSet if you're using it
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
-
-    @transaction.atomic
-    def new_request(self, request, *args, **kwargs):
-        try:
-            business = Business.objects.get(id=request.data.get("businessId"))
-        except Business.DoesNotExist:
-            return Response(
-                {"massage": "Invalid businessId"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        department = None
-        department_id = request.data.get("departmentId")
-        if department_id:
-            try:
-                department = Department.objects.get(id=department_id)
-            except Department.DoesNotExist:
-                return Response(
-                    {"massage": "Invalid departmentId"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-        Requests.objects.create(
-            title=request.data.get("title"),
-            description=request.data.get("description"),
-            type=request.data.get("type"),
-            creator_name=request.data.get("creator_name"),
-            creator_email=request.data.get("creator_email"),
-            creator_phone=request.data.get("creator_phone"),
-            business=business,
-            department=department,
-            ref_number=f"RQ{uuid.uuid4().hex[:10].upper()}"
-        )
-
-        return Response(
-            {
-                "message": "Request created successfully",
-            },
-            status=status.HTTP_201_CREATED
-        )

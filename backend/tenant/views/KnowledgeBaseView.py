@@ -262,10 +262,10 @@ class KBCategoryViewSet(CORSMixin, viewsets.ModelViewSet):
                 })
             return tree
         
-        root_categories = KBCategory.objects.for_business().filter(
-            parent=None, 
-            status='A'
-        ).order_by('sort_order', 'name')
+        # Reuse this viewset's own get_queryset(), which already handles the
+        # authenticated-vs-public/internal-category scoping correctly — unlike
+        # `.for_business()`, which silently degrades to `.all()` for AnonymousUser.
+        root_categories = self.get_queryset().filter(parent=None).order_by('sort_order', 'name')
         
         return Response(build_tree(root_categories))
 
