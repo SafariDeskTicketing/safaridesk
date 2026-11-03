@@ -33,11 +33,9 @@ class MarkNotificationAsReadView(RetrieveUpdateAPIView):
     lookup_field = 'pk'
     
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff or user.is_superuser:
-            return Notification.objects.all()
-        else:
-            return Notification.objects.filter(user=user)
+        # Each user may only read/mark their own notifications, same as NotificationListView.
+        # (A staff/superuser bypass previously returned Notification.objects.all() here.)
+        return Notification.objects.filter(user=self.request.user)
     
     def get_serializer_class(self):
         if self.request.method == 'GET':

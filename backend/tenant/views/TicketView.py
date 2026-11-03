@@ -19,7 +19,7 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q, Count, DurationField, ExpressionWrapper, F
 from django.utils.dateparse import parse_date, parse_datetime
@@ -626,11 +626,14 @@ class TicketCategoryView(viewsets.ModelViewSet):
 class TicketView(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     pagination_class = TicketPagination
+    permission_classes = [IsAuthenticated]
 
-    def get_permissions(self):
-        if self.action in ["loadActivityStream", "loadAttachments", "add_comment"]:
-            return [AllowAny()]
-        return [IsAuthenticated()]
+    def get_queryset(self):
+        # Defense in depth: scopes the default ModelViewSet actions (retrieve/update/
+        # partial_update/destroy) to the requester's business. No current URL routes to
+        # these default actions (see tenant/routes/ticket.py), but the unscoped class-level
+        # `queryset` above is a landmine for the next route added without scoping in mind.
+        return Ticket.objects.for_business()
 
     def get_serializer_class(self):
         if self.action == 'assign':
@@ -895,7 +898,8 @@ class TicketView(viewsets.ModelViewSet):
                 'attachments',
                 'activities__user'
             ).get(
-                id=id
+                id=id,
+                business=request.user.business,
             )
             merged_children = ticket.merged_children.prefetch_related(
                 'comments__author',
@@ -3082,7 +3086,7 @@ class TicketView(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            ticket = get_object_or_404(Ticket, id=ticket_id)
+            ticket = get_object_or_404(Ticket, id=ticket_id, business=request.user.business)
             comment = request.data.get('comment')
             # Sanitize comment for MySQL if necessary
             comment = _sanitize_text_for_mysql(comment) if comment else comment

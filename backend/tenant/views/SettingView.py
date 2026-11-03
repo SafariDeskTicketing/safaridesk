@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 
 from RNSafarideskBack import settings
 from RNSafarideskBack.settings import FILE_URL
-from tenant.models import Ticket, Requests, DepartmentEmails, Department
+from tenant.models import Requests, DepartmentEmails, Department
 from tenant.models.SettingModel import (
     CsatConfiguration,
     SettingSMTP,
@@ -26,8 +26,6 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets, filters, status
 
-from util.Mailer import Mailer
-from util.email.parser import TemplateParser
 from util.email.mappings import PLACEHOLDER_FIELDS
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, UpdateAPIView
@@ -44,36 +42,6 @@ def _log_settings_update(request, area: str, entity, metadata: dict | None = Non
         activity=f"{actor_name(request.user)} updated {area} settings",
         metadata={"area": area, **(metadata or {})},
     )
-
-
-class TemplateTest(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        template = self.request.user.business.get_email_template("NEW_TICKET_ALERT")
-
-        ticket = Ticket.objects.get(id=2)
-
-        # prepare objects
-        objects = {
-            "ticket": ticket,
-        }
-
-        # create parser instance
-        parser = TemplateParser(objects=objects)
-
-        # build context for this template
-        context = parser.build_context(template)
-
-        mailer = Mailer()
-        mailer.send_templated_email(
-            template=template,
-            context=context,
-            receiver_email="titus.eddys@gmail.com",
-            business=self.request.user.business,
-        )
-
-        return Response(context)
 
 
 class DepartmentEmailView(ListCreateAPIView):

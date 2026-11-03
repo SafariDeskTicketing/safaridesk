@@ -6,7 +6,7 @@ from tenant.views.MailIntegrationOAuthCallbackView import (
 )
 from tenant.views.MailIntegrationView import MailIntegrationViewSet
 from tenant.views.SettingView import SMTPSettingsView, EmailTemplateCategoryView, EmailTemplateView, \
-    EmailPlaceholdersView, TemplateTest, DepartmentEmailView, DepartmentEmailUpdateView, EmailConfigView, \
+    EmailPlaceholdersView, DepartmentEmailView, DepartmentEmailUpdateView, EmailConfigView, \
     EmailSignatureView, CsatConfigurationView
 from tenant.views.EmailFilterView import EmailFilterListView, EmailFilterResetView, EmailFilterLogView
 
@@ -23,7 +23,6 @@ urlpatterns = [
     path('general/update/', SMTPSettingsView.as_view({'put': 'update_general'}), name='update_general'),
     path('general/info/', SMTPSettingsView.as_view({'get': 'get_business_info'}), name='get_business_info'),
     path('email/placeholders/', EmailPlaceholdersView.as_view(), name='email_placeholders'),
-    path('email/template/test', TemplateTest.as_view(), name='email_template_test'),
     path('department/emails/', DepartmentEmailView.as_view(), name='department_emails'),
     path('department/emails/<int:pk>/', DepartmentEmailUpdateView.as_view(), name='department_email_update'),
     path('email/config/', EmailConfigView.as_view(), name='email_config'),
