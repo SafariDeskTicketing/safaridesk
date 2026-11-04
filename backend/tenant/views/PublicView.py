@@ -10,8 +10,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status, viewsets
-from urllib.parse import urlparse
-
 from RNSafarideskBack import settings
 from RNSafarideskBack.settings import FILE_URL
 from tenant.models import Department, TicketCategories, Ticket, TicketAttachment
@@ -21,7 +19,7 @@ from tenant.serializers.DepartmentSerializer import DepartmentSerializer
 from tenant.serializers.DomainValidationSerializer import DomainValidationSerializer, TicketSearchSerializer, \
     RequestCreateSerializer
 from tenant.serializers.TicketSerializer import TicketCategorySerializer, TicketSerializer
-from users.models import Business, Customer, CustomDomains
+from users.models import Business, Customer
 from util.Constants import PRIORITY_DURATION
 from shared.tasks import  send_ticket_notification
 from tenant.services.tickets.naming import generate_ticket_id, render_ticket_title
@@ -43,48 +41,12 @@ class PublicView(viewsets.ModelViewSet):  # or ModelViewSet if you're using it
             return RequestCreateSerializer
         return TicketSerializer
 
-    @staticmethod
-    def _extract_domain_segment(host: str):
-        parts = host.split(".")
-        if "localhost" in host:
-            return parts[0] if len(parts) > 1 else None
-        return parts[0] if len(parts) > 2 else None
-
-    def _resolve_business_from_host(self, host: str):
-        normalized_host = (host or "").strip().lower().rstrip(".")
-        if not normalized_host:
-            return None
-
-        custom_domain = CustomDomains.objects.select_related("business").filter(
-            domain__iexact=normalized_host,
-            is_verified=True,
-            business__is_active=True,
-        ).first()
-        if custom_domain:
-            return custom_domain.business
-
-        domain_segment = self._extract_domain_segment(normalized_host)
-        if not domain_segment:
-            return None
-
-        return Business.objects.filter(domain__iexact=domain_segment, is_active=True).first()
-
     def validate(self, request):
-        support_url = request.data.get("url")
-
-        if not support_url:
-            return Response({"message": "support_url is required"}, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            parsed_url = urlparse(support_url)
-            host = parsed_url.hostname  # e.g. "zim.localhost" or "zim.safaridesk.io"
-
-            if not host:
-                return Response({"message": "Invalid URL format"}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception:
-            return Response({"message": "Invalid URL format"}, status=status.HTTP_400_BAD_REQUEST)
-
-        business = self._resolve_business_from_host(host)
+        # Tenant is resolved once, authoritatively, by CustomDomainMiddleware from
+        # the request's actual Host header — not re-derived here from a client-
+        # supplied URL. The `url` field in the request body is accepted (for
+        # frontend backward-compat) but no longer parsed for resolution.
+        business = getattr(request, "tenant", None)
         if not business:
             return Response({"message": "Domain not found"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -124,10 +86,10 @@ class PublicView(viewsets.ModelViewSet):  # or ModelViewSet if you're using it
                     return Response({"message": "Invalid business ID"}, status=status.HTTP_400_BAD_REQUEST)
 
             if resolved_business is None:
+                # Resolved once, authoritatively, by CustomDomainMiddleware from the
+                # real Host header — covers both custom domains and the default
+                # subdomain scheme now, so no separate re-resolution is needed here.
                 resolved_business = getattr(request, "custom_domain_business", None)
-
-            if resolved_business is None:
-                resolved_business = self._resolve_business_from_host(request.get_host().split(":")[0])
 
             if resolved_business is None:
                 # Fail closed: without a resolved business, category/department lookups below

@@ -65,30 +65,10 @@ http.interceptors.request.use(
       delete config.headers['X-Skip-Auth'];
     }
 
-    // Extract subdomain from hostname for X-Client-Domain header
-    const hostname = window.location.hostname;
-    let subdomain = null;
-
-    // Handle different hostname formats
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      const parts = hostname.split('.');
-      if (parts.length > 2) {
-        subdomain = parts[0]; // e.g., 'nobody' from 'nobody.safaridesk.io'
-      }
-    } else {
-      // For localhost, try to extract from hostname like 'nobody.localhost'
-      const parts = hostname.split('.');
-      if (parts.length > 1) {
-        subdomain = parts[0];
-      }
-    }
-
+    // Tenant is resolved server-side from the real Host header by
+    // CustomDomainMiddleware — the backend never reads a client-sent domain
+    // header, so no X-Client-Domain is derived or sent here.
     const isPublic = isPublicRoute(config.url || '');
-
-    // Add X-Client-Domain header if subdomain exists
-    if (subdomain) {
-      config.headers['X-Client-Domain'] = subdomain;
-    }
 
     if (token && !isPublic && !skipAuth) {
       if (isTokenValid(token)) {
