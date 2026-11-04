@@ -25,7 +25,7 @@ import { TicketActivityStream } from './mini/TicketActivityStream';
 import SlaInfo from './mini/SlaInfo';
 import { Tooltip } from '../../components/ui/Tool';
 import { Input } from '../../components/ui/Input';
-import { getActiveAgents, useFetchAgents } from '../../services/agents';
+import { useFetchAgents } from '../../services/agents';
 import type { AgentType, ApiResponse as AgentApiResponse } from '../../types/agents';
 import UpdateTicketStatus from './mini/TicketUpdateStatus';
 import EmptyState from '../../components/ui/EmptyState';
@@ -64,6 +64,7 @@ import {
   resolveCreatedDateToken,
 } from './list/ticketSearch';
 import { buildTicketQueryParams } from './list/ticketListParams';
+import { useTicketFilterOptions } from './list/useTicketFilterOptions';
 import {
   useTicketsListQuery,
   transformApiTicket,
@@ -199,9 +200,12 @@ export default function TicketManagementSystem() {
   const [reloader, setReloader] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
-  const [agents, setAgents] = useState<Agent[] | null>(null);
-  
-  // Refs to avoid triggering fetchTickets recreation when lookup data changes
+  const { agents, departments, categories, labels, refetchLabels } = useTicketFilterOptions();
+
+  // Refs to avoid triggering fetchTickets recreation when lookup data changes —
+  // the token-search resolvers need synchronous, non-reactive access to the
+  // latest values, so these stay in sync with the query results via effects
+  // below rather than being read directly in render.
   const agentsRef = useRef<Agent[] | null>(null);
   const departmentsRef = useRef<Array<{ id: number; name: string }>>([]);
   const categoriesRef = useRef<Array<{ id: number; name: string; department?: number | null }>>([]);
@@ -215,11 +219,8 @@ export default function TicketManagementSystem() {
   const [ticketWatchers, setTicketWatchers] = useState<Watcher[]>([]);
   const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
-  const [categories, setCategories] = useState<Array<{ id: number; name: string; department?: number | null }>>([]);
-  const [labels, setLabels] = useState<LabelItem[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("");
-  const [departments, setDepartments] = useState<Array<{ id: number; name: string }>>([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDepartmentModal, setShowDepartmentModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -1343,79 +1344,13 @@ export default function TicketManagementSystem() {
     }
   };
 
-  const fetchAgents = async () => {
-    try {
-      const activeAgents = await queryClient.fetchQuery({
-        queryKey: ['filter-agents'],
-        queryFn: async () => {
-          const response = await http.get(`${APIS.LIST_AGENTS}?pagination=no`);
-          return getActiveAgents(response.data);
-        },
-        staleTime: 30 * 60 * 1000,
-      });
-      setAgents(activeAgents);
-      agentsRef.current = activeAgents;
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "An error occurred";
-      errorNotification(errorMsg);
-    }
-  };
-
-  const fetchDepartments = async () => {
-    try {
-      const depts = await queryClient.fetchQuery({
-        queryKey: ['filter-departments'],
-        queryFn: async () => {
-          const response = await http.get(APIS.LIST_DEPARTMENTS);
-          return response.data.results || response.data || [];
-        },
-        staleTime: 30 * 60 * 1000,
-      });
-      setDepartments(depts);
-      departmentsRef.current = depts;
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to load departments";
-      console.error(errorMsg);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const cats = await queryClient.fetchQuery({
-        queryKey: ['filter-categories'],
-        queryFn: async () => {
-          const response = await http.get(APIS.LIST_TICKET_CATEGORIES + '?pagination=no');
-          return response.data || response.data.results || [];
-        },
-        staleTime: 30 * 60 * 1000,
-      });
-      setCategories(cats);
-      categoriesRef.current = cats;
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to load categories";
-      console.error(errorMsg);
-    }
-  };
-
-  const fetchLabels = async () => {
-    try {
-      const labelItems = await queryClient.fetchQuery({
-        queryKey: ['filter-labels'],
-        queryFn: async () => {
-          const response = await http.get(APIS.LABELS_BASE, {
-            params: { pagination: 'no', active_only: true },
-          });
-          return response.data?.results || response.data || [];
-        },
-        staleTime: 30 * 60 * 1000,
-      });
-      setLabels(labelItems);
-      labelsRef.current = labelItems;
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to load labels';
-      console.error(errorMsg);
-    }
-  };
+  // Keep the refs in sync with the query-backed values above — the token-search
+  // resolvers (ticketSearch.ts) need synchronous access outside React's render
+  // cycle, so they read these refs rather than the reactive values directly.
+  useEffect(() => { agentsRef.current = agents; }, [agents]);
+  useEffect(() => { departmentsRef.current = departments; }, [departments]);
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
+  useEffect(() => { labelsRef.current = labels; }, [labels]);
 
   const assignAgentOptions = React.useMemo(() => {
     const base = [{ value: "", label: "Choose agent...", disabled: true }];
@@ -1447,12 +1382,8 @@ export default function TicketManagementSystem() {
     }
   };
 
-  useEffect(() => {
-    fetchAgents();
-    fetchDepartments();
-    fetchCategories();
-    fetchLabels();
-  }, []);
+  // Agents/departments/categories/labels are now fetched declaratively by
+  // useTicketFilterOptions() above — no manual trigger-on-mount needed.
 
   useEffect(() => {
     if (selectedTicket) {
@@ -1593,7 +1524,7 @@ export default function TicketManagementSystem() {
     };
     setSelectedTicket(nextTicket);
     queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    fetchLabels();
+    refetchLabels();
   };
 
   async function handleReopen(reason: string) {
