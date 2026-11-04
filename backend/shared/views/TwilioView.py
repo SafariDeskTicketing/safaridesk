@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -14,6 +14,7 @@ from drf_yasg import openapi
 
 from shared.models.TwilioSMSMessage import TwilioSMSMessage
 from shared.services.TwilioService import TwilioService
+from shared.permissions import HasValidTwilioSignature
 from shared.serializers.TwilioSerializer import (
     TwilioSMSMessageSerializer,
     SendSMSSerializer,
@@ -528,28 +529,12 @@ class PhoneLookupView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class TwilioStatusCallbackView(APIView):
     """Handle Twilio status callback webhooks"""
-    permission_classes = [AllowAny]
+    permission_classes = [HasValidTwilioSignature]
     authentication_classes = []
-    
+
     def post(self, request):
         """Handle message status updates from Twilio"""
         try:
-            # Log the full callback payload for debugging
-            logger.info(f"[Twilio Status Callback] Received payload: {dict(request.POST)}")
-            logger.info(f"[Twilio Status Callback] Headers: X-Twilio-Signature={request.headers.get('X-Twilio-Signature', 'N/A')}")
-            
-            # Validate Twilio signature — this is AllowAny, so without this
-            # anyone could POST fake status-callback data.
-            signature = request.headers.get('X-Twilio-Signature', '')
-            request_url = request.build_absolute_uri()
-
-            is_valid = TwilioService.validate_webhook_signature(
-                request_url, request.POST.dict(), signature
-            )
-            if not is_valid:
-                logger.warning("Invalid Twilio webhook signature")
-                return Response(status=status.HTTP_403_FORBIDDEN)
-
             serializer = TwilioStatusCallbackSerializer(data=request.POST)
             if not serializer.is_valid():
                 logger.warning(f"Invalid status callback data: {serializer.errors}")
@@ -594,23 +579,12 @@ class TwilioStatusCallbackView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class TwilioInboundSMSView(APIView):
     """Handle inbound SMS messages from Twilio"""
-    permission_classes = [AllowAny]
+    permission_classes = [HasValidTwilioSignature]
     authentication_classes = []
-    
+
     def post(self, request):
         """Handle incoming SMS messages"""
         try:
-            # Validate Twilio signature — this is AllowAny, so without this
-            # anyone could POST a fake inbound SMS and have it create a ticket.
-            signature = request.headers.get('X-Twilio-Signature', '')
-            request_url = request.build_absolute_uri()
-            is_valid = TwilioService.validate_webhook_signature(
-                request_url, request.POST.dict(), signature
-            )
-            if not is_valid:
-                logger.warning("Invalid Twilio webhook signature")
-                return Response(status=status.HTTP_403_FORBIDDEN)
-
             serializer = TwilioInboundSMSSerializer(data=request.POST)
             if not serializer.is_valid():
                 logger.warning(f"Invalid inbound SMS data: {serializer.errors}")

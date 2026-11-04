@@ -25,6 +25,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = csv_config("ALLOWED_HOSTS", default="*")
 
+# nginx always sits in front (deploy/nginx/*.conf set X-Forwarded-Proto on
+# every upstream). Without this, request.is_secure()/build_absolute_uri()
+# see the internal http:// hop to the backend container, not the real
+# scheme the client used — breaking anything that signs a callback URL
+# against the externally-visible https:// address (e.g. Twilio webhooks).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 # Optional Fernet key used for encrypting mailbox credentials/OAuth tokens.
 SECRET_ENCRYPTION_KEY = config("SECRET_ENCRYPTION_KEY", default=None)
 

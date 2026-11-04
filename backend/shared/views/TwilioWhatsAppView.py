@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -14,7 +14,7 @@ from drf_yasg import openapi
 
 from shared.models.TwilioWhatsAppMessage import TwilioWhatsAppMessage
 from shared.services.TwilioWhatsAppService import TwilioWhatsAppService
-from shared.services.TwilioService import TwilioService
+from shared.permissions import HasValidTwilioSignature
 from shared.serializers.TwilioWhatsAppSerializer import (
     TwilioWhatsAppMessageSerializer,
     SendWhatsAppMessageSerializer,
@@ -717,20 +717,12 @@ class WhatsAppMessageDetailView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class WhatsAppStatusCallbackView(APIView):
     """Handle Twilio WhatsApp status callback webhooks"""
-    permission_classes = [AllowAny]
+    permission_classes = [HasValidTwilioSignature]
     authentication_classes = []
-    
+
     def post(self, request):
         """Handle message status updates from Twilio"""
         try:
-            # Validate Twilio signature — this is AllowAny with zero prior
-            # validation, so anyone could POST fake status-callback data.
-            signature = request.headers.get('X-Twilio-Signature', '')
-            request_url = request.build_absolute_uri()
-            if not TwilioService.validate_webhook_signature(request_url, request.POST.dict(), signature):
-                logger.warning("Invalid Twilio webhook signature")
-                return Response(status=status.HTTP_403_FORBIDDEN)
-
             serializer = WhatsAppStatusCallbackSerializer(data=request.POST)
             if not serializer.is_valid():
                 logger.warning(f"Invalid WhatsApp status callback: {serializer.errors}")
@@ -774,20 +766,12 @@ class WhatsAppStatusCallbackView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class WhatsAppInboundView(APIView):
     """Handle inbound WhatsApp messages from Twilio"""
-    permission_classes = [AllowAny]
+    permission_classes = [HasValidTwilioSignature]
     authentication_classes = []
-    
+
     def post(self, request):
         """Handle incoming WhatsApp messages"""
         try:
-            # Validate Twilio signature — this is AllowAny, so without this
-            # anyone could POST a fake inbound WhatsApp message.
-            signature = request.headers.get('X-Twilio-Signature', '')
-            request_url = request.build_absolute_uri()
-            if not TwilioService.validate_webhook_signature(request_url, request.POST.dict(), signature):
-                logger.warning("Invalid Twilio webhook signature")
-                return Response(status=status.HTTP_403_FORBIDDEN)
-
             serializer = WhatsAppInboundMessageSerializer(data=request.POST)
             if not serializer.is_valid():
                 logger.warning(f"Invalid inbound WhatsApp data: {serializer.errors}")
