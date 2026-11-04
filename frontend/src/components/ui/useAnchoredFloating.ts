@@ -29,7 +29,7 @@ interface UseAnchoredFloatingOptions {
   placement?: Placement
   /** Gap between anchor and floating element, in px. */
   gap?: number
-  /** Make the floating element exactly as wide as the anchor. */
+  /** Make the floating element at least as wide as the anchor (it may grow to fit content, up to the viewport). */
   matchAnchorWidth?: boolean
   /** Upper bound on height; it also shrinks to the space actually available. */
   maxHeight?: number
@@ -58,9 +58,12 @@ export function useAnchoredFloating({
       shift({ padding: VIEWPORT_PADDING }),
       size({
         padding: VIEWPORT_PADDING,
-        apply({ rects, availableHeight, elements }) {
+        apply({ rects, availableHeight, availableWidth, elements }) {
           Object.assign(elements.floating.style, {
-            ...(matchAnchorWidth && { width: `${rects.reference.width}px` }),
+            ...(matchAnchorWidth && {
+              minWidth: `${rects.reference.width}px`,
+              maxWidth: `${Math.max(rects.reference.width, availableWidth)}px`,
+            }),
             ...(maxHeight !== undefined && {
               maxHeight: `${Math.max(0, Math.min(maxHeight, availableHeight))}px`,
             }),

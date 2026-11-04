@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { FloatingPortal } from '@floating-ui/react'
 import { ChevronDown, Search } from '../icons/AppIcons'
 import { useAnchoredFloating } from './useAnchoredFloating'
@@ -63,7 +63,6 @@ const Select: React.FC<SelectProps> = ({
   const [searchTerm, setSearchTerm] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   const fallbackId = useId()
@@ -102,9 +101,11 @@ const Select: React.FC<SelectProps> = ({
     maxHeight: 240,
   })
 
-  useEffect(() => {
-    if (isOpen && allowSearch) searchInputRef.current?.focus()
-  }, [isOpen, allowSearch])
+  // FloatingPortal mounts its children a render after `isOpen` flips, so an effect keyed on
+  // `isOpen` runs before the input exists. Focus it when it actually mounts instead.
+  const searchInputRef = useCallback((node: HTMLInputElement | null) => {
+    node?.focus({ preventScroll: true })
+  }, [])
 
   useEffect(() => {
     if (highlightedIndex >= 0) {
