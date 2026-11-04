@@ -31,3 +31,6 @@ dist-ssr
 !.env.production
 !.env.development
 
+
+# Stray log from a Windows path (C:\Temp\dev_log.txt) flattened into a filename
+/C*Tempdev_log.txt
