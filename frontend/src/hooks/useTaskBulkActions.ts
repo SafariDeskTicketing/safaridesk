@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import http from '../services/http';
+import { BASE_URL } from '../utils/base';
 import { errorNotification, successNotification } from '../components/ui/Toast';
 
 type TaskLike = { id: number };
@@ -41,7 +42,7 @@ export function useTaskBulkActions(tasks: TaskLike[], options: BulkActionOptions
   const handleBulkAction = async (action: 'archive' | 'delete') => {
     if (selectedTasks.size === 0) return;
 
-    const endpoint = action === 'archive' ? '/task/bulk/archive/' : '/task/bulk/delete/';
+    const endpoint = action === 'archive' ? `${BASE_URL}/task/bulk/archive/` : `${BASE_URL}/task/bulk/delete/`;
 
     try {
       await http.post(endpoint, { task_ids: Array.from(selectedTasks) });
