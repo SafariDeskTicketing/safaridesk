@@ -4,6 +4,7 @@ import { Check, MessageSquare, Phone, Smartphone, Bell, Edit3, ChevronDown, Chev
 import Button from '../../components/ui/Button';
 import { successNotification, errorNotification } from '../../components/ui/Toast';
 import http from '../../services/http';
+import { BASE_URL } from '../../utils/base';
 import IntegrationSetupScaffold, { SetupWizardStep } from './shared/IntegrationSetupScaffold';
 
 const SafariSmsLogo: React.FC<{ size?: number; className?: string }> = ({ size = 40, className = '' }) => (
@@ -67,10 +68,10 @@ export const SafariSmsSetupPage: React.FC = () => {
   const loadConfig = async () => {
     try {
       setIsLoading(true);
-      const statusRes = await http.get('/integrations/safari-sms/status/');
+      const statusRes = await http.get(`${BASE_URL}/integrations/safari-sms/status/`);
       setIsActivated(statusRes.data.is_activated);
 
-      const configRes = await http.get('/integrations/safari-sms/config/');
+      const configRes = await http.get(`${BASE_URL}/integrations/safari-sms/config/`);
       const config = configRes.data;
 
       setSmsEnabled(config.sms_enabled);
@@ -95,7 +96,7 @@ export const SafariSmsSetupPage: React.FC = () => {
   const handleActivate = async () => {
     try {
       setIsSaving(true);
-      await http.post('/integrations/safari-sms/activate/', { is_activated: true });
+      await http.post(`${BASE_URL}/integrations/safari-sms/activate/`, { is_activated: true });
       setIsActivated(true);
       setCurrentStep(1);
       successNotification('Safari SMS activated successfully!');
@@ -110,7 +111,7 @@ export const SafariSmsSetupPage: React.FC = () => {
   const handleDeactivate = async () => {
     try {
       setIsSaving(true);
-      await http.post('/integrations/safari-sms/activate/', { is_activated: false });
+      await http.post(`${BASE_URL}/integrations/safari-sms/activate/`, { is_activated: false });
       setIsActivated(false);
       setCurrentStep(0);
       successNotification('Safari SMS deactivated');
@@ -135,7 +136,7 @@ export const SafariSmsSetupPage: React.FC = () => {
         configData[`template_${n.key}`] = n.template;
       });
 
-      await http.put('/integrations/safari-sms/config/', configData);
+      await http.put(`${BASE_URL}/integrations/safari-sms/config/`, configData);
       successNotification('Configuration saved successfully!');
       return true;
     } catch (error) {
@@ -155,7 +156,7 @@ export const SafariSmsSetupPage: React.FC = () => {
 
     try {
       setIsTesting(true);
-      const response = await http.post('/integrations/safari-sms/test/', { to: testPhone, channel });
+      const response = await http.post(`${BASE_URL}/integrations/safari-sms/test/`, { to: testPhone, channel });
 
       if (channel === 'whatsapp' && response.data.note) {
         successNotification(`Test WhatsApp queued! Note: ${response.data.note}`);

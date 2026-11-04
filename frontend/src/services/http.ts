@@ -6,9 +6,11 @@ import { EXEMPTED_TOKEN_ROUTES } from '../routes/config';
 import { useAuthStore } from '../stores/authStore';
 
 
-// Create an Axios instance
+// Create an Axios instance. No `baseURL` here: every entry in APIS (services/apis.ts)
+// already embeds BASE_URL itself, so setting it here too doubled every single request
+// path to /api/v1/api/v1/... in the production build. Call sites that pass a bare
+// relative path (not through an APIS.* constant) must include BASE_URL themselves.
 const http = axios.create({
-  baseURL: BASE_URL,
   timeout: 20000,
 })
 

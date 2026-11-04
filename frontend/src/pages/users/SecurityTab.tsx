@@ -5,6 +5,7 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import http from '../../services/http';
+import { BASE_URL } from '../../utils/base';
 import { errorNotification, successNotification } from '../../components/ui/Toast';
 
 interface SecurityTabProps {
@@ -37,7 +38,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
     useEffect(() => {
         const fetchMfaPreference = async () => {
             try {
-                const response = await http.get('/auth/mfa/preference/');
+                const response = await http.get(`${BASE_URL}/auth/mfa/preference/`);
                 setMfaMethod(response.data.mfa_method || 'none');
                 setTotpConfigured(response.data.totp_configured || false);
             } catch (error) {
@@ -50,7 +51,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
     const handleSetupTotp = async () => {
         setLoadingMfa(true);
         try {
-            const response = await http.post('/auth/mfa/setup-totp/');
+            const response = await http.post(`${BASE_URL}/auth/mfa/setup-totp/`);
             setQrCode(response.data.qr_code);
             setTotpSecret(response.data.secret);
             setShowTotpSetup(true);
@@ -68,7 +69,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         }
         setLoadingMfa(true);
         try {
-            await http.post('/auth/mfa/verify-totp/', { code: verifyCode });
+            await http.post(`${BASE_URL}/auth/mfa/verify-totp/`, { code: verifyCode });
             setTotpConfigured(true);
             setMfaMethod('totp');
             setShowTotpSetup(false);
@@ -86,7 +87,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
     const handleDisableTotp = async () => {
         setLoadingMfa(true);
         try {
-            await http.post('/auth/mfa/disable-totp/');
+            await http.post(`${BASE_URL}/auth/mfa/disable-totp/`);
             setTotpConfigured(false);
             setMfaMethod('none');
             successNotification('Authenticator App disabled');
@@ -104,7 +105,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         }
         setSavingMfa(true);
         try {
-            await http.put('/auth/mfa/preference/', { mfa_method: method });
+            await http.put(`${BASE_URL}/auth/mfa/preference/`, { mfa_method: method });
             setMfaMethod(method);
             successNotification('MFA preference updated');
         } catch (error: any) {

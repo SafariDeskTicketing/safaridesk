@@ -14,6 +14,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { APIS } from '../../services/apis';
 import http from '../../services/http';
+import { BASE_URL } from '../../utils/base';
 import { exportSelectedTasks } from '../../services/exports';
 import type { ExportFormat } from '../../services/exports';
 import { errorNotification, successNotification } from '../../components/ui/Toast';
@@ -575,7 +576,7 @@ export default function TaskManagementSystem() {
   const handleBulkArchive = async () => {
     if (selectedTasks.size === 0) return;
     try {
-      const response = await http.post('/task/bulk/archive/', {
+      const response = await http.post(`${BASE_URL}/task/bulk/archive/`, {
         task_ids: Array.from(selectedTasks)
       });
       console.log('Archive response:', response.data);
@@ -591,7 +592,7 @@ export default function TaskManagementSystem() {
     if (selectedTasks.size === 0) return;
     try {
       setIsDeleting(true);
-      const response = await http.post('/task/bulk/delete/', {
+      const response = await http.post(`${BASE_URL}/task/bulk/delete/`, {
         task_ids: Array.from(selectedTasks)
       });
       console.log('Delete response:', response.data);
@@ -635,7 +636,7 @@ export default function TaskManagementSystem() {
   const handleBulkUnarchive = async () => {
     if (selectedTasks.size === 0) return;
     try {
-      const response = await http.post('/task/bulk/unarchive/', {
+      const response = await http.post(`${BASE_URL}/task/bulk/unarchive/`, {
         task_ids: Array.from(selectedTasks)
       });
       console.log('Unarchive response:', response.data);
@@ -649,7 +650,7 @@ export default function TaskManagementSystem() {
   const handleBulkRestore = async () => {
     if (selectedTasks.size === 0) return;
     try {
-      const response = await http.post('/task/bulk/restore/', {
+      const response = await http.post(`${BASE_URL}/task/bulk/restore/`, {
         task_ids: Array.from(selectedTasks)
       });
       console.log('Restore response:', response.data);
@@ -778,7 +779,7 @@ export default function TaskManagementSystem() {
       case 'restore':
         try {
           setIsSubmitting(true);
-          await http.post('/task/bulk/restore/', {
+          await http.post(`${BASE_URL}/task/bulk/restore/`, {
             task_ids: [task.id],
           });
           successNotification('Task restored from trash');
