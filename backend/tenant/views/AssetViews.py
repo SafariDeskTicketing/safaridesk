@@ -360,30 +360,6 @@ class AssetViewSet(viewsets.ModelViewSet):
 
 
 
-    @action(detail=True, methods=['post'])
-    def add_maintenance(self, request, pk=None):
-        """Add a maintenance record for an asset"""
-        asset = self.get_object()
-        serializer = AssetMaintenanceSerializer(data={
-            **request.data,
-            'asset': asset.id
-        })
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'detail': 'Maintenance record added successfully', 'maintenance': serializer.data}, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['post'])
-    def link_ticket(self, request, pk=None):
-        """Link a ticket to an asset"""
-        asset = self.get_object()
-        serializer = AssetTicketSerializer(data={
-            **request.data,
-            'asset': asset.id
-        })
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'detail': 'Ticket linked successfully', 'ticket_link': serializer.data}, status=status.HTTP_201_CREATED)
-
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         """Get asset history"""
