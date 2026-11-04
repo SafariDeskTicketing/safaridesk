@@ -1,5 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  useTasksListQuery,
+  transformApiTask,
+} from './list/taskListData';
+import { buildTaskQueryParams } from './list/taskListParams';
+import { useTaskFilterOptions } from './list/useTaskFilterOptions';
+import {
+  type ColumnFilterKey,
+  SEARCH_FILTER_OPTIONS,
+  SEARCH_FILTER_ICONS,
+  parseSearchQuery,
+  resolveDueDateToken,
+  statusLabel,
+} from './list/taskSearch';
 import { sanitizeHTML } from '../../utils/sanitize';
 import { createPortal } from 'react-dom';
 import {
@@ -24,7 +38,7 @@ import { formatRelativeTime } from '../../utils/helper';
 import { getStatusColor, getPriorityColor, formatDate, formatDueDateWithTime, formatDateWithTime, formatUserDisplayName } from '../../utils/displayHelpers';
 import Select from '../../components/ui/Select';
 import { Tooltip } from '../../components/ui/Tool';
-import { getActiveAgents, useFetchAgents } from '../../services/agents';
+import { useFetchAgents } from '../../services/agents';
 import type { AgentType, ApiResponse as AgentApiResponse } from '../../types/agents';
 import UpdateTaskStatus from './mini/updateStatus';
 import EmptyState from '../../components/ui/EmptyState';
@@ -54,53 +68,6 @@ const BULK_EXPORT_FORMAT_OPTIONS = [
   { value: 'json', label: 'JSON' },
 ];
 
-// Type definitions based on your API response
-interface ApiTask {
-  id: number;
-  title: string;
-  description: string;
-  task_status: string;
-  priority: string;
-  task_trackid: string;
-  assigned_to: {
-    id: number;
-    name?: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number: string;
-    avatar_url?: string;
-    is_active?: boolean;
-  } | null;
-  created_by?: {
-    id: number;
-    name?: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number?: string;
-    avatar_url?: string;
-  } | null;
-  due_date: string;
-  created_at: string;
-  updated_at?: string;
-  completed_at?: string | null;
-  department?: {
-    id: number;
-    name: string;
-    slag?: string;
-  } | null;
-  is_converted_to_ticket?: boolean;
-  linked_ticket?: any;
-  labels?: LabelItem[];
-}
-
-interface ApiResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: ApiTask[];
-}
 
 interface Watcher {
   id: number;
@@ -177,11 +144,9 @@ export default function TaskManagementSystem() {
   const viewItems = role ? (isAdmin ? TASK_VIEW_ITEMS : AGENT_TASK_VIEW_ITEMS) : TASK_VIEW_ITEMS;
 
   // API state management
-  const [tasks, setTasks] = useState<TaskObj[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskObj | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(() => {
     const saved = localStorage.getItem('taskPageSize');
@@ -202,12 +167,13 @@ export default function TaskManagementSystem() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const [updateStatus, setUpdateStatus] = useState(false);
-  const [agents, setAgents] = useState<Agent[] | null>(null);
-  const [departments, setDepartments] = useState<Array<{ id: number; name: string }>>([]);
-  const [labels, setLabels] = useState<LabelItem[]>([]);
+  const { agents, departments, labels } = useTaskFilterOptions();
   const agentsRef = useRef<Agent[] | null>(null);
   const departmentsRef = useRef<Array<{ id: number; name: string }>>([]);
   const labelsRef = useRef<LabelItem[]>([]);
+  useEffect(() => { agentsRef.current = agents; }, [agents]);
+  useEffect(() => { departmentsRef.current = departments; }, [departments]);
+  useEffect(() => { labelsRef.current = labels; }, [labels]);
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [statusDescription, setStatusDescription] = useState("");
@@ -223,15 +189,55 @@ export default function TaskManagementSystem() {
   const agentsData: AgentType[] = (agentResponse as AgentApiResponse)?.results || [];
   const isUserWatcher = taskWatchers.some(watcher => watcher.id === user?.user_id);
 
-  const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('activity');
   const [searchQuery, setSearchQuery] = useState('');
+  // Debounced so fast typing doesn't fire a server request per keystroke.
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
+
+  const tasksQuery = useTasksListQuery(
+    {
+      page: currentPage,
+      view: activeView,
+      limit,
+      searchQuery: debouncedSearchQuery,
+      statusFilter,
+      priorityFilter,
+      assigneeFilter,
+      departmentFilter,
+      labelFilterIds,
+      dateFromFilter,
+      dateToFilter,
+    },
+    {
+      agents: agentsRef.current,
+      departments: departmentsRef.current,
+      labels: labelsRef.current,
+    },
+  );
+
+  useEffect(() => {
+    if (tasksQuery.error) {
+      const errorMsg = tasksQuery.error instanceof Error ? tasksQuery.error.message : 'An error occurred';
+      errorNotification(errorMsg);
+    }
+  }, [tasksQuery.error]);
+
+  const tasks = useMemo(
+    () => tasksQuery.data?.results.map(transformApiTask) ?? [],
+    [tasksQuery.data],
+  );
+  const totalCount = tasksQuery.data?.count ?? 0;
+  const isLoading = tasksQuery.isLoading;
   const [viewMode, setViewMode] = useState<TaskViewMode>(getStoredTaskViewMode());
   const [isCreateTaskModalDirty, setIsCreateTaskModalDirty] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -241,7 +247,6 @@ export default function TaskManagementSystem() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  type ColumnFilterKey = 'status' | 'priority' | 'assignee' | 'department' | 'labels' | 'due_date';
   const [activeColumnFilter, setActiveColumnFilter] = useState<ColumnFilterKey | null>(null);
   const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(null);
   const [filterPosition, setFilterPosition] = useState<{ top: number; left: number; minWidth: number } | null>(null);
@@ -324,128 +329,6 @@ export default function TaskManagementSystem() {
   type TaskSortField = 'id' | 'title' | 'status' | 'priority' | 'department' | 'assignee' | 'due_date';
   const taskSortField: TaskSortField = 'due_date';
   const taskSortDirection: 'asc' | 'desc' = 'asc';
-  const searchFilterOptions: { key: 'all' | ColumnFilterKey; label: string; description: string }[] = [
-    { key: 'all', label: 'Search all', description: 'Search tasks' },
-    { key: 'status', label: 'Status', description: 'Filter by status' },
-    { key: 'priority', label: 'Priority', description: 'Filter by priority' },
-    { key: 'assignee', label: 'Assignee', description: 'Filter by assignee' },
-    { key: 'department', label: 'Department', description: 'Filter by department' },
-    { key: 'labels', label: 'Labels', description: 'Filter by labels' },
-    { key: 'due_date', label: 'Due date', description: 'Filter by due date' },
-  ];
-  const searchFilterIcons: Record<'all' | ColumnFilterKey, React.ComponentType<{ size?: number; className?: string }>> = {
-    all: Search,
-    status: CheckCircle,
-    priority: AlertTriangle,
-    assignee: User,
-    department: Building,
-    labels: Tag,
-    due_date: Calendar,
-  };
-  const searchTokenKeyMap: Record<string, ColumnFilterKey> = {
-    status: 'status',
-    priority: 'priority',
-    assignee: 'assignee',
-    assigned: 'assignee',
-    department: 'department',
-    dept: 'department',
-    label: 'labels',
-    labels: 'labels',
-    due: 'due_date',
-    duedate: 'due_date',
-    due_date: 'due_date',
-  };
-
-  const statusLabel = (value: string) => {
-    const map: Record<string, string> = {
-      todo: 'Todo',
-      open: 'Open',
-      in_progress: 'In progress',
-      completed: 'Completed',
-      hold: 'On hold',
-      cancelled: 'Cancelled',
-      draft: 'Draft',
-      breached: 'Breached',
-    };
-    return map[value] || value.replace(/_/g, ' ');
-  };
-
-  const parseSearchQuery = (query: string) => {
-    const regex = /\b(\w+):(?:"([^"]+)"|'([^']+)'|([^\s]+))/g;
-    const tokens: Partial<Record<ColumnFilterKey, string>> = {};
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(query)) !== null) {
-      const rawKey = match[1]?.toLowerCase();
-      const mappedKey = rawKey ? searchTokenKeyMap[rawKey] : undefined;
-      if (!mappedKey) continue;
-      const rawValue = match[2] ?? match[3] ?? match[4] ?? '';
-      if (!rawValue) continue;
-      tokens[mappedKey] = rawValue.trim();
-    }
-
-    const cleanedQuery = query
-      .replace(regex, '')
-      .replace(/\b\w+:\s*$/, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    return { tokens, cleanedQuery };
-  };
-
-  const resolveStatusToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase().replace(/\s+/g, '_').replace(/-+/g, '_');
-    if (normalized === 'open' || normalized === 'todo') return 'open';
-    if (normalized === 'on_hold') return 'hold';
-    if (normalized === 'closed') return 'completed';
-    const allowed = new Set(['open', 'in_progress', 'completed', 'cancelled', 'hold', 'draft', 'breached']);
-    return allowed.has(normalized) ? normalized : null;
-  };
-
-  const resolvePriorityToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase().replace(/\s+/g, '_').replace(/-+/g, '_');
-    const allowed = new Set(['low', 'medium', 'high', 'critical', 'urgent', 'normal']);
-    return allowed.has(normalized) ? normalized : null;
-  };
-
-  const resolveAssigneeToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase();
-    if (['unassigned', 'none', 'noone', 'no-one'].includes(normalized)) {
-      return 'unassigned';
-    }
-    const match = agents?.find(agent => {
-      const name = agent.name?.toLowerCase() || '';
-      const email = agent.email?.toLowerCase() || '';
-      return name.includes(normalized) || email.includes(normalized);
-    });
-    return match ? match.id.toString() : null;
-  };
-
-  const resolveDepartmentToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase();
-    const match = departmentsRef.current.find(dept => dept.name?.toLowerCase().includes(normalized));
-    return match ? match.id.toString() : null;
-  };
-
-  const resolveDueDateToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.trim();
-    if (!normalized) return null;
-    if (normalized.includes('..')) {
-      const [fromRaw, toRaw] = normalized.split('..');
-      const from = fromRaw?.trim() || undefined;
-      const to = toRaw?.trim() || undefined;
-      return { from, to };
-    }
-    if (normalized.startsWith('>=')) return { from: normalized.slice(2).trim() || undefined };
-    if (normalized.startsWith('>')) return { from: normalized.slice(1).trim() || undefined };
-    if (normalized.startsWith('<=')) return { to: normalized.slice(2).trim() || undefined };
-    if (normalized.startsWith('<')) return { to: normalized.slice(1).trim() || undefined };
-    return { from: normalized };
-  };
 
   const priorityOrder: Record<string, number> = {
     critical: 4,
@@ -582,7 +465,7 @@ export default function TaskManagementSystem() {
       console.log('Archive response:', response.data);
       setSelectedTasks(new Set());
       // Refresh tasks list
-      fetchTasks(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error archiving tasks:', error);
     }
@@ -600,7 +483,7 @@ export default function TaskManagementSystem() {
       successNotification(isTrash ? 'Tasks permanently deleted' : 'Tasks moved to trash');
       setSelectedTasks(new Set());
       // Refresh tasks list
-      fetchTasks(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error deleting tasks:', error);
       errorNotification('Failed to delete selected tasks');
@@ -641,7 +524,7 @@ export default function TaskManagementSystem() {
       });
       console.log('Unarchive response:', response.data);
       setSelectedTasks(new Set());
-      fetchTasks(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error unarchiving tasks:', error);
     }
@@ -655,7 +538,7 @@ export default function TaskManagementSystem() {
       });
       console.log('Restore response:', response.data);
       setSelectedTasks(new Set());
-      fetchTasks(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error restoring tasks:', error);
     }
@@ -735,7 +618,7 @@ export default function TaskManagementSystem() {
       });
       console.log('Attach response:', response.data);
       successNotification(response.data.message);
-      fetchTasks(currentPage);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setAttachTicketModalOpen(false);
       setSelectedTicketId("");
     } catch (error: any) {
@@ -783,7 +666,7 @@ export default function TaskManagementSystem() {
             task_ids: [task.id],
           });
           successNotification('Task restored from trash');
-          fetchTasks(currentPage, activeView);
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
         } catch (error: any) {
           errorNotification(error?.response?.data?.message || 'Failed to restore task');
         } finally {
@@ -852,120 +735,6 @@ export default function TaskManagementSystem() {
 
   const taskLatestComment = taskPreview ? getLatestCommentPreview('task', taskPreview.task.id) : null;
   const taskLatestCommentLoading = taskPreview ? isLatestCommentLoading('task', taskPreview.task.id) : false;
-
-  const transformApiTask = (apiTask: ApiTask): TaskObj => {
-    const priority = apiTask.priority?.toLowerCase();
-    return {
-      id: apiTask.id,
-      title: apiTask.title || '',
-      description: apiTask.description || '',
-      task_status: (apiTask.task_status === 'open' ? 'todo' : apiTask.task_status) as TaskObj['task_status'],
-      priority: ['low', 'medium', 'high', 'critical'].includes(priority) ? priority as TaskObj['priority'] : null,
-      task_trackid: apiTask.task_trackid || '',
-      assigned_to: apiTask.assigned_to ? {
-        id: apiTask.assigned_to.id,
-        name: apiTask.assigned_to.name || `${apiTask.assigned_to.first_name || ''} ${apiTask.assigned_to.last_name || ''}`.trim(),
-        email: apiTask.assigned_to.email,
-        phone_number: apiTask.assigned_to.phone_number,
-        is_active: apiTask.assigned_to.is_active ?? true,
-      } : null,
-      created_by: apiTask.created_by ? {
-        id: apiTask.created_by.id,
-        name: apiTask.created_by.name || `${apiTask.created_by.first_name || ''} ${apiTask.created_by.last_name || ''}`.trim(),
-        email: apiTask.created_by.email || '',
-        phone_number: apiTask.created_by.phone_number || '',
-      } : null,
-      department: apiTask.department ? {
-        id: apiTask.department.id,
-        name: apiTask.department.name || '',
-        slag: apiTask.department.slag || '',
-      } : null,
-      assigned_to_name: apiTask.assigned_to ? (apiTask.assigned_to.name || `${apiTask.assigned_to.first_name || ''} ${apiTask.assigned_to.last_name || ''}`.trim()) : null,
-      due_date: apiTask.due_date,
-      created_at: apiTask.created_at,
-      updated_at: apiTask.updated_at || apiTask.created_at,
-      completed_at: apiTask.completed_at || null,
-      is_converted_to_ticket: apiTask.is_converted_to_ticket || false,
-      linked_ticket: apiTask.linked_ticket || null,
-      status: apiTask.task_status,
-      labels: apiTask.labels || [],
-    };
-  };
-
-  const fetchTasks = React.useCallback(async (page: number = 1, view: string = 'all_tasks', limitOverride?: number) => {
-    setIsLoading(true);
-
-    try {
-      const effectiveLimit = limitOverride ?? limit;
-      const offset = (page - 1) * effectiveLimit;
-      const params: Record<string, string | number> = {
-        limit: effectiveLimit,
-        offset,
-        view: view,
-      };
-
-      const parsedSearch = parseSearchQuery(searchQuery);
-      if (parsedSearch.cleanedQuery) {
-        params.search = parsedSearch.cleanedQuery;
-      }
-
-      const tokenStatus = resolveStatusToken(parsedSearch.tokens.status);
-      const tokenPriority = resolvePriorityToken(parsedSearch.tokens.priority);
-      const tokenAssignee = resolveAssigneeToken(parsedSearch.tokens.assignee);
-      const tokenDepartment = resolveDepartmentToken(parsedSearch.tokens.department);
-      const tokenLabels = resolveLabelTokenIds(parsedSearch.tokens.labels, labelsRef.current);
-      const tokenDueDate = resolveDueDateToken(parsedSearch.tokens.due_date);
-
-      const rawStatus = tokenStatus ?? (statusFilter !== 'all' ? statusFilter : null);
-      const effectiveStatus = rawStatus === 'todo' ? 'open' : rawStatus === 'closed' ? 'completed' : rawStatus;
-      const effectivePriority = tokenPriority ?? (priorityFilter !== 'all' ? priorityFilter : null);
-      const effectiveAssignee = tokenAssignee ?? (assigneeFilter !== 'all' ? assigneeFilter : null);
-      const effectiveDepartment = tokenDepartment ?? (departmentFilter !== 'all' ? departmentFilter : null);
-      const effectiveLabelIds = tokenLabels.length > 0 ? tokenLabels : labelFilterIds;
-      const effectiveDateFrom = tokenDueDate?.from ?? dateFromFilter;
-      const effectiveDateTo = tokenDueDate?.to ?? dateToFilter;
-
-      if (effectiveStatus) params.status = effectiveStatus;
-      if (effectivePriority) params.priority = effectivePriority;
-      if (effectiveAssignee) params.assigned_to = effectiveAssignee;
-      if (effectiveDepartment) params.department = effectiveDepartment;
-      if (effectiveLabelIds.length > 0) params.label_ids = effectiveLabelIds.join(',');
-      if (effectiveDateFrom) params.date_from = effectiveDateFrom;
-      if (effectiveDateTo) params.date_to = effectiveDateTo;
-
-      // Seed from React Query cache so navigating back feels instant
-      const cacheKey = ['tasks', params];
-      const cached = queryClient.getQueryData<ApiResponse>(cacheKey);
-      if (cached?.results) {
-        setTasks(cached.results.map(transformApiTask));
-        setTotalCount(cached.count);
-        setCurrentPage(page);
-        setIsLoading(false);
-      }
-
-      const response = await http.get<ApiResponse>(APIS.LOAD_TASKS, {
-        params,
-      });
-
-      // Cache for next navigation
-      queryClient.setQueryData(cacheKey, response.data);
-
-      const transformedTasks = response.data.results.map(transformApiTask);
-      setTasks(transformedTasks);
-      setTotalCount(response.data.count);
-      setCurrentPage(page);
-
-      if (transformedTasks.length === 0) {
-        setSelectedTask(null);
-      }
-
-    } catch (error: any) {
-      errorNotification(error?.response?.data?.message || "An error occurred")
-
-    } finally {
-      setTimeout(() => setIsLoading(false), 100);
-    }
-  }, [limit, statusFilter, priorityFilter, assigneeFilter, departmentFilter, labelFilterIds, dateFromFilter, dateToFilter, searchQuery]);
 
   // Get active filter labels for display
   const getActiveFilterLabels = () => {
@@ -1217,40 +986,32 @@ export default function TaskManagementSystem() {
       const views = ['all_tasks', 'my_tasks', 'open_tasks', 'in_progress_tasks', 'completed_tasks', 'overdue_tasks', 'archived_tasks', 'trash_tasks'];
       const counts: Record<string, number> = {};
 
-      // Gather all active filters
-      const parsedSearch = parseSearchQuery(searchQuery);
-      const tokenStatus = resolveStatusToken(parsedSearch.tokens.status);
-      const tokenPriority = resolvePriorityToken(parsedSearch.tokens.priority);
-      const tokenAssignee = resolveAssigneeToken(parsedSearch.tokens.assignee);
-      const tokenDepartment = resolveDepartmentToken(parsedSearch.tokens.department);
-      const tokenLabels = resolveLabelTokenIds(parsedSearch.tokens.labels, labelsRef.current);
-      const tokenDueDate = resolveDueDateToken(parsedSearch.tokens.due_date);
-
-      const rawStatus = tokenStatus ?? (statusFilter !== 'all' ? statusFilter : null);
-      const effectiveStatus = rawStatus === 'todo' ? 'open' : rawStatus === 'closed' ? 'completed' : rawStatus;
-      const effectivePriority = tokenPriority ?? (priorityFilter !== 'all' ? priorityFilter : null);
-      const effectiveAssignee = tokenAssignee ?? (assigneeFilter !== 'all' ? assigneeFilter : null);
-      const effectiveDepartment = tokenDepartment ?? (departmentFilter !== 'all' ? departmentFilter : null);
-      const effectiveLabelIds = tokenLabels.length > 0 ? tokenLabels : labelFilterIds;
-      const effectiveDateFrom = tokenDueDate?.from ?? dateFromFilter;
-      const effectiveDateTo = tokenDueDate?.to ?? dateToFilter;
-      const cleanedQuery = parsedSearch.cleanedQuery;
+      const sharedParams = buildTaskQueryParams(
+        {
+          searchQuery: debouncedSearchQuery,
+          statusFilter,
+          priorityFilter,
+          assigneeFilter,
+          departmentFilter,
+          labelFilterIds,
+          dateFromFilter,
+          dateToFilter,
+        },
+        {
+          agents: agentsRef.current,
+          departments: departmentsRef.current,
+          labels: labelsRef.current,
+        },
+      );
 
       for (const view of views) {
         try {
           const params: Record<string, string | number> = {
-            view: view,
+            view,
             limit: 1,
             offset: 0,
+            ...sharedParams,
           };
-          if (effectiveStatus) params.status = effectiveStatus;
-          if (effectivePriority) params.priority = effectivePriority;
-          if (effectiveAssignee) params.assigned_to = effectiveAssignee;
-          if (effectiveDepartment) params.department = effectiveDepartment;
-          if (effectiveLabelIds.length > 0) params.label_ids = effectiveLabelIds.join(',');
-          if (effectiveDateFrom) params.date_from = effectiveDateFrom;
-          if (effectiveDateTo) params.date_to = effectiveDateTo;
-          if (cleanedQuery) params.search = cleanedQuery;
 
           const response = await http.get(APIS.LOAD_TASKS, { params });
           counts[view] = response.data.count || 0;
@@ -1266,17 +1027,18 @@ export default function TaskManagementSystem() {
     }
   };
 
+  // Task counts per view aren't covered by the list query itself (it only
+  // fetches the current view), so they still need their own effect.
   React.useEffect(() => {
-    fetchTasks(currentPage, activeView);
     fetchTaskCounts();
-  }, [fetchTasks, currentPage, activeView, statusFilter, priorityFilter, assigneeFilter, departmentFilter, labelFilterIds, dateFromFilter, dateToFilter, searchQuery]);
+  }, [statusFilter, priorityFilter, assigneeFilter, departmentFilter, labelFilterIds, dateFromFilter, dateToFilter, debouncedSearchQuery]);
 
   // Real-time: refresh tasks list on WebSocket task_event (task created/updated by anyone)
   React.useEffect(() => {
-    const handler = () => fetchTasks(currentPage, activeView);
+    const handler = () => queryClient.invalidateQueries({ queryKey: ['tasks'] });
     window.addEventListener('task_event', handler);
     return () => window.removeEventListener('task_event', handler);
-  }, [fetchTasks, currentPage, activeView]);
+  }, [queryClient]);
 
   // Watch for URL parameter changes and update activeView
   useEffect(() => {
@@ -1353,54 +1115,10 @@ export default function TaskManagementSystem() {
       || `Agent #${agent.id ?? ''}`;
   };
 
-  const fetchAgents = async () => {
-    try {
-      const response = await http.get(`${APIS.LIST_AGENTS}?pagination=no`);
-      const activeAgents = getActiveAgents(response.data);
-      setAgents(activeAgents);
-      agentsRef.current = activeAgents;
-    } catch (error: any) {
-      errorNotification(error?.response?.data?.message || "An error occurred")
-    }
-  };
-
-  const fetchDepartments = async () => {
-    try {
-      const response = await http.get(APIS.LIST_DEPARTMENTS);
-      const payload = Array.isArray(response.data) ? response.data : response.data.results || [];
-      setDepartments(payload);
-      departmentsRef.current = payload;
-    } catch (error: any) {
-      console.error("Failed to fetch departments:", error);
-    }
-  };
-
-  const fetchLabels = async () => {
-    try {
-      const response = await http.get(APIS.LABELS_BASE, {
-        params: {
-          pagination: 'no',
-          active_only: true,
-        },
-      });
-      const payload = response.data?.results || response.data || [];
-      setLabels(payload);
-      labelsRef.current = payload;
-    } catch (error: any) {
-      errorNotification(error?.response?.data?.message || 'Failed to load labels');
-    }
-  };
-
   const fetchWatchers = async (currentTaskId: string) => {
     // For now, tasks don't have watchers like tickets
     setTaskWatchers([]);
   };
-
-  useEffect(() => {
-    fetchAgents();
-    fetchDepartments();
-    fetchLabels();
-  }, []);
 
   useEffect(() => {
     if (selectedTask) {
@@ -1426,7 +1144,7 @@ export default function TaskManagementSystem() {
       const response = await http.post(`${APIS.UPDATE_TASK_STATUS}${selectedTask.id}/`, {
         status: selectedStatus
       });
-      await fetchTasks(currentPage);
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
       successNotification(response.data.message)
       setUpdateStatus(false);
     } catch (error: any) {
@@ -1442,7 +1160,7 @@ export default function TaskManagementSystem() {
     try {
       const response = await http.get(`${APIS.ASSIGN_TASK}${selectedTask.id}`);
       successNotification(response.data.message);
-      await fetchTasks(currentPage);
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error: any) {
       errorNotification(error?.response?.data?.message || 'Failed to assign task');
     } finally {
@@ -1457,7 +1175,7 @@ export default function TaskManagementSystem() {
       const response = await http.post(`${APIS.ASSIGN_TASK}${selectedTask.id}/`, {
         user_id: Number(selectedAgentId)
       });
-      await fetchTasks(currentPage);
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
       successNotification(response.data.message)
       setSelectedAgentId(''); // Reset selection
     } catch (error: any) {
@@ -1500,16 +1218,7 @@ export default function TaskManagementSystem() {
 
   const handleLabelsSaved = (updatedLabels: LabelItem[]) => {
     if (!selectedTask) return;
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === selectedTask.id
-          ? {
-              ...task,
-              labels: updatedLabels,
-            }
-          : task,
-      ),
-    );
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
     setSelectedTask((currentTask) =>
       currentTask
         ? {
@@ -1527,7 +1236,7 @@ export default function TaskManagementSystem() {
       const response = await http.patch(`${APIS.TASK_BASE}/${selectedTask.id}/`, {
         priority: selectedPriority
       });
-      await fetchTasks(currentPage);
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
       successNotification(response.data?.message || "Priority updated successfully");
       setSelectedPriority('');
     } catch (error: any) {
@@ -1977,8 +1686,8 @@ export default function TaskManagementSystem() {
                   <div className="sd-floating-popover absolute left-0 top-full z-50 mt-2 w-64 p-1.5">
                     <div className="px-2 py-1 text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Search filters</div>
                     <div className="mt-1 space-y-1">
-                      {searchFilterOptions.map(option => {
-                        const Icon = searchFilterIcons[option.key];
+                      {SEARCH_FILTER_OPTIONS.map(option => {
+                        const Icon = SEARCH_FILTER_ICONS[option.key];
                         return (
                           <button
                             key={option.key}
@@ -2887,7 +2596,7 @@ export default function TaskManagementSystem() {
       >
         {
           createTaskModal && <CreateTaskModal
-            reload={() => fetchTasks(currentPage)}
+            reload={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })}
             onclose={handleCloseCreateTaskModal}
             onSuccess={confirmCloseCreateTaskModal}
             onDirtyChange={setIsCreateTaskModalDirty}
@@ -2988,7 +2697,7 @@ export default function TaskManagementSystem() {
         currentPriority={selectedPriority || selectedTask?.priority || 'medium'}
         isOpen={priorityModalOpen}
         onClose={() => setPriorityModalOpen(false)}
-        onPriorityUpdated={() => fetchTasks(currentPage)}
+        onPriorityUpdated={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })}
       />
 
       {/* Attach to Ticket Modal */}
