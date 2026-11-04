@@ -1,12 +1,9 @@
 import logging
-import os
-import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.db.utils import IntegrityError
 from django.db import transaction
 from django.forms import ValidationError
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import viewsets, status
@@ -15,35 +12,21 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Q, DurationField, ExpressionWrapper, F
+from django.db.models import Q
 from RNSafarideskBack import settings
-from tenant.models import Ticket, TicketCategories, Department, TicketAttachment, Task
-from tenant.models.SlaXModel import SLA
-from tenant.models.TicketModel import TicketComment, CommentReply, TicketReopen
+from tenant.models import Ticket, TicketCategories, Task
+from tenant.models.TicketModel import TicketComment, CommentReply
 from tenant.serializers.LabelSerializer import LabelAssignmentSerializer
 from tenant.serializers.TicketSerializer import TicketAddComment, TicketAssign, TicketCategorySerializer, \
     TicketSerializer, TicketUpdateStatus, TicketsList, TicketAddWatchers, TicketAddTags, TicketCategoryUpdateSerializer, \
     TicketMergeRequestSerializer
 from tenant.serializers.EmailMessageRecordSerializer import EmailMessageRecordSerializer
-from tenant.services.labels import apply_label_filter, parse_label_ids
 from users.models import Users
-from util.Constants import PRIORITY_DURATION
-from shared.services.notification_preferences import NotificationSettingsService
-from shared.workers.Ticket import ticket_transfer_notification
-from tenant.services.contact_linker import link_or_create_contact
 from tenant.services.audit import actor_name, log_audit_event
 from tenant.services.tickets.duplicate_detection import DuplicateDetectionService
-from tenant.services.tickets.naming import (
-    generate_ticket_id,
-    render_ticket_title,
-)
 
 # --- Extracted service modules (see tenant/services/tickets/) ---
 from tenant.services.tickets.errors import TicketActionError
-from tenant.services.tickets.shared import (
-    parse_date_input,
-    sanitize_text_for_mysql,
-)
 from tenant.services.tickets import (
     activity_stream as activity_stream_service,
     assignment as assignment_service,
@@ -53,6 +36,7 @@ from tenant.services.tickets import (
     comment_reactions as comment_reactions_service,
     comments as comments_service,
     config as config_service,
+    creation as creation_service,
     email_reply as email_reply_service,
     export as export_service,
     field_updates as field_updates_service,
@@ -64,19 +48,11 @@ from tenant.services.tickets import (
     watchers as watchers_service,
 )
 from tenant.services.tickets.labels import (
-    _get_active_business_labels,
-    _get_existing_business_labels_by_names,
     _serialize_labels,
-    _set_ticket_labels,
 )
-from tenant.services.tickets.queries import _apply_ticket_ordering
-from tenant.services.tickets.attachments import _build_storage_paths
 from tenant.services.tickets.email_reply import _parse_ai_email_draft
 
 logger = logging.getLogger(__name__)
-
-TICKET_TITLE_SUMMARY_MAX_LENGTH = 120
-TICKET_TITLE_MAX_LENGTH = 200
 
 
 class TicketPagination(PageNumberPagination):
@@ -572,142 +548,7 @@ class TicketView(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """List all tickets, optionally without pagination and with view-based filtering"""
-        view = request.query_params.get('view', None)
-        queryset = Ticket.objects.for_business().prefetch_related('labels')
-
-        # Apply department-based visibility restrictions for non-admin agents
-        user = request.user
-        if user.role and user.role.name == 'agent':
-            # Get all departments the agent belongs to
-            agent_departments = user.department.all()
-            # Filter tickets to only show those in the agent's departments
-            queryset = queryset.filter(department__in=agent_departments)
-
-        # Exclude archived, deleted, and merged tickets from normal views
-        if view not in ['archived', 'trash', 'merged']:
-            queryset = queryset.filter(is_archived=False, is_deleted=False, is_merged=False)
-
-        status_filter_param = request.query_params.get('status')
-        if view:
-            # View names now match the count keys in ticket_counts endpoint
-            if view == 'all_unresolved':
-                # Only exclude closed/resolved if no explicit status filter is set —
-                # a status filter of 'closed' or 'resolved' must take precedence.
-                if not status_filter_param or status_filter_param == 'all':
-                    queryset = queryset.exclude(status__in=['closed', 'resolved']).filter(is_merged=False)
-                else:
-                    queryset = queryset.filter(is_merged=False)
-            elif view == 'all_tickets':
-                queryset = queryset.filter(is_merged=False)
-            elif view == 'all_unassigned':
-                queryset = queryset.filter(assigned_to__isnull=True, is_merged=False)
-            elif view == 'all_resolved':
-                queryset = queryset.filter(status__in=['closed', 'resolved'], is_merged=False)
-            elif view == 'my_overdue':
-                queryset = queryset.filter(assigned_to=request.user, due_date__lt=timezone.now(), is_merged=False).exclude(status__in=['closed', 'resolved'])
-            elif view == 'my_due_today':
-                today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-                today_end = today_start + timedelta(days=1)
-                queryset = queryset.filter(
-                    assigned_to=request.user,
-                    due_date__gte=today_start,
-                    due_date__lt=today_end,
-                    is_merged=False,
-                ).exclude(status__in=['closed', 'resolved'])
-            elif view == 'my_unresolved':
-                queryset = queryset.filter(assigned_to=request.user, is_merged=False).exclude(status__in=['closed', 'resolved'])
-            elif view == 'my_resolved':
-                queryset = queryset.filter(assigned_to=request.user, status__in=['closed', 'resolved'], is_merged=False)
-            elif view == 'requested_by_me':
-                queryset = queryset.filter(created_by=request.user, is_merged=False)
-            elif view == 'sla_breached':
-                # This is inefficient. A better approach is needed for production.
-                breached_tickets = [ticket.id for ticket in queryset.filter(is_merged=False) if ticket.is_sla_breached]
-                queryset = queryset.filter(id__in=breached_tickets)
-            elif view == 'slow_queues':
-                queryset = queryset.filter(status__in=['closed', 'resolved'], resolved_at__isnull=False, is_merged=False).annotate(
-                    resolution_duration=ExpressionWrapper(
-                        F('resolved_at') - F('created_at'),
-                        output_field=DurationField(),
-                    )
-                ).order_by('-resolution_duration', '-resolved_at')
-            elif view == 'reopened':
-                # Tickets that have been reopened (have at least one TicketReopen record)
-                reopened_ticket_ids = TicketReopen.objects.filter(
-                    ticket__business=request.user.business
-                ).values_list('ticket_id', flat=True).distinct()
-                queryset = queryset.filter(id__in=reopened_ticket_ids, is_merged=False)
-            elif view == 'archived':
-                # Archived tickets: is_archived=True AND is_deleted=False
-                queryset = queryset.filter(is_archived=True, is_deleted=False)
-            elif view == 'trash':
-                # Trash/Deleted tickets: is_deleted=True (regardless of is_archived)
-                queryset = queryset.filter(is_deleted=True)
-            elif view == 'merged':
-                queryset = queryset.filter(is_merged=True)
-
-        # Apply search filter
-        search_query = request.query_params.get('search')
-        if search_query:
-            queryset = queryset.filter(
-                Q(ticket_id__icontains=search_query) |
-                Q(title__icontains=search_query) |
-                Q(description__icontains=search_query) |
-                Q(creator_name__icontains=search_query) |
-                Q(creator_email__icontains=search_query)
-            )
-
-        # Apply individual field filters
-        status_filter = request.query_params.get('status')
-        if status_filter and status_filter != 'all':
-            if status_filter in ['closed', 'resolved']:
-                queryset = queryset.filter(status__in=['closed', 'resolved'])
-            else:
-                queryset = queryset.filter(status=status_filter)
-
-        priority_filter = request.query_params.get('priority')
-        if priority_filter and priority_filter != 'all':
-            queryset = queryset.filter(priority=priority_filter)
-
-        assigned_to_filter = request.query_params.get('assigned_to')
-        if assigned_to_filter:
-            if assigned_to_filter == 'unassigned':
-                queryset = queryset.filter(assigned_to__isnull=True)
-            elif assigned_to_filter != 'all':
-                queryset = queryset.filter(assigned_to_id=assigned_to_filter)
-
-        department_filter = request.query_params.get('department')
-        if department_filter and department_filter != 'all':
-            queryset = queryset.filter(department_id=department_filter)
-
-        category_filter = request.query_params.get('category')
-        if category_filter and category_filter != 'all':
-            queryset = queryset.filter(category_id=category_filter)
-
-        label_ids = parse_label_ids(request.query_params.get('label_ids'))
-        queryset = apply_label_filter(queryset, label_ids)
-
-        # Date range filters
-        date_from = request.query_params.get('date_from')
-        if date_from:
-            from_date = parse_date_input(date_from)
-            if from_date:
-                queryset = queryset.filter(created_at__date__gte=from_date)
-
-        date_to = request.query_params.get('date_to')
-        if date_to:
-            to_date = parse_date_input(date_to)
-            if to_date:
-                queryset = queryset.filter(created_at__date__lte=to_date)
-
-        sort_by = request.query_params.get('sort_by')
-        sort_direction = request.query_params.get('sort_direction')
-        queryset = _apply_ticket_ordering(
-            queryset,
-            sort_by,
-            sort_direction,
-            preserve_existing=view == 'slow_queues' and not sort_by,
-        )
+        queryset = queries_service.list_tickets_queryset(user=request.user, query_params=request.query_params)
 
         pagination = request.query_params.get('pagination', 'yes').lower()
 
@@ -769,488 +610,23 @@ class TicketView(viewsets.ModelViewSet):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:
-            # Extract data from request
-            print(request.data)
-
-            raw_title = request.data.get('title')
-            creator_name = request.data.get('creator_name')
-            creator_phone = request.data.get('creator_phone')
-            creator_email = request.data.get('creator_email')
-            description = request.data.get('description')
-            # DB-safe: strip 4-byte characters (e.g. emojis) for MySQL setups that don't support utf8mb4
-            description = sanitize_text_for_mysql(description) if description else description
-            # Accept both legacy keys (category/department) and frontend keys (category_id/department_id)
-            category_id = request.data.get('category') or request.data.get('category_id')
-            department_id = request.data.get('department') or request.data.get('department_id')
-
-            priority = request.data.get('priority')
-            if not priority:
-                priority = 'medium'  # Fallback
-
-            customer_tier = request.data.get('customer_tier', 'standard')  # Add customer tier
-            source = request.data.get('source', 'web')  # Add source field with default 'web'
-            is_public = True if str(request.data.get('is_public')).lower() == 'true' else False
-            assignee_id = request.data.get('assignee_id')
-            raw_tags = []
-            try:
-                raw_tags = request.data.getlist('tags[]')
-            except Exception:
-                pass
-            if not raw_tags and 'tags' in request.data:
-                maybe_tags = request.data.get('tags')
-                if isinstance(maybe_tags, list):
-                    raw_tags = maybe_tags
-                elif isinstance(maybe_tags, str):
-                    raw_tags = [t.strip() for t in maybe_tags.split(',') if t.strip()]
-            raw_label_ids = []
-            try:
-                raw_label_ids = request.data.getlist('label_ids[]')
-            except Exception:
-                pass
-            if not raw_label_ids and 'label_ids' in request.data:
-                maybe_label_ids = request.data.get('label_ids')
-                if isinstance(maybe_label_ids, list):
-                    raw_label_ids = maybe_label_ids
-                elif isinstance(maybe_label_ids, str):
-                    raw_label_ids = [item.strip() for item in maybe_label_ids.split(',') if item.strip()]
-            label_ids = parse_label_ids(raw_label_ids)
-
-            created_by = None
-
-            # Validate required fields
-            if not all([raw_title, category_id, department_id, priority]):
-                return Response({
-                    "message": "Missing required fields: title, category, department, or priority"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            raw_title = str(raw_title).strip()
-            if len(raw_title) > TICKET_TITLE_SUMMARY_MAX_LENGTH:
-                return Response({
-                    "message": f"Ticket title is too long. Maximum {TICKET_TITLE_SUMMARY_MAX_LENGTH} characters allowed."
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Generate ticket ID and formatted title using shared naming rules.
-            ticket_id = generate_ticket_id(business=request.user.business)
-            title = render_ticket_title(
-                summary=raw_title,
-                ticket_id=ticket_id,
-                source=source,
-                business=request.user.business,
-                max_length=None,
-            )
-            if len(title) > TICKET_TITLE_MAX_LENGTH:
-                return Response({
-                    "message": f"Formatted ticket title is too long. Please shorten the title to fit within {TICKET_TITLE_MAX_LENGTH} characters."
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Validate customer tier
-            valid_tiers = ['premium', 'standard', 'basic']
-            if customer_tier not in valid_tiers:
-                return Response({
-                    "message": f"Invalid customer tier. Must be one of: {', '.join(valid_tiers)}"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Get category and department objects
-            try:
-                category = get_object_or_404(TicketCategories, id=category_id, business=request.user.business)
-            except Http404:
-                return Response({
-                    "message": f"Category with id {category_id} not found"
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            try:
-                department = get_object_or_404(Department, id=department_id, business=request.user.business)
-            except Http404:
-                return Response({
-                    "message": f"Department with id {department_id} not found"
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            # Check if user already exists
-            if creator_email:
-                try:
-                    existing_user = Users.objects.filter(
-                        email=creator_email,
-                        business=request.user.business
-                    ).first()
-                    if existing_user:
-                        created_by = existing_user
-                except Exception as e:
-                    # Fallback to create a customer
-                    logger.warning(f"Error checking existing user: {str(e)}")
-
-
-            # Optional assignee lookup (must belong to business)
-            assigned_agent = None
-            if assignee_id not in [None, '', 'null']:
-                try:
-                    assigned_agent = Users.objects.filter(
-                        id=int(assignee_id),
-                        business=request.user.business
-                    ).first()
-                    if not assigned_agent:
-                        return Response({
-                            "message": f"Assignee with id {assignee_id} not found for this business"
-                        }, status=status.HTTP_404_NOT_FOUND)
-                except ValueError:
-                    return Response({
-                        "message": "assignee_id must be an integer"
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Normalize tags
-            tag_list = []
-            for t in raw_tags:
-                if isinstance(t, str) and t.strip():
-                    tag_list.append(t.strip())
-            tag_list = list(dict.fromkeys(tag_list))  # dedupe preserving order
-            try:
-                validated_labels = []
-                if label_ids:
-                    validated_labels = _get_active_business_labels(request.user, label_ids)
-                elif tag_list:
-                    validated_labels = _get_existing_business_labels_by_names(request.user, tag_list)
-            except ValueError as e:
-                return Response({
-                    "message": str(e),
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Create ticket (without due_date - SLA will calculate it)
-            try:
-                ticket = Ticket.objects.create(
-                    title=title,
-                    description=description,
-                    category=category,
-                    department=department,
-                    creator_name=creator_name,
-                    creator_email=creator_email,
-                    creator_phone=creator_phone,
-                    created_by=created_by,
-                    ticket_id=ticket_id,
-                    priority=priority,
-                    customer_tier=customer_tier,  # Add customer tier
-                    source=source,  # Add source field
-                    is_public=is_public,
-                    assigned_to=assigned_agent,
-                    tags=",".join(tag_list) if tag_list else ""
-                )
-                if validated_labels:
-                    _set_ticket_labels(ticket, validated_labels)
-                contact = link_or_create_contact(
-                    business=request.user.business,
-                    name=creator_name,
-                    email=creator_email,
-                    phone=creator_phone,
-                    owner=request.user if isinstance(request.user, Users) else None,
-                )
-                if contact:
-                    ticket.contact = contact
-                    ticket.save(update_fields=["contact"])
-                if assigned_agent:
-                    ticket.status = 'assigned'
-                    ticket.save(update_fields=['status'])
-
-                # Auto-assign SLA policy to ticket if SLA is enabled
-                try:
-                    # Check if SLA is globally enabled for this business
-                    from tenant.models.SlaXModel import SLAConfiguration
-                    sla_config = SLAConfiguration.objects.filter(business=request.user.business).first()
-
-                    if sla_config and sla_config.sla_enabled:
-                        # First, try to find a policy with auto_apply enabled and matching priority
-                        applicable_sla = SLA.objects.filter(
-                            business=request.user.business,
-                            is_active=True,
-                            auto_apply=True,
-                            targets__priority=priority
-                        ).first()
-
-                        # If no auto_apply policy found, look for any active policy with matching priority
-                        if not applicable_sla:
-                            applicable_sla = SLA.objects.filter(
-                                business=request.user.business,
-                                is_active=True,
-                                targets__priority=priority
-                            ).first()
-
-                        if applicable_sla:
-                            ticket.sla = applicable_sla
-                            ticket.save(update_fields=['sla'])
-                            logger.info(f"SLA policy '{applicable_sla.name}' assigned to ticket {ticket_id}")
-                        else:
-                            logger.warning(f"No applicable SLA found for ticket {ticket_id} with priority {priority}")
-                    else:
-                        logger.info(f"SLA is disabled for business {request.user.business.name}, skipping auto-assignment")
-                except Exception as e:
-                    logger.error(f"Error auto-assigning SLA to ticket {ticket_id}: {str(e)}")
-
-                # Calculate due dates using the ticket's own methods
-                sla_due_times = ticket.calculate_sla_due_times()
-                due_date = None
-                if sla_due_times and sla_due_times['resolution_due']:
-                    due_date = sla_due_times['resolution_due']
-                    ticket.due_date = due_date
-                    ticket.save()
-                    logger.info(f"Ticket {ticket_id} resolution due date set to {due_date} based on SLA.")
-                else:
-                    logger.warning(f"Could not calculate SLA due date for ticket {ticket_id}. Falling back to default.")
-                    # Fallback to old method if no SLA policy exists or calculation fails
-                    try:
-                        priority_dict = dict(PRIORITY_DURATION)
-                        priority_hours_str = priority_dict.get(priority)
-                        if priority_hours_str:
-                            priority_hours = int(priority_hours_str)
-                            due_date = datetime.now() + timedelta(hours=priority_hours)
-                            ticket.due_date = due_date
-                            ticket.save()
-                        else:
-                            due_date = None
-                    except Exception as e:
-                        logger.error(f"Error with fallback due date calculation: {str(e)}")
-                        due_date = None
-
-            except ValueError as e:
-                return Response({
-                    "message": str(e),
-                }, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                logger.error(f"Error creating ticket or assigning SLA: {str(e)}")
-                return Response({
-                    "message": "Failed to create ticket or assign SLA",
-                    "details": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            duplicate_detection = DuplicateDetectionService().process_new_ticket(ticket, actor=request.user)
-            if duplicate_detection:
-                setattr(ticket, "_duplicate_detection", duplicate_detection)
-                ticket.refresh_from_db()
-
-            # Optional assignee at creation (internal only) - mirror assign endpoint behavior
-            if assignee_id and not (duplicate_detection and duplicate_detection.get("status") == "auto_merged"):
-                try:
-                    agent = get_object_or_404(Users, id=assignee_id, business=request.user.business)
-                except Http404:
-                    return Response({
-                        "message": f"Assignee with id {assignee_id} not found"
-                    }, status=status.HTTP_404_NOT_FOUND)
-
-                old_assignee = ticket.assigned_to
-                ticket.assigned_to = agent
-                ticket.status = 'assigned'
-                ticket.updated_by = request.user
-                ticket.updated_at = datetime.now()
-                ticket.save(update_fields=['assigned_to', 'status', 'updated_by', 'updated_at'])
-
-                # Activity log
-                from tenant.models import TicketActivity
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    user=request.user,
-                    activity_type='assigned',
-                    description=f"Ticket Assignment\nTicket was assigned to {agent.get_full_name()}",
-                    new_value=agent.get_full_name(),
-                    old_value=old_assignee.get_full_name() if old_assignee else ''
-                )
-
-                # Notifications
-                NotificationSettingsService.create_in_app_notification(
-                    user=agent,
-                    ticket=ticket,
-                    message=f"Ticket #{ticket.ticket_id} has been assigned to you: {ticket.title}",
-                    notification_type="ticket_assigned",
-                    metadata={
-                        "reassigned": bool(old_assignee),
-                        "previous_assignee": old_assignee.get_full_name() if old_assignee else None,
-                        "priority": ticket.priority,
-                        "activity_type": "assigned",
-                        "assigned_by": request.user.get_full_name()
-                    }
-                )
-                if old_assignee and old_assignee != agent:
-                    NotificationSettingsService.create_in_app_notification(
-                        user=old_assignee,
-                        ticket=ticket,
-                        message=f"Ticket #{ticket.ticket_id} was reassigned from you to {agent.get_full_name()}",
-                        notification_type="ticket_assigned",
-                        metadata={
-                            "reassigned_from": True,
-                            "new_assignee": agent.get_full_name(),
-                            "priority": ticket.priority,
-                            "activity_type": "reassigned"
-                        }
-                    )
-                    ticket_transfer_notification.delay(ticket.id, old_assignee.get_full_name())
-
-                if not ticket.first_response_at:
-                    ticket.mark_first_response()
-
-            # Note: Description is NOT added as a TicketComment to avoid redundancy
-            # since it's already displayed in the description section of the ticket
-
-            # Handle file uploads
-            if request.FILES:
-                logger.info("Files found in request, processing...")
-                uploaded_files = request.FILES
-
-                for uploaded_file_name, uploaded_file in uploaded_files.items():
-                    try:
-                        file_extension = os.path.splitext(uploaded_file.name)[1].lower()
-
-                        # Validate file extension (add your allowed extensions)
-                        allowed_extensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.txt']
-                        if file_extension not in allowed_extensions:
-                            return Response({
-                                "error": f"File type {file_extension} not allowed"
-                            }, status=status.HTTP_400_BAD_REQUEST)
-
-                        # Generate unique filename
-                        unique_filename = f"{uuid.uuid4()}{file_extension}"
-
-                        # Create directory (scoped by business)
-                        properties_dir, url_base = _build_storage_paths(ticket.business, subfolder='files')
-
-                        # Full file path
-                        file_path = os.path.join(properties_dir, unique_filename)
-
-                        # Save file
-                        with open(file_path, 'wb+') as destination:
-                            for chunk in uploaded_file.chunks():
-                                destination.write(chunk)
-
-                        # Generate URL
-                        file_url = f"{url_base}/{unique_filename}" if url_base else unique_filename
-
-                        # Create attachment
-                        TicketAttachment.objects.create(
-                            ticket=ticket,
-                            file_url=file_url,
-                            filename=uploaded_file.name,  # Save original filename
-                            description=f"File uploaded for ticket {ticket_id}"
-                        )
-
-                        logger.info(f"File saved: {file_path}")
-
-                    except Exception as file_error:
-                        logger.error(f"Error saving file {uploaded_file_name}: {str(file_error)}")
-                        return Response({
-                            "error": f"Failed to save file {uploaded_file_name}",
-                            "details": str(file_error)
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Prepare email data
-            ticket_email_data = {
-                'ticket_id': ticket_id,
-                'title': title,
-                'due_date': due_date.strftime('%Y-%m-%d %H:%M:%S') if due_date else 'TBD',
-                'priority': priority,
-                'customer_tier': customer_tier,
-                'creator_name': creator_name or 'Anonymous',
-                'creator_email': creator_email or 'N/A',
-                'creator_phone': creator_phone or 'N/A',
-                'category_name': category.name,
-                'description': description or 'No description provided',
-            }
-
-            # Create in-app notifications for new ticket
-            # If ticket has no assignee, notify all department members
-            if not (duplicate_detection and duplicate_detection.get("status") == "auto_merged"):
-                if ticket.assigned_to:
-                    NotificationSettingsService.create_in_app_notification(
-                        user=ticket.assigned_to,
-                        ticket=ticket,
-                        message=f"New ticket #{ticket.ticket_id} has been assigned to you: {ticket.title}",
-                        notification_type="ticket_assigned",
-                        metadata={
-                            "priority": ticket.priority,
-                            "category": category.name,
-                            "department": department.name,
-                            "activity_type": "assigned"
-                        }
-                    )
-                elif department:
-                    # No assignee - notify all department members
-                    dept_members = NotificationSettingsService.active_department_members(department)
-                    NotificationSettingsService.notify_many(
-                        users=list(dept_members),
-                        ticket=ticket,
-                        message=f"New unassigned ticket #{ticket.ticket_id} in {department.name}: {ticket.title}",
-                        notification_type="ticket_assigned",
-                        metadata={
-                            "priority": ticket.priority,
-                            "category": category.name,
-                            "department": department.name,
-                            "unassigned": True,
-                            "activity_type": "created"
-                        }
-                    )
-
-            # Prepare response data
-            response_data = {
-                "message": "Ticket created successfully",
-                "ticket_id": ticket.merged_into.ticket_id if ticket.is_merged and ticket.merged_into else ticket.ticket_id,
-                "priority": priority,
-                "customer_tier": customer_tier,
-            }
-            if duplicate_detection:
-                response_data["duplicate_detection"] = duplicate_detection
-                if duplicate_detection.get("status") == "auto_merged":
-                    response_data["message"] = "Duplicate ticket detected and merged automatically"
-                    response_data["created_ticket_id"] = ticket.ticket_id
-
-            # Add SLA information if available
-            if hasattr(ticket, 'sla_tracker'):
-                sla_info = ticket.sla_status
-                if sla_info:
-                    response_data["sla_info"] = {
-                        "first_response_due": sla_info['first_response_due'].isoformat(),
-                        "resolution_due": sla_info['resolution_due'].isoformat(),
-                        "policy_name": ticket.sla_tracker.sla_policy.name
-                    }
-
-            # Save Activity
-            from tenant.models import TicketActivity
-            # Only attach a Users instance here; customer portal requests use Customer accounts.
-            activity_user = request.user if isinstance(request.user, Users) else (created_by if isinstance(created_by, Users) else None)
-
-            # Log ticket creation activity without description (as per user requirement)
-            user_name = 'Customer' if activity_user is None else (
-                activity_user.get_full_name() if hasattr(activity_user, 'get_full_name') else str(activity_user)
-            )
-            TicketActivity.objects.create(
-                ticket=ticket,
-                user=activity_user,
-                activity_type='created',
-                description=f"{user_name} created the ticket"
-            )
-
-            log_audit_event(
-                request,
-                event_type="TICKET_CREATED",
-                entity_type="ticket",
-                entity=ticket,
-                activity=f"{actor_name(request.user)} created Ticket #{ticket.ticket_id} - '{ticket.title}'",
-                metadata={
-                    "entity_identifier": ticket.ticket_id,
-                    "priority": ticket.priority,
-                    "status": ticket.status,
-                    "department": department.name if department else None,
-                    "category": category.name if category else None,
-                    "assignee": assigned_agent.get_full_name() if assigned_agent else None,
-                },
-            )
-
-            return Response(response_data, status=status.HTTP_201_CREATED)
-
+            result = creation_service.create_ticket_from_request(request=request)
+        except TicketActionError as exc:
+            return Response(exc.payload, status=exc.status_code)
         except ValidationError as e:
             logger.error(f"Validation error in ticket creation: {str(e)}")
             return Response({
                 "message": "Validation error",
                 "details": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-
         except Exception as e:
             logger.error(f"Unexpected error in ticket creation: {str(e)}")
             return Response({
                 "message": "An unexpected error occurred while creating the ticket",
                 "details": str(e) if settings.DEBUG else "Please contact support"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(result, status=status.HTTP_201_CREATED)
 
     @transaction.atomic
     def add_ticket_watchers(self, request, *args, **kwargs):

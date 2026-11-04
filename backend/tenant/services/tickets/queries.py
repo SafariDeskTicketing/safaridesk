@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any, Dict
 
-from django.db.models import Count, Q
+from django.db.models import Count, DurationField, ExpressionWrapper, F, Q
 from django.utils import timezone
 
 from tenant.models import Task, Ticket
@@ -63,6 +63,152 @@ def _apply_ticket_ordering(queryset, sort_by: str | None, sort_direction: str | 
     return queryset.order_by(*(f'{prefix}{field}' if field != tie_breaker else field for field in ordering))
 
 
+def list_tickets_queryset(*, user: Users, query_params):
+    """
+    Build the queryset for the main ticket list endpoint (``TicketView.list``):
+    view-based filtering (all_unresolved/my_overdue/slow_queues/archived/trash/
+    merged/etc.), search, individual field filters, and ordering.
+    Pagination/serialization stay in the view.
+    """
+    view = query_params.get('view', None)
+    queryset = Ticket.objects.for_business().prefetch_related('labels')
+
+    # Apply department-based visibility restrictions for non-admin agents
+    if user.role and user.role.name == 'agent':
+        # Get all departments the agent belongs to
+        agent_departments = user.department.all()
+        # Filter tickets to only show those in the agent's departments
+        queryset = queryset.filter(department__in=agent_departments)
+
+    # Exclude archived, deleted, and merged tickets from normal views
+    if view not in ['archived', 'trash', 'merged']:
+        queryset = queryset.filter(is_archived=False, is_deleted=False, is_merged=False)
+
+    status_filter_param = query_params.get('status')
+    if view:
+        # View names now match the count keys in ticket_counts endpoint
+        if view == 'all_unresolved':
+            # Only exclude closed/resolved if no explicit status filter is set —
+            # a status filter of 'closed' or 'resolved' must take precedence.
+            if not status_filter_param or status_filter_param == 'all':
+                queryset = queryset.exclude(status__in=['closed', 'resolved']).filter(is_merged=False)
+            else:
+                queryset = queryset.filter(is_merged=False)
+        elif view == 'all_tickets':
+            queryset = queryset.filter(is_merged=False)
+        elif view == 'all_unassigned':
+            queryset = queryset.filter(assigned_to__isnull=True, is_merged=False)
+        elif view == 'all_resolved':
+            queryset = queryset.filter(status__in=['closed', 'resolved'], is_merged=False)
+        elif view == 'my_overdue':
+            queryset = queryset.filter(assigned_to=user, due_date__lt=timezone.now(), is_merged=False).exclude(status__in=['closed', 'resolved'])
+        elif view == 'my_due_today':
+            today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = today_start + timedelta(days=1)
+            queryset = queryset.filter(
+                assigned_to=user,
+                due_date__gte=today_start,
+                due_date__lt=today_end,
+                is_merged=False,
+            ).exclude(status__in=['closed', 'resolved'])
+        elif view == 'my_unresolved':
+            queryset = queryset.filter(assigned_to=user, is_merged=False).exclude(status__in=['closed', 'resolved'])
+        elif view == 'my_resolved':
+            queryset = queryset.filter(assigned_to=user, status__in=['closed', 'resolved'], is_merged=False)
+        elif view == 'requested_by_me':
+            queryset = queryset.filter(created_by=user, is_merged=False)
+        elif view == 'sla_breached':
+            # This is inefficient. A better approach is needed for production.
+            breached_tickets = [ticket.id for ticket in queryset.filter(is_merged=False) if ticket.is_sla_breached]
+            queryset = queryset.filter(id__in=breached_tickets)
+        elif view == 'slow_queues':
+            queryset = queryset.filter(status__in=['closed', 'resolved'], resolved_at__isnull=False, is_merged=False).annotate(
+                resolution_duration=ExpressionWrapper(
+                    F('resolved_at') - F('created_at'),
+                    output_field=DurationField(),
+                )
+            ).order_by('-resolution_duration', '-resolved_at')
+        elif view == 'reopened':
+            # Tickets that have been reopened (have at least one TicketReopen record)
+            reopened_ticket_ids = TicketReopen.objects.filter(
+                ticket__business=user.business
+            ).values_list('ticket_id', flat=True).distinct()
+            queryset = queryset.filter(id__in=reopened_ticket_ids, is_merged=False)
+        elif view == 'archived':
+            # Archived tickets: is_archived=True AND is_deleted=False
+            queryset = queryset.filter(is_archived=True, is_deleted=False)
+        elif view == 'trash':
+            # Trash/Deleted tickets: is_deleted=True (regardless of is_archived)
+            queryset = queryset.filter(is_deleted=True)
+        elif view == 'merged':
+            queryset = queryset.filter(is_merged=True)
+
+    # Apply search filter
+    search_query = query_params.get('search')
+    if search_query:
+        queryset = queryset.filter(
+            Q(ticket_id__icontains=search_query) |
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(creator_name__icontains=search_query) |
+            Q(creator_email__icontains=search_query)
+        )
+
+    # Apply individual field filters
+    status_filter = query_params.get('status')
+    if status_filter and status_filter != 'all':
+        if status_filter in ['closed', 'resolved']:
+            queryset = queryset.filter(status__in=['closed', 'resolved'])
+        else:
+            queryset = queryset.filter(status=status_filter)
+
+    priority_filter = query_params.get('priority')
+    if priority_filter and priority_filter != 'all':
+        queryset = queryset.filter(priority=priority_filter)
+
+    assigned_to_filter = query_params.get('assigned_to')
+    if assigned_to_filter:
+        if assigned_to_filter == 'unassigned':
+            queryset = queryset.filter(assigned_to__isnull=True)
+        elif assigned_to_filter != 'all':
+            queryset = queryset.filter(assigned_to_id=assigned_to_filter)
+
+    department_filter = query_params.get('department')
+    if department_filter and department_filter != 'all':
+        queryset = queryset.filter(department_id=department_filter)
+
+    category_filter = query_params.get('category')
+    if category_filter and category_filter != 'all':
+        queryset = queryset.filter(category_id=category_filter)
+
+    label_ids = parse_label_ids(query_params.get('label_ids'))
+    queryset = apply_label_filter(queryset, label_ids)
+
+    # Date range filters
+    date_from = query_params.get('date_from')
+    if date_from:
+        from_date = parse_date_input(date_from)
+        if from_date:
+            queryset = queryset.filter(created_at__date__gte=from_date)
+
+    date_to = query_params.get('date_to')
+    if date_to:
+        to_date = parse_date_input(date_to)
+        if to_date:
+            queryset = queryset.filter(created_at__date__lte=to_date)
+
+    sort_by = query_params.get('sort_by')
+    sort_direction = query_params.get('sort_direction')
+    queryset = _apply_ticket_ordering(
+        queryset,
+        sort_by,
+        sort_direction,
+        preserve_existing=view == 'slow_queues' and not sort_by,
+    )
+
+    return queryset
+
+
 def my_tickets_queryset(*, user: Users, query_params):
     """Build the queryset for 'my tickets' (by departments or as watcher)."""
     user_departments = user.department.all()
@@ -112,60 +258,6 @@ def my_tickets_queryset(*, user: Users, query_params):
 
     label_ids = parse_label_ids(query_params.get('label_ids'))
     queryset = apply_label_filter(queryset, label_ids)
-
-    date_from = query_params.get('date_from')
-    if date_from:
-        from_date = parse_date_input(date_from)
-        if from_date:
-            queryset = queryset.filter(created_at__date__gte=from_date)
-
-    date_to = query_params.get('date_to')
-    if date_to:
-        to_date = parse_date_input(date_to)
-        if to_date:
-            queryset = queryset.filter(created_at__date__lte=to_date)
-
-    # NOTE (pre-existing bug, preserved verbatim): the original
-    # TicketView.my_tickets applied this exact same block of search/status/
-    # priority/assigned_to/department/category/date filters a second time
-    # here (without label filtering). Re-applying identical `.filter(...)`
-    # calls is a no-op on the result set, so behavior is unchanged, but it's
-    # dead/duplicated work left over from the original code.
-    search_query = query_params.get('search')
-    if search_query:
-        queryset = queryset.filter(
-            Q(ticket_id__icontains=search_query) |
-            Q(title__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(creator_name__icontains=search_query) |
-            Q(creator_email__icontains=search_query)
-        )
-
-    status_filter = query_params.get('status')
-    if status_filter and status_filter != 'all':
-        if status_filter in ['closed', 'resolved']:
-            queryset = queryset.filter(status__in=['closed', 'resolved'])
-        else:
-            queryset = queryset.filter(status=status_filter)
-
-    priority_filter = query_params.get('priority')
-    if priority_filter and priority_filter != 'all':
-        queryset = queryset.filter(priority=priority_filter)
-
-    assigned_to_filter = query_params.get('assigned_to')
-    if assigned_to_filter:
-        if assigned_to_filter == 'unassigned':
-            queryset = queryset.filter(assigned_to__isnull=True)
-        elif assigned_to_filter != 'all':
-            queryset = queryset.filter(assigned_to_id=assigned_to_filter)
-
-    department_filter = query_params.get('department')
-    if department_filter and department_filter != 'all':
-        queryset = queryset.filter(department_id=department_filter)
-
-    category_filter = query_params.get('category')
-    if category_filter and category_filter != 'all':
-        queryset = queryset.filter(category_id=category_filter)
 
     date_from = query_params.get('date_from')
     if date_from:
