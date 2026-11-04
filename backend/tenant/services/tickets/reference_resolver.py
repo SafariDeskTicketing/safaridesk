@@ -25,12 +25,17 @@ def _user_label(user: Users) -> str:
 
 def get_ticket_reference_options(business_id: int) -> dict[str, list[dict[str, Any]]]:
     """Return AI-safe ticket references scoped to one business."""
-    departments = Department.objects.filter(business_id=business_id).order_by("name", "id")
-    categories = TicketCategories.objects.filter(
+    # .unscoped() here, not the default manager: business_id IS the scope
+    # being requested. Filtering on top of the ambient thread-local business
+    # too would silently empty the result if this ever runs where the two
+    # disagree (e.g. a background job resolving references for a business
+    # other than whichever one happens to be ambient).
+    departments = Department.objects.unscoped().filter(business_id=business_id).order_by("name", "id")
+    categories = TicketCategories.objects.unscoped().filter(
         business_id=business_id,
         is_active=True,
     ).order_by("name", "id")
-    labels = Label.objects.filter(
+    labels = Label.objects.unscoped().filter(
         business_id=business_id,
         is_active=True,
     ).order_by("name", "id")
@@ -52,7 +57,7 @@ def resolve_category(business_id: int, raw_value: Any) -> dict[str, Any] | None:
     if not value:
         return None
 
-    query = TicketCategories.objects.filter(business_id=business_id, is_active=True)
+    query = TicketCategories.objects.unscoped().filter(business_id=business_id, is_active=True)
     value_id = _int_or_none(value)
     category = query.filter(id=value_id).first() if value_id is not None else query.filter(name__iexact=value).first()
     if not category and value:
@@ -67,7 +72,7 @@ def resolve_department(business_id: int, raw_value: Any) -> dict[str, Any] | Non
     if not value:
         return None
 
-    query = Department.objects.filter(business_id=business_id)
+    query = Department.objects.unscoped().filter(business_id=business_id)
     value_id = _int_or_none(value)
     department = query.filter(id=value_id).first() if value_id is not None else query.filter(name__iexact=value).first()
     if not department and value:
@@ -120,7 +125,7 @@ def resolve_label_ids(business_id: int, raw_values: Any) -> dict[str, Any]:
         requested_ids.append(value_id)
 
     labels = list(
-        Label.objects.filter(
+        Label.objects.unscoped().filter(
             business_id=business_id,
             is_active=True,
             id__in=requested_ids,
@@ -146,7 +151,7 @@ def resolve_label_names(business_id: int, raw_values: Any) -> dict[str, Any]:
         raw_values = [raw_values]
 
     requested_names = [_clean(value) for value in raw_values if _clean(value)]
-    labels = list(Label.objects.filter(business_id=business_id, is_active=True))
+    labels = list(Label.objects.unscoped().filter(business_id=business_id, is_active=True))
     by_name = {label.name.strip().casefold(): label for label in labels}
     resolved = []
     invalid = []

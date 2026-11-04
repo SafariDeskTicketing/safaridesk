@@ -29,24 +29,29 @@ class FilterManager(models.Manager):
 
     def for_user(self, user=None, filter_by_client=True):
         user = user or get_current_user()
-        queryset = self.get_queryset()
+        # Start unscoped, not from get_queryset(): the explicit `user` param
+        # IS the scope being requested here. Layering the ambient thread-local
+        # business filter underneath it would silently AND the two together —
+        # correct when they happen to agree, an always-empty queryset when a
+        # caller deliberately passes a different user's business (admin
+        # tooling, reports, exports) and the ambient context doesn't match.
+        queryset = self.unscoped()
         if filter_by_client and user and user.is_authenticated and hasattr(user, 'business'):
-            # queryset = queryset.filter(business=user.business, created_by=user).distinct()
             queryset = queryset.filter(business=user.business).distinct()
 
         return queryset
-    
+
     def for_business(self, user=None, filter_by_client=True):
         user = user or get_current_user()
-        queryset = self.get_queryset()
+        queryset = self.unscoped()
         if filter_by_client and user and user.is_authenticated and hasattr(user, 'business'):
             queryset = queryset.filter(business=user.business).distinct()
 
         return queryset
-    
+
     def for_me(self, user=None, filter_by_client=True):
         user = user or get_current_user()
-        queryset = self.get_queryset()
+        queryset = self.unscoped()
         if filter_by_client and user and user.is_authenticated and hasattr(user, 'business'):
             queryset = queryset.filter(business=user.business, created_by=user).distinct()
 
