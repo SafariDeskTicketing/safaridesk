@@ -54,6 +54,23 @@ import { getLabelNamesByIds, resolveLabelTokenIds } from '../../utils/labels';
 import { useHoverPreviewActivity } from '../../hooks/useHoverPreviewActivity';
 import { useCopilotStore } from '../../stores/copilotStore';
 import { Loader } from '../../components/loader/loader';
+import { BASE_URL } from '../../utils/base';
+import {
+  type ColumnFilterKey,
+  SEARCH_FILTER_OPTIONS,
+  SEARCH_FILTER_ICONS,
+  parseSearchQuery,
+  resolveStatusToken,
+  resolveCreatedDateToken,
+} from './list/ticketSearch';
+import { buildTicketQueryParams } from './list/ticketListParams';
+import {
+  useTicketsListQuery,
+  transformApiTicket,
+  DEFAULT_SORT_STATE,
+  type SortField,
+  type SortState,
+} from './list/ticketListData';
 
 type BulkExportFormat = Exclude<ExportFormat, 'pdf'>;
 
@@ -64,54 +81,6 @@ const BULK_EXPORT_FORMAT_OPTIONS = [
 ];
 
 // Type definitions based on your API response
-interface ApiTicket {
-  id: number;
-  title: string;
-  creator_name: string;
-  creator_phone: string;
-  creator_email: string;
-  ticket_id: string;
-  description: string;
-  category: {
-    id: number;
-    name: string;
-  };
-  department: {
-    id: number;
-    name: string;
-  };
-  priority: string;
-  priority_display: string;
-  is_public: boolean;
-  status: string;
-  status_display: string;
-  created_at: string;
-  updated_at?: string;
-  assigned_to: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number: string;
-    avatar_url?: string;
-    is_active?: boolean;
-  } | null;
-  breached: boolean;
-  due_date?: string;
-  source?: 'email' | 'web' | 'phone' | 'chat' | 'chatbot' | 'api' | 'internal' | 'customer_portal'; // Ticket source field
-  linked_tasks_count?: number;
-  is_opened?: boolean;
-  has_new_reply?: boolean;
-  labels?: LabelItem[];
-}
-
-interface ApiResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: ApiTicket[];
-}
-
 interface Watcher {
   id: number;
   name: string;
@@ -209,9 +178,7 @@ export default function TicketManagementSystem() {
   const viewItems = role ? (isAdmin ? TICKET_VIEW_ITEMS : AGENT_TICKET_VIEW_ITEMS) : TICKET_VIEW_ITEMS;
 
   // API state management
-  const [tickets, setTickets] = React.useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = React.useState<Ticket | null>(null);
-  const [totalCount, setTotalCount] = React.useState(0);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [limit, setLimit] = React.useState(() => {
     const saved = localStorage.getItem('ticketPageSize');
@@ -274,7 +241,6 @@ export default function TicketManagementSystem() {
   const selectedTicketLabels = selectedTicket?.labels || [];
 
 
-  const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('activity');
   const [searchQuery, setSearchQuery] = useState('');
   // Debounced so fast typing doesn't fire a server request per keystroke; the
@@ -301,7 +267,6 @@ export default function TicketManagementSystem() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  type ColumnFilterKey = 'status' | 'priority' | 'assignee' | 'department' | 'category' | 'labels' | 'created_at';
   const [activeColumnFilter, setActiveColumnFilter] = useState<ColumnFilterKey | null>(null);
   const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(null);
   const [filterPosition, setFilterPosition] = useState<{ top: number; left: number; minWidth: number } | null>(null);
@@ -394,136 +359,6 @@ export default function TicketManagementSystem() {
     }
     localStorage.setItem('ticketViewMode', viewMode);
   }, [viewMode]);
-  const searchFilterOptions: { key: 'all' | ColumnFilterKey; label: string; description: string }[] = [
-    { key: 'all', label: 'Search all', description: 'Search tickets' },
-    { key: 'status', label: 'Status', description: 'Filter by status' },
-    { key: 'priority', label: 'Priority', description: 'Filter by priority' },
-    { key: 'assignee', label: 'Assignee', description: 'Filter by assignee' },
-    { key: 'department', label: 'Department', description: 'Filter by department' },
-    { key: 'category', label: 'Category', description: 'Filter by category' },
-    { key: 'labels', label: 'Labels', description: 'Filter by labels' },
-    { key: 'created_at', label: 'Created date', description: 'Filter by created date' },
-  ];
-  const searchFilterIcons: Record<'all' | ColumnFilterKey, React.ComponentType<{ size?: number; className?: string }>> = {
-    all: Search,
-    status: CheckCircle,
-    priority: AlertTriangle,
-    assignee: User,
-    department: Building,
-    category: Tag,
-    labels: Tag,
-    created_at: Calendar,
-  };
-  const searchTokenKeyMap: Record<string, ColumnFilterKey> = {
-    status: 'status',
-    priority: 'priority',
-    assignee: 'assignee',
-    assigned: 'assignee',
-    department: 'department',
-    dept: 'department',
-    category: 'category',
-    cat: 'category',
-    label: 'labels',
-    labels: 'labels',
-    created: 'created_at',
-    createdat: 'created_at',
-    created_date: 'created_at',
-    created_at: 'created_at',
-    due: 'created_at',
-    duedate: 'created_at',
-    due_date: 'created_at',
-  };
-
-  const parseSearchQuery = (query: string) => {
-    const regex = /\b(\w+):(?:"([^"]+)"|'([^']+)'|([^\s]+))/g;
-    const tokens: Partial<Record<ColumnFilterKey, string>> = {};
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(query)) !== null) {
-      const rawKey = match[1]?.toLowerCase();
-      const mappedKey = rawKey ? searchTokenKeyMap[rawKey] : undefined;
-      if (!mappedKey) continue;
-      const rawValue = match[2] ?? match[3] ?? match[4] ?? '';
-      if (!rawValue) continue;
-      tokens[mappedKey] = rawValue.trim();
-    }
-
-    const cleanedQuery = query
-      .replace(regex, '')
-      .replace(/\b\w+:\s*$/, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    return { tokens, cleanedQuery };
-  };
-
-  const formatSearchTokenValue = (value: string) => {
-    if (!value) return '';
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-    return /\s/.test(trimmed) ? `"${trimmed}"` : trimmed;
-  };
-
-  const resolveStatusToken = (value?: string) => {
-    if (!value) return null;
-    let normalized = value.toLowerCase().replace(/\s+/g, '_').replace(/-+/g, '_');
-    if (normalized === 'hold') normalized = 'on_hold';
-    if (normalized === 'assigned' || normalized === 'todo') normalized = 'open';
-    if (normalized === 'solved' || normalized === 'resolved') normalized = 'closed';
-    const allowed = new Set(['open', 'in_progress', 'pending', 'on_hold', 'closed']);
-    return allowed.has(normalized) ? normalized : null;
-  };
-
-  const resolvePriorityToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase().replace(/\s+/g, '_').replace(/-+/g, '_');
-    const allowed = new Set(['low', 'medium', 'high', 'urgent', 'normal']);
-    return allowed.has(normalized) ? normalized : null;
-  };
-
-  const resolveAssigneeToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase();
-    if (['unassigned', 'none', 'noone', 'no-one'].includes(normalized)) {
-      return 'unassigned';
-    }
-    const match = agentsRef.current?.find(agent => {
-      const name = agent.name?.toLowerCase() || '';
-      const email = agent.email?.toLowerCase() || '';
-      return name.includes(normalized) || email.includes(normalized);
-    });
-    return match ? match.id.toString() : null;
-  };
-
-  const resolveDepartmentToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase();
-    const match = departmentsRef.current.find(dept => dept.name?.toLowerCase().includes(normalized));
-    return match ? match.id.toString() : null;
-  };
-
-  const resolveCategoryToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.toLowerCase();
-    const match = categoriesRef.current.find(cat => cat.name?.toLowerCase().includes(normalized));
-    return match ? match.id.toString() : null;
-  };
-
-  const resolveCreatedDateToken = (value?: string) => {
-    if (!value) return null;
-    const normalized = value.trim();
-    if (!normalized) return null;
-    if (normalized.includes('..')) {
-      const [fromRaw, toRaw] = normalized.split('..');
-      const from = fromRaw?.trim() || undefined;
-      const to = toRaw?.trim() || undefined;
-      return { from, to };
-    }
-    if (normalized.startsWith('>=')) return { from: normalized.slice(2).trim() || undefined };
-    if (normalized.startsWith('>')) return { from: normalized.slice(1).trim() || undefined };
-    if (normalized.startsWith('<=')) return { to: normalized.slice(2).trim() || undefined };
-    if (normalized.startsWith('<')) return { to: normalized.slice(1).trim() || undefined };
-    return { from: normalized };
-  };
   const [isCreateTicketModalDirty, setIsCreateTicketModalDirty] = useState(false);
   const [showCreateTicketCloseConfirm, setShowCreateTicketCloseConfirm] = useState(false);
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
@@ -539,13 +374,49 @@ export default function TicketManagementSystem() {
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
   const columnFilterRef = useRef<HTMLDivElement>(null);
 
-  type SortField = 'ticket_id' | 'title' | 'status' | 'priority' | 'department' | 'author' | 'assignee' | 'created_at' | 'tasks';
-  type SortState = { field: SortField; direction: 'asc' | 'desc'; explicit: boolean };
-  const defaultSortState: SortState = { field: 'created_at', direction: 'desc', explicit: false };
   const [sortStateByView, setSortStateByView] = useState<Record<string, SortState>>({});
-  const currentSortState = sortStateByView[activeView] ?? defaultSortState;
+  const currentSortState = sortStateByView[activeView] ?? DEFAULT_SORT_STATE;
   const sortField = currentSortState.field;
   const sortDirection = currentSortState.direction;
+
+  const ticketsQuery = useTicketsListQuery(
+    {
+      page: currentPage,
+      view: activeView,
+      limit,
+      sortState: currentSortState,
+      searchQuery: debouncedSearchQuery,
+      statusFilter,
+      priorityFilter,
+      assigneeFilter,
+      departmentFilter,
+      categoryFilter,
+      labelFilterIds,
+      dateFromFilter,
+      dateToFilter,
+    },
+    {
+      agents: agentsRef.current,
+      departments: departmentsRef.current,
+      categories: categoriesRef.current,
+      labels: labelsRef.current,
+    },
+  );
+
+  useEffect(() => {
+    if (ticketsQuery.error) {
+      const errorMsg = ticketsQuery.error instanceof Error ? ticketsQuery.error.message : 'An error occurred while fetching tickets';
+      errorNotification(errorMsg);
+    }
+  }, [ticketsQuery.error]);
+
+  const tickets = useMemo(
+    () => ticketsQuery.data?.results.map(transformApiTicket) ?? [],
+    [ticketsQuery.data],
+  );
+  const totalCount = ticketsQuery.data?.count ?? 0;
+  const isLoading = ticketsQuery.isLoading;
+  const isFetchingTickets = ticketsQuery.isFetching;
 
   const statusPillClass = (status: string) =>
     `inline-flex items-center justify-center px-3 py-1 rounded-full text-[14px] font-semibold whitespace-nowrap border ${getStatusColor(status)}`;
@@ -621,7 +492,7 @@ export default function TicketManagementSystem() {
 
   const handleSortToggle = useCallback((field: SortField) => {
     setSortStateByView((prev) => {
-      const current = prev[activeView] ?? defaultSortState;
+      const current = prev[activeView] ?? DEFAULT_SORT_STATE;
       if (current.field === field) {
         return {
           ...prev,
@@ -891,13 +762,13 @@ export default function TicketManagementSystem() {
   const handleBulkArchive = async () => {
     if (selectedTickets.size === 0) return;
     try {
-      const response = await http.post('/ticket/bulk/archive/', {
+      const response = await http.post(`${BASE_URL}/ticket/bulk/archive/`, {
         ticket_ids: Array.from(selectedTickets).map(id => Number(id))
       });
       console.log('Archive response:', response.data);
       setSelectedTickets(new Set());
       // Refresh tickets list
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     } catch (error) {
       console.error('Error archiving tickets:', error);
       errorNotification('Failed to archive selected tickets');
@@ -909,7 +780,7 @@ export default function TicketManagementSystem() {
     setShowBulkDeleteConfirm(false);
     try {
       const isTrash = getViewContext() === 'trash';
-      const endpoint = isTrash ? '/ticket/bulk/permanent-delete/' : '/ticket/bulk/delete/';
+      const endpoint = isTrash ? `${BASE_URL}/ticket/bulk/permanent-delete/` : `${BASE_URL}/ticket/bulk/delete/`;
       console.log('[DEBUG] activeView:', activeView, 'isTrash:', isTrash, 'endpoint:', endpoint);
       const response = await http.post(endpoint, {
         ticket_ids: Array.from(selectedTickets).map(id => Number(id))
@@ -922,7 +793,7 @@ export default function TicketManagementSystem() {
       );
       setSelectedTickets(new Set());
       // Refresh tickets list
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     } catch (error) {
       console.error('Error deleting tickets:', error);
       errorNotification('Failed to delete selected tickets');
@@ -937,14 +808,14 @@ export default function TicketManagementSystem() {
     if (!selectedTicket) return;
     try {
       const isTrash = getViewContext() === 'trash';
-      const endpoint = isTrash ? '/ticket/bulk/permanent-delete/' : '/ticket/bulk/delete/';
+      const endpoint = isTrash ? `${BASE_URL}/ticket/bulk/permanent-delete/` : `${BASE_URL}/ticket/bulk/delete/`;
       await http.post(endpoint, {
         ticket_ids: [Number(selectedTicket.id)],
       });
       successNotification(isTrash ? 'Ticket permanently deleted' : 'Ticket moved to trash');
       setShowDeleteModal(false);
       setSelectedTicket(null);
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     } catch (error: any) {
       console.error('Error deleting ticket:', error);
       errorNotification(error?.response?.data?.message || 'Failed to delete ticket');
@@ -973,12 +844,12 @@ export default function TicketManagementSystem() {
   const handleBulkUnarchive = async () => {
     if (selectedTickets.size === 0) return;
     try {
-      const response = await http.post('/ticket/bulk/unarchive/', {
+      const response = await http.post(`${BASE_URL}/ticket/bulk/unarchive/`, {
         ticket_ids: Array.from(selectedTickets).map(id => Number(id))
       });
       console.log('Unarchive response:', response.data);
       setSelectedTickets(new Set());
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     } catch (error) {
       console.error('Error unarchiving tickets:', error);
       errorNotification('Failed to unarchive selected tickets');
@@ -988,12 +859,12 @@ export default function TicketManagementSystem() {
   const handleBulkRestore = async () => {
     if (selectedTickets.size === 0) return;
     try {
-      const response = await http.post('/ticket/bulk/restore/', {
+      const response = await http.post(`${BASE_URL}/ticket/bulk/restore/`, {
         ticket_ids: Array.from(selectedTickets).map(id => Number(id))
       });
       console.log('Restore response:', response.data);
       setSelectedTickets(new Set());
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     } catch (error) {
       console.error('Error restoring tickets:', error);
       errorNotification('Failed to restore selected tickets');
@@ -1226,64 +1097,6 @@ export default function TicketManagementSystem() {
     };
   }, [showSearchFilterDropdown, showSearchValueDropdown]);
 
-  const transformApiTicket = (apiTicket: ApiTicket): Ticket => {
-    const normalizedStatus = (resolveStatusToken(apiTicket.status) ?? 'open') as Ticket['status'];
-
-    return ({
-    id: apiTicket.id.toString(),
-    title: apiTicket.title || '',
-    description: apiTicket.description || '',
-    status: normalizedStatus,
-    priority: apiTicket.priority_display?.toLowerCase() as Ticket['priority'] || 'normal',
-    category: apiTicket.category?.name || 'Uncategorized',
-    department: apiTicket.department ? {
-      id: apiTicket.department.id,
-      name: apiTicket.department.name,
-    } : undefined,
-    ticket_id: apiTicket.ticket_id || '',
-    assigneeId: apiTicket.assigned_to?.id.toString(),
-    assignee: apiTicket.assigned_to ? {
-      id: apiTicket.assigned_to.id.toString(),
-      email: apiTicket.assigned_to.email || '',
-      firstName: apiTicket.assigned_to.first_name || '',
-      lastName: apiTicket.assigned_to.last_name || '',
-      role: 'agent',
-      workspaceId: 'default-workspace-id',
-      isActive: apiTicket.assigned_to?.is_active ?? true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      avatar_url: apiTicket.assigned_to.avatar_url,
-    } : undefined,
-    requesterId: 'unknown-requester-id',
-    requester: {
-      id: 'unknown-requester-id',
-      email: apiTicket.creator_email || '',
-      firstName: (apiTicket.creator_name || '').split(' ')[0] || '',
-      lastName: (apiTicket.creator_name || '').split(' ').slice(1).join(' ') || '',
-      role: 'staff',
-      workspaceId: 'default-workspace-id',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      phone: apiTicket.creator_phone || '',
-    },
-    workspaceId: 'default-workspace-id',
-    tags: (apiTicket.labels || []).map((label) => label.name),
-    labels: apiTicket.labels || [],
-    attachments: [],
-    comments: [],
-    createdAt: apiTicket.created_at || new Date().toISOString(),
-    updatedAt: apiTicket.updated_at || apiTicket.created_at || new Date().toISOString(),
-    dueDate: apiTicket.due_date,
-    resolvedAt: undefined,
-    breached: apiTicket.breached,
-    source: apiTicket.source || 'web', // Added source field mapping
-    linked_tasks_count: apiTicket.linked_tasks_count ?? 0,
-    is_opened: apiTicket.is_opened ?? false,
-    has_new_reply: apiTicket.has_new_reply ?? false,
-  });
-  };
-
   // Handlers for create ticket modal close confirmation
   const handleCloseCreateTicketModal = () => {
     if (isCreateTicketModalDirty) {
@@ -1301,129 +1114,28 @@ export default function TicketManagementSystem() {
   };
 
 
-  const fetchTicketsAbortRef = useRef<AbortController | null>(null);
-
-  const fetchTickets = React.useCallback(async (page: number = 1, view: string = 'all_unresolved', limitOverride?: number) => {
-    // Cancel any in-flight request so a late-arriving stale response (e.g. from
-    // a filter the user already changed away from) can't overwrite newer state.
-    fetchTicketsAbortRef.current?.abort();
-    const abortController = new AbortController();
-    fetchTicketsAbortRef.current = abortController;
-
-    setIsLoading(true);
-    const effectiveLimit = limitOverride ?? limit;
-
-    try {
-      const offset = (page - 1) * effectiveLimit;
-      const params: Record<string, string | number> = {
-        page_size: effectiveLimit,
-        offset,
-        view: view,
-      };
-      const viewSortState = sortStateByView[view] ?? defaultSortState;
-      const shouldSendSort =
-        view !== 'slow_queues' || viewSortState.explicit;
-      if (shouldSendSort) {
-        params.sort_by = viewSortState.field;
-        params.sort_direction = viewSortState.direction;
-      }
-
-      const parsedSearch = parseSearchQuery(debouncedSearchQuery);
-      if (parsedSearch.cleanedQuery) {
-        params.search = parsedSearch.cleanedQuery;
-      }
-
-      const tokenStatus = resolveStatusToken(parsedSearch.tokens.status);
-      const tokenPriority = resolvePriorityToken(parsedSearch.tokens.priority);
-      const tokenAssignee = resolveAssigneeToken(parsedSearch.tokens.assignee);
-      const tokenDepartment = resolveDepartmentToken(parsedSearch.tokens.department);
-      const tokenCategory = resolveCategoryToken(parsedSearch.tokens.category);
-      const tokenLabels = resolveLabelTokenIds(parsedSearch.tokens.labels, labelsRef.current);
-      const tokenCreatedDate = resolveCreatedDateToken(parsedSearch.tokens.created_at);
-
-      const effectiveStatus = tokenStatus ?? (statusFilter !== 'all' ? statusFilter : null);
-      const effectivePriority = tokenPriority ?? (priorityFilter !== 'all' ? priorityFilter : null);
-      const effectiveAssignee = tokenAssignee ?? (assigneeFilter !== 'all' ? assigneeFilter : null);
-      const effectiveDepartment = tokenDepartment ?? (departmentFilter !== 'all' ? departmentFilter : null);
-      const effectiveCategory = tokenCategory ?? (categoryFilter !== 'all' ? categoryFilter : null);
-      const effectiveLabelIds = tokenLabels.length > 0 ? tokenLabels : labelFilterIds;
-      const effectiveDateFrom = tokenCreatedDate?.from ?? dateFromFilter;
-      const effectiveDateTo = tokenCreatedDate?.to ?? dateToFilter;
-
-      if (effectiveStatus) params.status = effectiveStatus;
-      if (effectivePriority) params.priority = effectivePriority;
-      if (effectiveAssignee) params.assigned_to = effectiveAssignee;
-      if (effectiveDepartment) params.department = effectiveDepartment;
-      if (effectiveCategory) params.category = effectiveCategory;
-      if (effectiveLabelIds.length > 0) params.label_ids = effectiveLabelIds.join(',');
-      if (effectiveDateFrom) params.date_from = effectiveDateFrom;
-      if (effectiveDateTo) params.date_to = effectiveDateTo;
-
-      const cacheKey = ['tickets', params];
-      const cached = queryClient.getQueryData<ApiResponse>(cacheKey);
-      if (cached?.results) {
-        setTickets(cached.results.map(transformApiTicket));
-        setTotalCount(cached.count || 0);
-        setCurrentPage(page);
-        setTimeout(() => setIsLoading(false), 100);
-      }
-
-      const response = await http.get<ApiResponse>(APIS.LIST_TICKETS, { params, signal: abortController.signal });
-      queryClient.setQueryData(cacheKey, response.data);
-      const transformedTickets = response.data.results.map(transformApiTicket);
-      setTickets(transformedTickets);
-      setTotalCount(response.data.count || 0);
-      setCurrentPage(page);
-    } catch (error: unknown) {
-      if ((error as { code?: string; name?: string })?.code === 'ERR_CANCELED' ||
-          (error as { code?: string; name?: string })?.name === 'CanceledError') {
-        // A newer fetchTickets call superseded this one — not a real error.
-        return;
-      }
-      const errorMsg = error instanceof Error ? error.message : 'An error occurred while fetching tickets';
-      errorNotification(errorMsg);
-    } finally {
-      if (fetchTicketsAbortRef.current === abortController) {
-        setTimeout(() => setIsLoading(false), 100);
-      }
-    }
-  }, [limit, debouncedSearchQuery, statusFilter, priorityFilter, assigneeFilter, departmentFilter, categoryFilter, labelFilterIds, dateFromFilter, dateToFilter, sortStateByView]);
 
   const fetchTicketCounts = async () => {
     try {
-      const params: Record<string, string> = {};
-
-      const parsedSearch = parseSearchQuery(debouncedSearchQuery);
-      if (parsedSearch.cleanedQuery) {
-        params.search = parsedSearch.cleanedQuery;
-      }
-
-      const tokenStatus = resolveStatusToken(parsedSearch.tokens.status);
-      const tokenPriority = resolvePriorityToken(parsedSearch.tokens.priority);
-      const tokenAssignee = resolveAssigneeToken(parsedSearch.tokens.assignee);
-      const tokenDepartment = resolveDepartmentToken(parsedSearch.tokens.department);
-      const tokenCategory = resolveCategoryToken(parsedSearch.tokens.category);
-      const tokenLabels = resolveLabelTokenIds(parsedSearch.tokens.labels, labelsRef.current);
-      const tokenCreatedDate = resolveCreatedDateToken(parsedSearch.tokens.created_at);
-
-      const effectiveStatus = tokenStatus ?? (statusFilter !== 'all' ? statusFilter : null);
-      const effectivePriority = tokenPriority ?? (priorityFilter !== 'all' ? priorityFilter : null);
-      const effectiveAssignee = tokenAssignee ?? (assigneeFilter !== 'all' ? assigneeFilter : null);
-      const effectiveDepartment = tokenDepartment ?? (departmentFilter !== 'all' ? departmentFilter : null);
-      const effectiveCategory = tokenCategory ?? (categoryFilter !== 'all' ? categoryFilter : null);
-      const effectiveLabelIds = tokenLabels.length > 0 ? tokenLabels : labelFilterIds;
-      const effectiveDateFrom = tokenCreatedDate?.from ?? dateFromFilter;
-      const effectiveDateTo = tokenCreatedDate?.to ?? dateToFilter;
-
-      if (effectiveStatus) params.status = effectiveStatus;
-      if (effectivePriority) params.priority = effectivePriority;
-      if (effectiveAssignee) params.assigned_to = effectiveAssignee;
-      if (effectiveDepartment) params.department = effectiveDepartment;
-      if (effectiveCategory) params.category = effectiveCategory;
-      if (effectiveLabelIds.length > 0) params.label_ids = effectiveLabelIds.join(',');
-      if (effectiveDateFrom) params.date_from = effectiveDateFrom;
-      if (effectiveDateTo) params.date_to = effectiveDateTo;
-
+      const params = buildTicketQueryParams(
+        {
+          searchQuery: debouncedSearchQuery,
+          statusFilter,
+          priorityFilter,
+          assigneeFilter,
+          departmentFilter,
+          categoryFilter,
+          labelFilterIds,
+          dateFromFilter,
+          dateToFilter,
+        },
+        {
+          agents: agentsRef.current,
+          departments: departmentsRef.current,
+          categories: categoriesRef.current,
+          labels: labelsRef.current,
+        },
+      );
       const response = await http.get(APIS.TICKET_COUNTS, { params });
       setTicketCounts(response.data);
     } catch (error: unknown) {
@@ -1537,19 +1249,22 @@ export default function TicketManagementSystem() {
     requestAnimationFrame(() => searchInputRef.current?.focus());
   };
 
+  // The ticket list itself is fetched reactively by useTicketsListQuery above —
+  // its queryKey already embeds page/view/limit/filters/sort, so it refetches
+  // on its own whenever any of those change. Counts don't go through React
+  // Query yet, so they still need an explicit fetch on the same dependencies.
   React.useEffect(() => {
-    fetchTickets(currentPage, activeView);
     fetchTicketCounts();
-  }, [fetchTickets, currentPage, activeView, limit, statusFilter, priorityFilter, assigneeFilter, departmentFilter, categoryFilter, labelFilterIds, dateFromFilter, dateToFilter]);
+  }, [currentPage, activeView, limit, statusFilter, priorityFilter, assigneeFilter, departmentFilter, categoryFilter, labelFilterIds, dateFromFilter, dateToFilter]);
 
   useEffect(() => {
     const handler = () => {
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
       fetchTicketCounts();
     };
     window.addEventListener('ticket_event', handler);
     return () => window.removeEventListener('ticket_event', handler);
-  }, [fetchTickets, currentPage, activeView]);
+  }, [currentPage, activeView]);
 
   // Detailed view shows inline - no navigation needed
 
@@ -1620,11 +1335,7 @@ export default function TicketManagementSystem() {
       if (response.data.ticket) {
         const updatedTicket = transformApiTicket(response.data.ticket);
         setSelectedTicket(updatedTicket);
-
-        // Also update the ticket in the list if it's there
-        setTickets(prev => prev.map(ticket =>
-          ticket.id === ticketId ? { ...updatedTicket } : ticket
-        ));
+        queryClient.invalidateQueries({ queryKey: ['tickets'] });
       }
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "Failed to refresh ticket details";
@@ -1767,13 +1478,13 @@ export default function TicketManagementSystem() {
       };
       setSelectedTicket(updatedTicket);
 
-      // Update the ticket in the list
-      setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updatedTicket : t));
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
 
       // If ticket is moved to terminal state from unresolved views, switch table to closed view.
+      // handleViewSelect already resets currentPage, which changes the query key and
+      // triggers its own refetch — no separate fetch call needed here.
       if (normalizedStatus === 'closed' && (activeView === openViewKey || activeView === 'all_unresolved' || activeView === 'my_unresolved')) {
         handleViewSelect(closedViewKey);
-        fetchTickets(1, closedViewKey);
       }
 
       successNotification(response.data.message)
@@ -1797,7 +1508,7 @@ export default function TicketManagementSystem() {
     try {
       const response = await http.get(`${APIS.TICKET_ASSIGN_TO_ME}${selectedTicket.id}`);
       successNotification(response.data.message);
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
       fetchTicketDetails(selectedTicket.id);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to assign ticket';
@@ -1818,7 +1529,7 @@ export default function TicketManagementSystem() {
       const response = await http.post(`${APIS.TICKET_ASSIGN}`, payload);
       successNotification(response.data.message)
       // Refresh list and selected ticket
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
       fetchTicketDetails(selectedTicket.id);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "An error occurred";
@@ -1864,7 +1575,7 @@ export default function TicketManagementSystem() {
       fetchWatchers(selectedTicket.id);
       fetchTicketDetails(selectedTicket.id); // Refresh ticket details
       successNotification(response.data.message);
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "Failed to add watchers";
       errorNotification(errorMsg);
@@ -1881,9 +1592,7 @@ export default function TicketManagementSystem() {
       tags: updatedLabels.map((label) => label.name),
     };
     setSelectedTicket(nextTicket);
-    setTickets((current) => current.map((ticket) => (
-      ticket.id === selectedTicket.id ? nextTicket : ticket
-    )));
+    queryClient.invalidateQueries({ queryKey: ['tickets'] });
     fetchLabels();
   };
 
@@ -1894,7 +1603,7 @@ export default function TicketManagementSystem() {
       const response = await http.post(`${APIS.TICKET_BASE}/${selectedTicket.id}/reopen/`, { reason });
 
       // Refresh ticket details and list from server
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
       fetchTicketDetails(selectedTicket.id); // Refresh ticket details
 
       successNotification(response.data.message);
@@ -1925,9 +1634,7 @@ export default function TicketManagementSystem() {
         department: selectedDept || selectedTicket.department
       };
       setSelectedTicket(updatedTicket);
-
-      // Update the ticket in the list
-      setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updatedTicket : t));
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
 
       successNotification(response.data.message || 'Department updated successfully');
       setSelectedDepartmentId("");
@@ -1953,7 +1660,7 @@ export default function TicketManagementSystem() {
       const selectedCat = categories.find(c => c.id === Number(selectedCategoryId) || c.name === selectedCategoryId);
       const updatedTicket: Ticket = { ...selectedTicket, category: selectedCat?.name || selectedTicket.category } as Ticket;
       setSelectedTicket(updatedTicket);
-      setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updatedTicket : t));
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
 
       successNotification(response.data.message || 'Category updated successfully');
       setSelectedCategoryId("");
@@ -1974,11 +1681,10 @@ export default function TicketManagementSystem() {
 
       const updatedTicket: Ticket = { ...selectedTicket, priority: selectedPriority } as Ticket;
       setSelectedTicket(updatedTicket);
-      setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updatedTicket : t));
 
       successNotification(response.data.message || 'Priority updated successfully');
       setSelectedPriority("");
-      fetchTickets(currentPage, activeView);
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
       fetchTicketDetails(selectedTicket.id);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "Failed to update priority";
@@ -2463,8 +2169,8 @@ export default function TicketManagementSystem() {
                         <div className="sd-floating-popover absolute left-0 top-full z-50 mt-2 w-64 p-1.5">
                           <div className="px-2 py-1 text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Search filters</div>
                           <div className="mt-1 space-y-1">
-                            {searchFilterOptions.map(option => {
-                              const Icon = searchFilterIcons[option.key];
+                            {SEARCH_FILTER_OPTIONS.map(option => {
+                              const Icon = SEARCH_FILTER_ICONS[option.key];
                               return (
                                 <button
                                   key={option.key}
@@ -2792,7 +2498,7 @@ export default function TicketManagementSystem() {
           </header>
 
           <div className={`flex-1 min-w-0 overflow-hidden ${splitLayoutClass}`}>
-            {isLoading && <Loader />}
+            {isFetchingTickets && <Loader />}
             {/* Tickets List */}
             <div className={`${viewMode === 'detailed' && showDetailPanel ? 'min-w-0' : 'w-full'} min-w-0 bg-white dark:bg-surface-elevated border-r border-gray-200 dark:border-subtle flex flex-col`}>
               {/* Bulk Actions - Show when tickets are selected */}
@@ -3144,7 +2850,6 @@ export default function TicketManagementSystem() {
                         setLimit(newLimit);
                         localStorage.setItem('ticketPageSize', String(newLimit));
                         setCurrentPage(1);
-                        fetchTickets(1, activeView, newLimit);
                       }}
                       options={[
                         { value: '10', label: '10' },
@@ -3729,7 +3434,7 @@ export default function TicketManagementSystem() {
       >
         {
           createTicket && <CreateTicketModal
-            reload={() => fetchTickets(currentPage, activeView)}
+            reload={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
             onclose={handleCloseCreateTicketModal}
             onSuccess={confirmCloseCreateTicketModal}
             onDirtyChange={setIsCreateTicketModalDirty}
@@ -3765,7 +3470,7 @@ export default function TicketManagementSystem() {
           isOpen={showStatusModal}
           onClose={() => setShowStatusModal(false)}
           onStatusUpdated={() => {
-            fetchTickets(currentPage, activeView);
+            queryClient.invalidateQueries({ queryKey: ['tickets'] });
             fetchTicketDetails(selectedTicket.id);
           }}
         />
@@ -3777,7 +3482,7 @@ export default function TicketManagementSystem() {
           currentPriority={selectedTicket.priority}
           isOpen={showPriorityModal}
           onClose={() => setShowPriorityModal(false)}
-          onPriorityUpdated={() => fetchTickets(currentPage, activeView)}
+          onPriorityUpdated={() => queryClient.invalidateQueries({ queryKey: ['tickets'] })}
         />
       )}
 
