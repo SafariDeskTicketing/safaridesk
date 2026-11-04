@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Search, Plus, User, Clock, MessageCircle, ChevronDown, ChevronRight, ChevronLeft, ChevronUp, Grid3x3, Tag, CheckCircle, UserCheck, AlertCircle, ShieldAlert, Trash2, Building, AlertTriangle, UserX, XCircle, Inbox, CreditCard, Settings, X, List, PauseCircle, Ticket as TicketIcon
+  Search, Plus, User, Clock, MessageCircle, ChevronDown, ChevronRight, ChevronLeft, ChevronUp, Grid3x3, Tag, CheckCircle, UserCheck, AlertCircle, ShieldAlert, Trash2, Building, AlertTriangle, UserX, XCircle, Inbox, CreditCard, Settings, X, List, PauseCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Button from '../../components/ui/Button';
@@ -12,7 +12,7 @@ import { APIS } from '../../services/apis';
 import http from '../../services/http';
 import { errorNotification, successNotification } from '../../components/ui/Toast';
 import type { Agent, LabelItem, Ticket } from '../../types';
-import { SOURCE_OPTIONS, getSourceLabel, getStatusColor, getPriorityColor, formatUserDisplayName } from '../../utils/displayHelpers';
+import { SOURCE_OPTIONS, getStatusColor, getPriorityColor } from '../../utils/displayHelpers';
 import Select from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
 import { useFetchAgents } from '../../services/agents';
@@ -35,11 +35,9 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { NewBadge } from '../../components/ui/NewBadge';
 import { AGENT_TICKET_VIEW_ITEMS, TICKET_VIEW_ITEMS } from '../../components/layout/viewConfigs';
 import TicketSettingsModal from '../../components/settings/TicketSettingsModal';
-import { HoverPreviewCard } from '../../components/previews/HoverPreviewCard';
 import LabelGroup from '../../components/ui/LabelGroup';
 import ManageLabelsModal from '../../components/labels/ManageLabelsModal';
 import { getLabelNamesByIds, resolveLabelTokenIds } from '../../utils/labels';
-import { useHoverPreviewActivity } from '../../hooks/useHoverPreviewActivity';
 import { useCopilotStore } from '../../stores/copilotStore';
 import { Loader } from '../../components/loader/loader';
 import { BASE_URL } from '../../utils/base';
@@ -68,6 +66,8 @@ import { useTicketBulkActions, type BulkExportFormat } from './list/useTicketBul
 import { TicketDetailPanel } from './list/TicketDetailPanel';
 import { UpdateDepartmentModal } from './list/UpdateDepartmentModal';
 import { DeleteTicketModal } from './list/DeleteTicketModal';
+import { useTicketHoverPreview } from './list/useTicketHoverPreview';
+import { TicketHoverPreview } from './list/TicketHoverPreview';
 
 const BULK_EXPORT_FORMAT_OPTIONS = [
   { value: 'xlsx', label: 'Excel' },
@@ -92,42 +92,11 @@ interface AddWatchersPayload {
   watchers: number[];
 }
 
-interface TicketPreviewState {
-  ticket: Ticket;
-  anchorRect: DOMRect;
-  placement: 'left' | 'right';
-}
-
-const PREVIEW_OPEN_DELAY_MS = 350;
-const PREVIEW_CLOSE_DELAY_MS = 160;
-const PREVIEW_CARD_WIDTH = 544;
-const PREVIEW_CARD_SAFE_HEIGHT = 560;
-const PREVIEW_VIEWPORT_PADDING = 20;
 type TicketViewMode = 'detailed' | 'card' | 'list';
 
 const getStoredTicketViewMode = (): 'card' | 'list' => (
   localStorage.getItem('ticketViewMode') === 'card' ? 'card' : 'list'
 );
-
-const getDescriptionPreview = (description?: string | null, maxLength = 220): string => {
-  if (!description) return 'No description provided';
-  const text = description
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!text) return 'No description provided';
-  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
-};
-
-const formatPriorityLabel = (priority?: string | null): string => {
-  if (!priority) return 'Normal';
-  const value = priority.replace(/_/g, ' ').trim();
-  return value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Normal';
-};
-
 
 export default function TicketManagementSystem() {
 
@@ -234,51 +203,16 @@ export default function TicketManagementSystem() {
     openColumnFilter,
     closeColumnFilter,
   } = useColumnFilterPopover(() => setShowSearchFilterDropdown(false));
-  const [ticketPreview, setTicketPreview] = useState<TicketPreviewState | null>(null);
-  const ticketPreviewOpenTimeoutRef = useRef<number | null>(null);
-  const ticketPreviewHideTimeoutRef = useRef<number | null>(null);
-  const { ensureLatestComment, getLatestCommentPreview, isLoading: isLatestCommentLoading } = useHoverPreviewActivity();
-
-  const clearTicketPreviewOpenTimeout = () => {
-    if (ticketPreviewOpenTimeoutRef.current) {
-      window.clearTimeout(ticketPreviewOpenTimeoutRef.current);
-      ticketPreviewOpenTimeoutRef.current = null;
-    }
-  };
-
-  const clearTicketPreviewHideTimeout = () => {
-    if (ticketPreviewHideTimeoutRef.current) {
-      window.clearTimeout(ticketPreviewHideTimeoutRef.current);
-      ticketPreviewHideTimeoutRef.current = null;
-    }
-  };
-
-  const showTicketPreview = (ticket: Ticket, element: HTMLElement) => {
-    clearTicketPreviewOpenTimeout();
-    clearTicketPreviewHideTimeout();
-    const anchorRect = element.getBoundingClientRect();
-    const placement = anchorRect.right + PREVIEW_CARD_WIDTH + 14 <= window.innerWidth - 16 ? 'right' : 'left';
-
-    ticketPreviewOpenTimeoutRef.current = window.setTimeout(() => {
-      setTicketPreview({ ticket, anchorRect, placement });
-      void ensureLatestComment('ticket', ticket.id);
-    }, PREVIEW_OPEN_DELAY_MS);
-  };
-
-  const scheduleHideTicketPreview = () => {
-    clearTicketPreviewOpenTimeout();
-    clearTicketPreviewHideTimeout();
-    ticketPreviewHideTimeoutRef.current = window.setTimeout(() => {
-      setTicketPreview(null);
-    }, PREVIEW_CLOSE_DELAY_MS);
-  };
-
-  useEffect(() => {
-    return () => {
-      clearTicketPreviewOpenTimeout();
-      clearTicketPreviewHideTimeout();
-    };
-  }, []);
+  const {
+    ticketPreview,
+    ticketPreviewPosition,
+    ticketLatestComment,
+    ticketLatestCommentLoading,
+    showTicketPreview,
+    scheduleHideTicketPreview,
+    clearHideTimeout: clearTicketPreviewHideTimeout,
+    closeTicketPreview,
+  } = useTicketHoverPreview();
 
   useEffect(() => {
     if (!selectedTicket) {
@@ -384,41 +318,6 @@ export default function TicketManagementSystem() {
     viewMode === 'detailed' && showDetailPanel
       ? 'grid grid-cols-[clamp(300px,30vw,420px)_minmax(0,1fr)]'
       : 'flex';
-  const ticketPreviewGap = 14;
-  const ticketPreviewPosition = useMemo(() => {
-    if (!ticketPreview) return null;
-
-    let left = ticketPreview.placement === 'right'
-      ? ticketPreview.anchorRect.right + ticketPreviewGap
-      : ticketPreview.anchorRect.left - PREVIEW_CARD_WIDTH - ticketPreviewGap;
-
-    if (left + PREVIEW_CARD_WIDTH > window.innerWidth - PREVIEW_VIEWPORT_PADDING) {
-      left = window.innerWidth - PREVIEW_CARD_WIDTH - PREVIEW_VIEWPORT_PADDING;
-    }
-    left = Math.max(PREVIEW_VIEWPORT_PADDING, left);
-
-    const anchorCenterY = ticketPreview.anchorRect.top + (ticketPreview.anchorRect.height / 2);
-    let top = anchorCenterY - (PREVIEW_CARD_SAFE_HEIGHT / 2);
-    top = Math.max(
-      PREVIEW_VIEWPORT_PADDING,
-      Math.min(top, window.innerHeight - PREVIEW_CARD_SAFE_HEIGHT - PREVIEW_VIEWPORT_PADDING)
-    );
-
-    const arrowOffset = Math.max(
-      48,
-      Math.min(anchorCenterY - top, PREVIEW_CARD_SAFE_HEIGHT - 48)
-    );
-
-    return { left, top, arrowOffset };
-  }, [ticketPreview]);
-
-  const ticketLatestComment = ticketPreview ? getLatestCommentPreview('ticket', ticketPreview.ticket.id) : null;
-  const ticketLatestCommentLoading = ticketPreview ? isLatestCommentLoading('ticket', ticketPreview.ticket.id) : false;
-
-  const formatUserName = (user?: { firstName?: string; lastName?: string; email?: string; isActive?: boolean }) => {
-    return formatUserDisplayName(user, 'Unassigned');
-  };
-
   const filteredTickets = useMemo(() => {
     const { cleanedQuery } = parseSearchQuery(searchQuery);
     if (!cleanedQuery) return tickets;
@@ -928,12 +827,6 @@ export default function TicketManagementSystem() {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
-  };
-
-  // Using shared utility functions from displayHelpers
-
-  const getSourceDisplay = (source?: string) => {
-    return getSourceLabel(source);
   };
 
   const fetchTicketDetails = async (ticketId: string) => {
@@ -2169,48 +2062,15 @@ export default function TicketManagementSystem() {
           document.body
         )}
 
-      {typeof document !== 'undefined' && ticketPreview && ticketPreviewPosition &&
-        createPortal(
-          <div
-            className="fixed z-[10000]"
-            style={{ left: ticketPreviewPosition.left, top: ticketPreviewPosition.top }}
-            onMouseEnter={clearTicketPreviewHideTimeout}
-            onMouseLeave={scheduleHideTicketPreview}
-          >
-            <HoverPreviewCard
-              icon={TicketIcon}
-              title={ticketPreview.ticket.title}
-              subtitle={`Ticket #${ticketPreview.ticket.ticket_id}`}
-              placement={ticketPreview.placement}
-              arrowOffset={ticketPreviewPosition.arrowOffset}
-              onClose={() => setTicketPreview(null)}
-              summaryFields={[
-                { label: 'Priority', value: formatPriorityLabel(ticketPreview.ticket.priority) },
-                { label: 'Status', value: statusLabel(ticketPreview.ticket.status) },
-                { label: 'Source', value: getSourceDisplay(ticketPreview.ticket.source) },
-              ]}
-              description={getDescriptionPreview(ticketPreview.ticket.description, 280)}
-              latestActivity={{
-                label: 'Latest update',
-                loading: ticketLatestCommentLoading,
-                empty: !ticketLatestComment && !ticketLatestCommentLoading,
-                emptyTitle: 'No recent activity',
-                emptyDescription: 'The latest comment will appear here when activity exists.',
-                authorName: ticketLatestComment?.authorName,
-                authorAvatar: ticketLatestComment?.authorAvatar,
-                createdAt: ticketLatestComment?.createdAt,
-                content: ticketLatestComment?.content,
-              }}
-              detailFields={[
-                { label: 'Requester', value: formatUserName(ticketPreview.ticket.requester) },
-                { label: 'Assignee', value: ticketPreview.ticket.assignee ? formatUserName(ticketPreview.ticket.assignee) : 'Unassigned' },
-                { label: 'Department', value: ticketPreview.ticket.department?.name || '—' },
-                { label: 'Linked tasks', value: String(ticketPreview.ticket.linked_tasks_count ?? 0) },
-              ]}
-            />
-          </div>,
-          document.body
-        )}
+      <TicketHoverPreview
+        ticketPreview={ticketPreview}
+        position={ticketPreviewPosition}
+        latestComment={ticketLatestComment}
+        latestCommentLoading={ticketLatestCommentLoading}
+        onClose={closeTicketPreview}
+        onMouseEnter={clearTicketPreviewHideTimeout}
+        onMouseLeave={scheduleHideTicketPreview}
+      />
 
       <TicketSettingsModal
         isOpen={showSettingsModal}
