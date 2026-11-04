@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Search, Plus, User, Clock, MessageCircle, FileText, ChevronDown, ChevronRight, ChevronLeft, ChevronUp, Paperclip, Grid3x3, Eye, Calendar, Mail, Phone, Tag, CheckCircle, Edit3, UserCheck, CheckSquare, AlertCircle, ShieldAlert, Archive, Trash2, Download, RotateCcw, Link as LinkIcon, Building, AlertTriangle, UserX, XCircle, Inbox, CreditCard, Settings, X, List, PauseCircle, Ticket as TicketIcon
+  Search, Plus, User, Clock, MessageCircle, FileText, ChevronDown, ChevronRight, ChevronLeft, ChevronUp, Paperclip, Grid3x3, Eye, Calendar, Mail, Phone, Tag, CheckCircle, Edit3, UserCheck, CheckSquare, AlertCircle, ShieldAlert, Trash2, RotateCcw, Link as LinkIcon, Building, AlertTriangle, UserX, XCircle, Inbox, CreditCard, Settings, X, List, PauseCircle, Ticket as TicketIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Button from '../../components/ui/Button';
 import { useAuthStore } from '../../stores/authStore';
-import { useUIStore } from '../../stores/uiStore';
 import { APIS } from '../../services/apis';
 import http from '../../services/http';
-import { exportSelectedTickets } from '../../services/exports';
-import type { ExportFormat } from '../../services/exports';
 import { errorNotification, successNotification } from '../../components/ui/Toast';
 import type { Agent, LabelItem, Ticket } from '../../types';
 import TicketAttachments from './mini/TicketAttachments';
@@ -76,8 +73,7 @@ import {
   type SortField,
 } from './list/ticketListData';
 import { useViewSortState } from './list/useViewSortState';
-
-type BulkExportFormat = Exclude<ExportFormat, 'pdf'>;
+import { useTicketBulkActions, type BulkExportFormat } from './list/useTicketBulkActions';
 
 const BULK_EXPORT_FORMAT_OPTIONS = [
   { value: 'xlsx', label: 'Excel' },
@@ -365,7 +361,6 @@ export default function TicketManagementSystem() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [taskDialogTicketId, setTaskDialogTicketId] = useState<string>('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   const { currentSortState, toggleSort } = useViewSortState(activeView);
@@ -578,111 +573,21 @@ export default function TicketManagementSystem() {
     setLabelFilterIds(parsedLabelIds);
   }, [location.search]);
 
-  // Selection state for bulk actions
-  const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set());
-  const [bulkExportFormat, setBulkExportFormat] = useState<BulkExportFormat>('xlsx');
-
-  // Warn before browser close/refresh when tickets are selected
-  useEffect(() => {
-    if (selectedTickets.size === 0) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [selectedTickets.size]);
-
-  // Block all in-app navigation (NavLink, navigate(), back/forward) when items are selected
-  const blocker = useBlocker(selectedTickets.size > 0);
-
-  // Sync selection count to global store so Sidebar can still show the count in its dialog
-  const { setSelectionCount } = useUIStore();
-  useEffect(() => {
-    setSelectionCount(selectedTickets.size);
-    return () => setSelectionCount(0);
-  }, [selectedTickets.size]);
-
-  // Selection handlers
-  const handleTicketSelection = (ticketId: string, selected: boolean) => {
-    setSelectedTickets(prev => {
-      const newSet = new Set(prev);
-      if (selected) {
-        newSet.add(ticketId);
-      } else {
-        newSet.delete(ticketId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleSelectAllVisible = (checked: boolean) => {
-    setSelectedTickets(prev => {
-      const next = new Set(prev);
-      filteredTickets.forEach(ticket => {
-        if (checked) {
-          next.add(ticket.id);
-        } else {
-          next.delete(ticket.id);
-        }
-      });
-      return next;
-    });
-  };
-
-  const handleSelectAll = () => {
-    if (selectedTickets.size === filteredTickets.length) {
-      setSelectedTickets(new Set());
-    } else {
-      setSelectedTickets(new Set(filteredTickets.map(ticket => ticket.id)));
-    }
-  };
-
-  // Bulk action handlers
-  const handleBulkArchive = async () => {
-    if (selectedTickets.size === 0) return;
-    try {
-      const response = await http.post(`${BASE_URL}/ticket/bulk/archive/`, {
-        ticket_ids: Array.from(selectedTickets).map(id => Number(id))
-      });
-      console.log('Archive response:', response.data);
-      setSelectedTickets(new Set());
-      // Refresh tickets list
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    } catch (error) {
-      console.error('Error archiving tickets:', error);
-      errorNotification('Failed to archive selected tickets');
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedTickets.size === 0) return;
-    setShowBulkDeleteConfirm(false);
-    try {
-      const isTrash = getViewContext() === 'trash';
-      const endpoint = isTrash ? `${BASE_URL}/ticket/bulk/permanent-delete/` : `${BASE_URL}/ticket/bulk/delete/`;
-      console.log('[DEBUG] activeView:', activeView, 'isTrash:', isTrash, 'endpoint:', endpoint);
-      const response = await http.post(endpoint, {
-        ticket_ids: Array.from(selectedTickets).map(id => Number(id))
-      });
-      console.log('Delete response:', response.data);
-      successNotification(
-        isTrash
-          ? `${selectedTickets.size} ticket(s) permanently deleted`
-          : `${selectedTickets.size} ticket(s) moved to trash`
-      );
-      setSelectedTickets(new Set());
-      // Refresh tickets list
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    } catch (error) {
-      console.error('Error deleting tickets:', error);
-      errorNotification('Failed to delete selected tickets');
-    }
-  };
-
-  const showBulkDeleteConfirmation = () => {
-    setShowBulkDeleteConfirm(true);
-  };
+  const {
+    selectedTickets,
+    setSelectedTickets,
+    bulkExportFormat,
+    setBulkExportFormat,
+    showBulkDeleteConfirm,
+    setShowBulkDeleteConfirm,
+    blocker,
+    handleTicketSelection,
+    handleSelectAllVisible,
+    handleSelectAll,
+    getViewContext,
+    getBulkActions,
+    handleBulkDelete,
+  } = useTicketBulkActions(activeView, filteredTickets, canExport);
 
   const handleSingleTicketDelete = async () => {
     if (!selectedTicket) return;
@@ -699,83 +604,6 @@ export default function TicketManagementSystem() {
     } catch (error: any) {
       console.error('Error deleting ticket:', error);
       errorNotification(error?.response?.data?.message || 'Failed to delete ticket');
-    }
-  };
-
-  const handleBulkExport = async () => {
-    if (selectedTickets.size === 0) return;
-    try {
-      await exportSelectedTickets(Array.from(selectedTickets).map(id => Number(id)), bulkExportFormat);
-      setSelectedTickets(new Set());
-    } catch (error) {
-      console.error('Error exporting tickets:', error);
-      errorNotification('Failed to export selected tickets');
-    }
-  };
-
-  // Get current view context
-  const getViewContext = () => {
-    if (activeView === 'archived') return 'archived';
-    if (activeView === 'trash') return 'trash';
-    return 'normal';
-  };
-
-  // Additional bulk action handlers
-  const handleBulkUnarchive = async () => {
-    if (selectedTickets.size === 0) return;
-    try {
-      const response = await http.post(`${BASE_URL}/ticket/bulk/unarchive/`, {
-        ticket_ids: Array.from(selectedTickets).map(id => Number(id))
-      });
-      console.log('Unarchive response:', response.data);
-      setSelectedTickets(new Set());
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    } catch (error) {
-      console.error('Error unarchiving tickets:', error);
-      errorNotification('Failed to unarchive selected tickets');
-    }
-  };
-
-  const handleBulkRestore = async () => {
-    if (selectedTickets.size === 0) return;
-    try {
-      const response = await http.post(`${BASE_URL}/ticket/bulk/restore/`, {
-        ticket_ids: Array.from(selectedTickets).map(id => Number(id))
-      });
-      console.log('Restore response:', response.data);
-      setSelectedTickets(new Set());
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    } catch (error) {
-      console.error('Error restoring tickets:', error);
-      errorNotification('Failed to restore selected tickets');
-    }
-  };
-
-  // Get bulk actions based on current view context
-  const getBulkActions = () => {
-    const context = getViewContext();
-    const withExport = (actions: Array<{ key: string; label: string; icon: typeof Download; action: () => void; className: string }>) =>
-      canExport ? actions : actions.filter((action) => action.key !== 'export');
-
-    switch (context) {
-      case 'archived':
-        return withExport([
-          { key: 'unarchive', label: 'Unarchive', icon: Archive, action: handleBulkUnarchive, className: 'bg-primary-600 hover:bg-primary-700' },
-          { key: 'delete', label: 'Delete', icon: Trash2, action: showBulkDeleteConfirmation, className: 'bg-red-600 hover:bg-red-700' },
-          { key: 'export', label: 'Export', icon: Download, action: handleBulkExport, className: 'bg-primary-600 hover:bg-primary-700' }
-        ]);
-      case 'trash':
-        return withExport([
-          { key: 'restore', label: 'Restore', icon: RotateCcw, action: handleBulkRestore, className: 'bg-yellow-600 hover:bg-yellow-700' },
-          { key: 'delete', label: 'Delete Forever', icon: Trash2, action: showBulkDeleteConfirmation, className: 'bg-red-600 hover:bg-red-700' },
-          { key: 'export', label: 'Export', icon: Download, action: handleBulkExport, className: 'bg-primary-600 hover:bg-primary-700' }
-        ]);
-      default:
-        return withExport([
-          { key: 'archive', label: 'Archive', icon: Archive, action: handleBulkArchive, className: 'bg-primary-600 hover:bg-primary-700' },
-          { key: 'delete', label: 'Delete', icon: Trash2, action: showBulkDeleteConfirmation, className: 'bg-red-600 hover:bg-red-700' },
-          { key: 'export', label: 'Export', icon: Download, action: handleBulkExport, className: 'bg-primary-600 hover:bg-primary-700' }
-        ]);
     }
   };
 
@@ -892,11 +720,6 @@ export default function TicketManagementSystem() {
     setSelectedTicket(null);
     setSelectedTickets(new Set());
   };
-
-  useEffect(() => {
-    // Avoid stale selections when switching between normal/trash/archived views.
-    setSelectedTickets(new Set());
-  }, [activeView]);
 
   useEffect(() => {
     if (!showSearchFilterDropdown && !showSearchValueDropdown) return;
