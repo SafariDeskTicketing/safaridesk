@@ -1,82 +1,7 @@
-// import React, { ReactNode, useEffect, useRef } from 'react';
-// import type { LucideIcon } from 'lucide-react';
-
-// type DropdownMenuProps = {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   children: ReactNode;
-// };
-
-// export const DropdownMenu: React.FC<DropdownMenuProps> = ({ isOpen, onClose, children }) => {
-//   const dropdownRef = useRef<HTMLDivElement>(null);
-
-//   useEffect(() => {
-//     const handleClickOutside = (event: MouseEvent) => {
-//       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-//         onClose();
-//       }
-//     };
-
-//     if (isOpen) {
-//       document.addEventListener('mousedown', handleClickOutside);
-//     }
-
-//     return () => {
-//       document.removeEventListener('mousedown', handleClickOutside);
-//     };
-//   }, [isOpen, onClose]);
-
-//   if (!isOpen) return null;
-
-//   return (
-//     <div 
-//       ref={dropdownRef}
-//       className="absolute right-0 top-8 mt-1 w-56 rounded-md shadow-lg bg-white dark:bg-surface-elevated border border-gray-200 dark:border-subtle"
-//       style={{ 
-//         position: 'absolute',
-//         zIndex: 9999 // Much higher z-index
-//       }}
-//     >
-//       <div className="py-1">
-//         {children}
-//       </div>
-//     </div>
-//   );
-// };
-
-// type DropdownItemProps = {
-//   icon?: LucideIcon;
-//   children: ReactNode;
-//   onClick?: () => void;
-//   variant?: 'default' | 'danger';
-// };
-
-// export const DropdownItem: React.FC<DropdownItemProps> = ({
-//   icon: Icon,
-//   children,
-//   onClick,
-//   variant = 'default',
-// }) => {
-//   const variants = {
-//     default: 'text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-surface-hover',
-//     danger: 'text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20',
-//   };
-
-//   return (
-//     <button
-//       className={`${variants[variant]} group flex items-center w-full px-4 py-2 text-sm transition-colors`}
-//       onClick={onClick}
-//     >
-//       {Icon && <Icon className="mr-3 h-4 w-4" />}
-//       {children}
-//     </button>
-//   );
-// };
-
-
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import React, { ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
+import { FloatingPortal } from '@floating-ui/react';
+import { useAnchoredFloating } from './useAnchoredFloating';
 
 type DropdownMenuProps = {
   isOpen: boolean;
@@ -85,48 +10,57 @@ type DropdownMenuProps = {
   compact?: boolean;
 };
 
+/**
+ * Controlled menu anchored to its parent element. Callers wrap the trigger and
+ * the menu in one container, so a click on the trigger counts as "inside" and
+ * toggles the menu instead of dismissing and immediately reopening it.
+ */
 export const DropdownMenu: React.FC<DropdownMenuProps> = ({ isOpen, onClose, children, compact = false }) => {
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const anchorProbeRef = useRef<HTMLSpanElement>(null);
+  const { refs, floatingStyles, getFloatingProps } = useAnchoredFloating({
+    open: isOpen,
+    onOpenChange: (nextOpen) => {
+      if (!nextOpen) onClose();
+    },
+    placement: 'bottom-end',
+  });
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  useLayoutEffect(() => {
+    refs.setReference(anchorProbeRef.current?.parentElement ?? null);
+  }, [refs]);
 
   return (
-    <div 
-      ref={dropdownRef}
-      className={clsx(
-        'absolute right-0 top-8 mt-2 rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] shadow-[var(--shell-shadow-md)]',
-        compact ? 'w-44 py-1' : 'w-56 py-2'
+    <>
+      <span ref={anchorProbeRef} hidden />
+      {isOpen && (
+        <FloatingPortal>
+          <div
+            ref={refs.setFloating}
+            style={floatingStyles}
+            role="menu"
+            className={clsx(
+              'rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] shadow-[var(--shell-shadow-md)]',
+              compact ? 'w-44 py-1' : 'w-56 py-2'
+            )}
+            {...getFloatingProps()}
+          >
+            {children}
+          </div>
+        </FloatingPortal>
       )}
-      style={{ 
-        position: 'absolute',
-        zIndex: 9999 // Much higher z-index
-      }}
-    >
-      <div>
-        {children}
-      </div>
-    </div>
+    </>
   );
 };
 
+/**
+ * Callers pass both Tabler (AppIcons) and Lucide icons. Only `size`/`className`
+ * mean the same thing in both: `stroke` is stroke *width* in Tabler but stroke
+ * *color* in Lucide, so it must not be passed here.
+ */
+type MenuIcon = React.ComponentType<{ size?: number | string; className?: string }>;
+
 type DropdownItemProps = {
-  icon?: LucideIcon;
+  icon?: MenuIcon;
   children: ReactNode;
   onClick?: () => void;
   variant?: 'default' | 'danger';
@@ -147,6 +81,8 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
 
   return (
     <button
+      type="button"
+      role="menuitem"
       className={clsx(
         variants[variant],
         'group flex w-full items-center rounded-[6px] transition-colors',
@@ -154,7 +90,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
       )}
       onClick={onClick}
     >
-      {Icon && <Icon className={clsx('mr-2.5', compact ? 'h-4 w-4' : '')} size={16} stroke={1.8} />}
+      {Icon && <Icon className={clsx('mr-2.5', compact ? 'h-4 w-4' : '')} size={16} />}
       {children}
     </button>
   );
@@ -162,7 +98,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
 
 interface DropdownProps {
   trigger: ReactNode;
-  options: { label: string; onClick: () => void; icon?: LucideIcon; variant?: 'default' | 'danger' }[];
+  options: { label: string; onClick: () => void; icon?: MenuIcon; variant?: 'default' | 'danger' }[];
   compact?: boolean;
 }
 

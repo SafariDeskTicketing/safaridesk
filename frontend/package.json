@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.20",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-label": "^2.1.7",
     "@tabler/icons-react": "^3.41.1",
