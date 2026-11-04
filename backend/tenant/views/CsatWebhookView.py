@@ -38,13 +38,19 @@ class CsatWebhookView(APIView):
     authentication_classes = []  # Skip JWT auth — we do our own secret validation below
 
     def post(self, request, *args, **kwargs) -> Response:
-        # Validate the webhook secret
+        # Validate the webhook secret. Fail closed if it's unset: this is an
+        # AllowAny endpoint, so a missing secret must never silently become
+        # "accept any request," or anyone could submit a fake CSAT score for
+        # any ticket by guessing its ticket_id.
         webhook_secret = config("CSAT_WEBHOOK_SECRET", default="")
-        if webhook_secret:
-            auth_header = request.headers.get("Authorization", "")
-            if not auth_header.startswith("Bearer ") or auth_header[7:] != webhook_secret:
-                logger.warning("[CSAT Webhook] Invalid or missing Authorization header.")
-                return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        if not webhook_secret:
+            logger.error("[CSAT Webhook] CSAT_WEBHOOK_SECRET is not configured — rejecting request.")
+            return Response({"detail": "Webhook not configured"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer ") or auth_header[7:] != webhook_secret:
+            logger.warning("[CSAT Webhook] Invalid or missing Authorization header.")
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
         data = request.data
         csat_value = data.get("csat_value")

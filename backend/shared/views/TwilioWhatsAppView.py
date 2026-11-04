@@ -14,6 +14,7 @@ from drf_yasg import openapi
 
 from shared.models.TwilioWhatsAppMessage import TwilioWhatsAppMessage
 from shared.services.TwilioWhatsAppService import TwilioWhatsAppService
+from shared.services.TwilioService import TwilioService
 from shared.serializers.TwilioWhatsAppSerializer import (
     TwilioWhatsAppMessageSerializer,
     SendWhatsAppMessageSerializer,
@@ -722,6 +723,14 @@ class WhatsAppStatusCallbackView(APIView):
     def post(self, request):
         """Handle message status updates from Twilio"""
         try:
+            # Validate Twilio signature — this is AllowAny with zero prior
+            # validation, so anyone could POST fake status-callback data.
+            signature = request.headers.get('X-Twilio-Signature', '')
+            request_url = request.build_absolute_uri()
+            if not TwilioService.validate_webhook_signature(request_url, request.POST.dict(), signature):
+                logger.warning("Invalid Twilio webhook signature")
+                return Response(status=status.HTTP_403_FORBIDDEN)
+
             serializer = WhatsAppStatusCallbackSerializer(data=request.POST)
             if not serializer.is_valid():
                 logger.warning(f"Invalid WhatsApp status callback: {serializer.errors}")
@@ -771,6 +780,14 @@ class WhatsAppInboundView(APIView):
     def post(self, request):
         """Handle incoming WhatsApp messages"""
         try:
+            # Validate Twilio signature — this is AllowAny, so without this
+            # anyone could POST a fake inbound WhatsApp message.
+            signature = request.headers.get('X-Twilio-Signature', '')
+            request_url = request.build_absolute_uri()
+            if not TwilioService.validate_webhook_signature(request_url, request.POST.dict(), signature):
+                logger.warning("Invalid Twilio webhook signature")
+                return Response(status=status.HTTP_403_FORBIDDEN)
+
             serializer = WhatsAppInboundMessageSerializer(data=request.POST)
             if not serializer.is_valid():
                 logger.warning(f"Invalid inbound WhatsApp data: {serializer.errors}")
