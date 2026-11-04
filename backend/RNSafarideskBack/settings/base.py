@@ -93,7 +93,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     'django_celery_beat',
-    'django_cron',
     "drf_yasg",
     "oauth2_provider",
     "channels",
@@ -324,11 +323,6 @@ CORE_FIRST_NAME = config("CORE_FIRST_NAME")
 CORE_LAST_NAME = config("CORE_LAST_NAME")
 CORE_PHONE_NUMBER = config("CORE_PHONE_NUMBER")
 
-# Django Cron
-CRON_CLASSES = [
-    'shared.cron.RunEmailsCommand',
-    'shared.cron.RunSLACommand',
-]
 
 # ---------------------------------------------------------------------------
 # Structured JSON logging via structlog

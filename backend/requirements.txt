@@ -12,7 +12,6 @@ gunicorn
 django-otp
 celery
 redis
-django-cron
 email-reply-parser
 python-dotenv
 pillow
