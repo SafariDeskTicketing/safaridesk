@@ -69,10 +69,9 @@ import { resolveViewFromUrlParams } from './list/ticketViewResolution';
 import {
   useTicketsListQuery,
   transformApiTicket,
-  DEFAULT_SORT_STATE,
   type SortField,
-  type SortState,
 } from './list/ticketListData';
+import { useViewSortState } from './list/useViewSortState';
 
 type BulkExportFormat = Exclude<ExportFormat, 'pdf'>;
 
@@ -376,8 +375,7 @@ export default function TicketManagementSystem() {
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
   const columnFilterRef = useRef<HTMLDivElement>(null);
 
-  const [sortStateByView, setSortStateByView] = useState<Record<string, SortState>>({});
-  const currentSortState = sortStateByView[activeView] ?? DEFAULT_SORT_STATE;
+  const { currentSortState, toggleSort } = useViewSortState(activeView);
   const sortField = currentSortState.field;
   const sortDirection = currentSortState.direction;
 
@@ -493,29 +491,9 @@ export default function TicketManagementSystem() {
   const listTickets = useMemo(() => filteredTickets, [filteredTickets]);
 
   const handleSortToggle = useCallback((field: SortField) => {
-    setSortStateByView((prev) => {
-      const current = prev[activeView] ?? DEFAULT_SORT_STATE;
-      if (current.field === field) {
-        return {
-          ...prev,
-          [activeView]: {
-            field,
-            direction: current.direction === 'asc' ? 'desc' : 'asc',
-            explicit: true,
-          },
-        };
-      }
-      return {
-        ...prev,
-        [activeView]: {
-          field,
-          direction: field === 'created_at' ? 'desc' : 'asc',
-          explicit: true,
-        },
-      };
-    });
+    toggleSort(field);
     setCurrentPage(prev => (prev === 1 ? prev : 1));
-  }, [activeView]);
+  }, [toggleSort]);
 
   const sortIcon = (field: SortField) => {
     const isActive = sortField === field;
