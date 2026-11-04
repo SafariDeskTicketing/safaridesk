@@ -1,6 +1,7 @@
 import { Search, CheckCircle, AlertTriangle, User, Building, Tag, Calendar } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Agent } from '../../../types';
+import { parseSearchQueryTokens, type ParsedSearchQuery } from '../../../utils/searchTokenMiniLanguage';
 
 export type ColumnFilterKey = 'status' | 'priority' | 'assignee' | 'department' | 'labels' | 'due_date';
 
@@ -38,27 +39,8 @@ const SEARCH_TOKEN_KEY_MAP: Record<string, ColumnFilterKey> = {
   due_date: 'due_date',
 };
 
-export const parseSearchQuery = (query: string) => {
-  const regex = /\b(\w+):(?:"([^"]+)"|'([^']+)'|([^\s]+))/g;
-  const tokens: Partial<Record<ColumnFilterKey, string>> = {};
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(query)) !== null) {
-    const rawKey = match[1]?.toLowerCase();
-    const mappedKey = rawKey ? SEARCH_TOKEN_KEY_MAP[rawKey] : undefined;
-    if (!mappedKey) continue;
-    const rawValue = match[2] ?? match[3] ?? match[4] ?? '';
-    if (!rawValue) continue;
-    tokens[mappedKey] = rawValue.trim();
-  }
-
-  const cleanedQuery = query
-    .replace(regex, '')
-    .replace(/\b\w+:\s*$/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return { tokens, cleanedQuery };
-};
+export const parseSearchQuery = (query: string): ParsedSearchQuery<ColumnFilterKey> =>
+  parseSearchQueryTokens(query, SEARCH_TOKEN_KEY_MAP);
 
 export const resolveStatusToken = (value?: string) => {
   if (!value) return null;

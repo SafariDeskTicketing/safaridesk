@@ -1,5 +1,7 @@
 import { Search, CheckCircle, AlertTriangle, User, Building, Tag, Calendar, type LucideIcon } from 'lucide-react';
 import type { Agent } from '../../../types';
+import { parseSearchQueryTokens, type ParsedSearchQuery } from '../../../utils/searchTokenMiniLanguage';
+export { formatSearchTokenValue } from '../../../utils/searchTokenMiniLanguage';
 
 export type ColumnFilterKey =
   | 'status'
@@ -52,41 +54,10 @@ const SEARCH_TOKEN_KEY_MAP: Record<string, ColumnFilterKey> = {
   due_date: 'created_at',
 };
 
-export interface ParsedSearchQuery {
-  tokens: Partial<Record<ColumnFilterKey, string>>;
-  cleanedQuery: string;
-}
-
 /** Parses a token mini-language like `status:open priority:high free text` into
  * structured filter tokens plus the remaining free-text search. */
-export const parseSearchQuery = (query: string): ParsedSearchQuery => {
-  const regex = /\b(\w+):(?:"([^"]+)"|'([^']+)'|([^\s]+))/g;
-  const tokens: Partial<Record<ColumnFilterKey, string>> = {};
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(query)) !== null) {
-    const rawKey = match[1]?.toLowerCase();
-    const mappedKey = rawKey ? SEARCH_TOKEN_KEY_MAP[rawKey] : undefined;
-    if (!mappedKey) continue;
-    const rawValue = match[2] ?? match[3] ?? match[4] ?? '';
-    if (!rawValue) continue;
-    tokens[mappedKey] = rawValue.trim();
-  }
-
-  const cleanedQuery = query
-    .replace(regex, '')
-    .replace(/\b\w+:\s*$/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return { tokens, cleanedQuery };
-};
-
-export const formatSearchTokenValue = (value: string): string => {
-  if (!value) return '';
-  const trimmed = value.trim();
-  if (!trimmed) return '';
-  return /\s/.test(trimmed) ? `"${trimmed}"` : trimmed;
-};
+export const parseSearchQuery = (query: string): ParsedSearchQuery<ColumnFilterKey> =>
+  parseSearchQueryTokens(query, SEARCH_TOKEN_KEY_MAP);
 
 export const resolveStatusToken = (value?: string): string | null => {
   if (!value) return null;

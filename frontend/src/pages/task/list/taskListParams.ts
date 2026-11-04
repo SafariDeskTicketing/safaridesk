@@ -1,5 +1,6 @@
 import type { Agent, LabelItem } from '../../../types';
 import { resolveLabelTokenIds } from '../../../utils/labels';
+import { resolveFilterValue } from '../../../utils/searchTokenMiniLanguage';
 import {
   parseSearchQuery,
   resolveStatusToken,
@@ -51,11 +52,11 @@ export const buildTaskQueryParams = (
   const tokenLabels = resolveLabelTokenIds(parsedSearch.tokens.labels, lookups.labels);
   const tokenDueDate = resolveDueDateToken(parsedSearch.tokens.due_date);
 
-  const rawStatus = tokenStatus ?? (filters.statusFilter !== 'all' ? filters.statusFilter : null);
+  const rawStatus = resolveFilterValue(tokenStatus, filters.statusFilter);
   const effectiveStatus = rawStatus === 'todo' ? 'open' : rawStatus === 'closed' ? 'completed' : rawStatus;
-  const effectivePriority = tokenPriority ?? (filters.priorityFilter !== 'all' ? filters.priorityFilter : null);
-  const effectiveAssignee = tokenAssignee ?? (filters.assigneeFilter !== 'all' ? filters.assigneeFilter : null);
-  const effectiveDepartment = tokenDepartment ?? (filters.departmentFilter !== 'all' ? filters.departmentFilter : null);
+  const effectivePriority = resolveFilterValue(tokenPriority, filters.priorityFilter);
+  const effectiveAssignee = resolveFilterValue(tokenAssignee, filters.assigneeFilter);
+  const effectiveDepartment = resolveFilterValue(tokenDepartment, filters.departmentFilter);
   const effectiveLabelIds = tokenLabels.length > 0 ? tokenLabels : filters.labelFilterIds;
   const effectiveDateFrom = tokenDueDate?.from ?? filters.dateFromFilter;
   const effectiveDateTo = tokenDueDate?.to ?? filters.dateToFilter;

@@ -1,5 +1,6 @@
 import type { Agent, LabelItem } from '../../../types';
 import { resolveLabelTokenIds } from '../../../utils/labels';
+import { resolveFilterValue } from '../../../utils/searchTokenMiniLanguage';
 import {
   parseSearchQuery,
   resolveStatusToken,
@@ -55,11 +56,11 @@ export const buildTicketQueryParams = (
   const tokenLabels = resolveLabelTokenIds(parsedSearch.tokens.labels, lookups.labels);
   const tokenCreatedDate = resolveCreatedDateToken(parsedSearch.tokens.created_at);
 
-  const effectiveStatus = tokenStatus ?? (filters.statusFilter !== 'all' ? filters.statusFilter : null);
-  const effectivePriority = tokenPriority ?? (filters.priorityFilter !== 'all' ? filters.priorityFilter : null);
-  const effectiveAssignee = tokenAssignee ?? (filters.assigneeFilter !== 'all' ? filters.assigneeFilter : null);
-  const effectiveDepartment = tokenDepartment ?? (filters.departmentFilter !== 'all' ? filters.departmentFilter : null);
-  const effectiveCategory = tokenCategory ?? (filters.categoryFilter !== 'all' ? filters.categoryFilter : null);
+  const effectiveStatus = resolveFilterValue(tokenStatus, filters.statusFilter);
+  const effectivePriority = resolveFilterValue(tokenPriority, filters.priorityFilter);
+  const effectiveAssignee = resolveFilterValue(tokenAssignee, filters.assigneeFilter);
+  const effectiveDepartment = resolveFilterValue(tokenDepartment, filters.departmentFilter);
+  const effectiveCategory = resolveFilterValue(tokenCategory, filters.categoryFilter);
   const effectiveLabelIds = tokenLabels.length > 0 ? tokenLabels : filters.labelFilterIds;
   const effectiveDateFrom = tokenCreatedDate?.from ?? filters.dateFromFilter;
   const effectiveDateTo = tokenCreatedDate?.to ?? filters.dateToFilter;
