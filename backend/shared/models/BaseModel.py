@@ -3,11 +3,28 @@ from django.conf import settings
 from django.apps import apps
 from django_currentuser.middleware import get_current_user
 
+from shared.middleware.current_business import get_current_business
 from util.Constants import STATUS_CHOICES
 
 
 class FilterManager(models.Manager):
     def get_queryset(self):
+        # Tenant scoping is the default, not opt-in: a bare `Model.objects.filter()`
+        # can no longer leak another tenant's rows just because a view forgot to
+        # call `.for_business()`. See shared/middleware/current_business.py for
+        # exactly when this is and isn't set (unscoped for superadmin requests
+        # and background jobs, by design).
+        qs = super().get_queryset()
+        business = get_current_business()
+        if business is not None:
+            qs = qs.filter(business=business)
+        return qs
+
+    def unscoped(self):
+        """Explicit escape hatch for legitimate cross-tenant queries
+        (superadmin tooling, management commands, Celery tasks that operate
+        across all businesses). Prefer this over bypassing the manager
+        entirely so the intent is visible at the call site."""
         return super().get_queryset()
 
     def for_user(self, user=None, filter_by_client=True):
