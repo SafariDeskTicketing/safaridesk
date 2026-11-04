@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import http from '../../services/http';
 import { APIS } from '../../services/apis';
 import { successNotification, errorNotification } from '../ui/Toast';
@@ -14,9 +14,10 @@ interface AssignTicketModalProps {
   onClose: () => void;
   onTicketAssigned: () => void;
   assignedAgentId?: number | null;
+  departmentId?: number | null;
 }
 
-const AssignTicketModal: React.FC<AssignTicketModalProps> = ({ ticketId, isOpen, onClose, onTicketAssigned, assignedAgentId }) => {
+const AssignTicketModal: React.FC<AssignTicketModalProps> = ({ ticketId, isOpen, onClose, onTicketAssigned, assignedAgentId, departmentId }) => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,6 +35,19 @@ const AssignTicketModal: React.FC<AssignTicketModalProps> = ({ ticketId, isOpen,
       fetchAgents();
     }
   }, [isOpen]);
+
+  // Only agents from the ticket's department, or agents with no department
+  // data at all (treated as unrestricted) — agents already assigned are
+  // excluded separately below.
+  const filteredAgents = useMemo(() => {
+    return agents.filter(agent => {
+      if (agent.id === assignedAgentId) return false;
+      if (departmentId && agent.department && agent.department.length > 0) {
+        return agent.department.some(dept => dept.id === departmentId);
+      }
+      return true;
+    });
+  }, [agents, assignedAgentId, departmentId]);
 
   const handleAssignTicket = async () => {
     if (!selectedAgentId) {
@@ -77,9 +91,7 @@ const AssignTicketModal: React.FC<AssignTicketModalProps> = ({ ticketId, isOpen,
           label="Agent"
           value={selectedAgentId}
           onChange={setSelectedAgentId}
-          options={agents
-            .filter(agent => agent.id !== assignedAgentId)
-            .map(agent => ({ value: agent.id.toString(), label: agent.name }))}
+          options={filteredAgents.map(agent => ({ value: agent.id.toString(), label: agent.name || 'Unknown Agent' }))}
           placeholder="Select an agent..."
           className="w-full"
         />

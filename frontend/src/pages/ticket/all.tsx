@@ -21,6 +21,8 @@ import EmptyState from '../../components/ui/EmptyState';
 import TicketDetailSkeleton from '../../components/ui/TicketDetailSkeleton';
 import { TableSkeleton } from '../../components/ui/TableSkeleton';
 import { GridTicketCard } from '../../components/tickets/GridCard';
+import AssignTicketModal from '../../components/tickets/AssignTicketModal';
+import UpdateCategoryModal from '../../components/tickets/UpdateCategoryModal';
 import { Modal } from '../../components/ui/Modal';
 import { CreateTicketModal } from '../../components/tickets/CreateTicketModal';
 import { TicketCard } from '../../components/tickets/TicketCard';
@@ -184,7 +186,6 @@ export default function TicketManagementSystem() {
   const [ticketWatchers, setTicketWatchers] = useState<Watcher[]>([]);
   const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDepartmentModal, setShowDepartmentModal] = useState(false);
@@ -193,17 +194,6 @@ export default function TicketManagementSystem() {
   const agentsData: AgentType[] = (agentResponse as AgentApiResponse)?.results || [];
   const isUserWatcher = ticketWatchers.some(watcher => watcher.id === user?.user_id);
   const isTicketClosed = selectedTicket?.status === 'closed';
-  const selectedTicketDepartmentId = useMemo(() => {
-    const dept = selectedTicket?.department;
-    if (!dept) return null;
-    return typeof dept === 'number' ? dept : dept.id;
-  }, [selectedTicket]);
-  const filteredCategoriesForTicket = useMemo(() => {
-    if (!selectedTicketDepartmentId) return categories;
-    return categories.filter(
-      (cat) => cat.department == null || cat.department === selectedTicketDepartmentId
-    );
-  }, [categories, selectedTicketDepartmentId]);
   const selectedTicketLabels = selectedTicket?.labels || [];
 
 
@@ -1191,32 +1181,6 @@ export default function TicketManagementSystem() {
     }
   }
 
-  async function handleUpdateCategory() {
-    if (!selectedTicket || !selectedCategoryId) return;
-    try {
-      setIsSubmitting(true);
-      const payload = {
-        category_id: Number(selectedCategoryId),
-        category: Number.isNaN(Number(selectedCategoryId)) ? selectedCategoryId : undefined,
-      };
-      const response = await http.put(`${APIS.TICKET_UPDATE_CATEGORY}/${selectedTicket.id}`, payload);
-
-      // Find the selected category and update the UI
-      const selectedCat = categories.find(c => c.id === Number(selectedCategoryId) || c.name === selectedCategoryId);
-      const updatedTicket: Ticket = { ...selectedTicket, category: selectedCat?.name || selectedTicket.category } as Ticket;
-      setSelectedTicket(updatedTicket);
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-
-      successNotification(response.data.message || 'Category updated successfully');
-      setSelectedCategoryId("");
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to update category";
-      errorNotification(errorMsg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   async function handleUpdatePriority() {
     if (!selectedTicket || !selectedPriority) return;
     try {
@@ -2069,57 +2033,19 @@ export default function TicketManagementSystem() {
         onClose={() => setTaskDialogOpen(false)}
       />
 
-      {/* Assign Agent Modal */}
-      <Modal
-        isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        title="Assign Agent"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <Select
-            id="assign-agent-modal"
-            label="Select Agent"
-            value={selectedAgentId}
-            onChange={setSelectedAgentId}
-            options={[
-              { value: "", label: "Choose agent...", disabled: true },
-              ...(agents && agents.length > 0
-                ? agents
-                  .filter(agent => {
-                    if (selectedTicket?.assignee && agent.id.toString() === selectedTicket.assignee.id) return false;
-                    if (selectedTicket?.department && agent.department && agent.department.length > 0) {
-                      const deptId = typeof selectedTicket.department === 'number' ? selectedTicket.department : selectedTicket.department.id;
-                      return agent.department.some(dept => dept.id === deptId);
-                    }
-                    return true;
-                  })
-                  .map(agent => ({ value: agent.id.toString(), label: agent.name || "Unknown Agent" }))
-                : [{ value: "", label: "No agents found", disabled: true }]
-              )
-            ]}
-            placeholder="Choose agent..."
-            size="md"
-            required
-            allowSearch
-          />
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={() => setShowAssignModal(false)}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-subtle rounded-lg text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-surface-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => { handleAssign(); setShowAssignModal(false); }}
-              disabled={isSubmitting || !selectedAgentId}
-              className="px-2.5 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
-            >
-              {isSubmitting ? 'Assigning...' : 'Assign'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {selectedTicket && (
+        <AssignTicketModal
+          ticketId={selectedTicket.id}
+          isOpen={showAssignModal}
+          onClose={() => setShowAssignModal(false)}
+          onTicketAssigned={() => {
+            queryClient.invalidateQueries({ queryKey: ['tickets'] });
+            fetchTicketDetails(selectedTicket.id);
+          }}
+          assignedAgentId={selectedTicket.assignee ? Number(selectedTicket.assignee.id) : null}
+          departmentId={selectedTicket.department?.id ?? null}
+        />
+      )}
 
       {/* Update Department Modal */}
       <Modal
@@ -2163,47 +2089,19 @@ export default function TicketManagementSystem() {
         </div>
       </Modal>
 
-      {/* Update Category Modal */}
-      <Modal
-        isOpen={showCategoryModal}
-        onClose={() => setShowCategoryModal(false)}
-        title="Update Category"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="category-select-modal" className="block text-[length:var(--font-body)] font-medium text-gray-700 dark:text-[var(--text-primary)] mb-2">
-              Select Category
-            </label>
-            <select
-              id="category-select-modal"
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-gray-200 dark:border-subtle rounded-lg bg-gray-50 dark:bg-surface-hover text-gray-900 dark:text-[var(--text-primary)] focus:ring-2 focus:ring-primary-500 outline-none"
-            >
-              <option value="">Select a Category</option>
-              {filteredCategoriesForTicket.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={() => setShowCategoryModal(false)}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-subtle rounded-lg text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-surface-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => { handleUpdateCategory(); setShowCategoryModal(false); }}
-              disabled={isSubmitting || !selectedCategoryId}
-              className="px-2.5 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
-            >
-              {isSubmitting ? 'Updating...' : 'Update'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {selectedTicket && (
+        <UpdateCategoryModal
+          ticketId={selectedTicket.id}
+          currentCategory={selectedTicket.category}
+          departmentId={selectedTicket.department?.id ?? null}
+          isOpen={showCategoryModal}
+          onClose={() => setShowCategoryModal(false)}
+          onCategoryUpdated={() => {
+            queryClient.invalidateQueries({ queryKey: ['tickets'] });
+            fetchTicketDetails(selectedTicket.id);
+          }}
+        />
+      )}
 
       {/* Delete Ticket Confirmation Modal */}
       <Modal
