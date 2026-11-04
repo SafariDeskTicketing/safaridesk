@@ -99,7 +99,6 @@ INSTALLED_APPS = [
     "channels",
     "users",
     "shared",
-    "main",
     "tenant",
 ]
 
