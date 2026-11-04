@@ -65,6 +65,7 @@ import {
 } from './list/ticketSearch';
 import { buildTicketQueryParams } from './list/ticketListParams';
 import { useTicketFilterOptions } from './list/useTicketFilterOptions';
+import { resolveViewFromUrlParams } from './list/ticketViewResolution';
 import {
   useTicketsListQuery,
   transformApiTicket,
@@ -587,89 +588,9 @@ export default function TicketManagementSystem() {
   // Sync activeView with URL parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const statusParam = params.get('status');
-    const viewParam = params.get('view');
-
-    // Check for status param first (most common)
-    if (statusParam) {
-      // Map old status params (if any) to new view keys
-      const viewMap: Record<string, string> = {
-        'all_tickets': 'all_tickets',
-        'all_unassigned': 'all_unassigned',
-        'all_unresolved': 'all_unresolved',
-        'all_resolved': 'all_resolved',
-        'slow_queues': 'slow_queues',
-        'reopened': 'reopened',
-        'my_due_today': 'my_due_today',
-        'my_overdue': 'my_overdue',
-        'my_unresolved': 'my_unresolved',
-        'my_resolved': 'my_resolved',
-        'requested_by_me': 'requested_by_me',
-        'sla_breached': 'sla_breached',
-        'archived': 'archived',
-        'trash': 'trash',
-        // Legacy names for backwards compatibility
-        'all_unassigned_tickets': 'all_unassigned',
-        'all_unsolved_tickets': 'all_unresolved',
-        'all_resolved_tickets': 'all_resolved',
-        'reopened_tickets': 'reopened',
-        'my_resolution_overdue': 'my_overdue',
-        'my_unsolved_tickets': 'my_unresolved',
-        'my_resolved_tickets': 'my_resolved',
-        'sla_breached_tickets': 'sla_breached',
-        'archived_tickets': 'archived',
-        'trash_tickets': 'trash',
-        'closed': 'all_resolved' // Map 'closed' to all_resolved view
-      };
-
-      const mappedView = viewMap[statusParam] || statusParam;
-      const allowedViews = new Set([
-        'all_tickets',
-        'all_unassigned',
-        'all_unresolved',
-        'all_resolved',
-        'slow_queues',
-        'reopened',
-        'my_due_today',
-        'my_overdue',
-        'my_unresolved',
-        'my_resolved',
-        'requested_by_me',
-        'sla_breached',
-        'archived',
-        'trash',
-      ]);
-      const targetView = allowedViews.has(mappedView) ? mappedView : defaultView;
-      if (targetView !== activeView) {
-        setActiveView(targetView);
-      }
-    }
-    // Otherwise check for view param (for dashboard assigned card)
-    else if (viewParam) {
-      const viewMap: Record<string, string> = {
-        'my_tickets': 'my_unresolved'
-      };
-      const allowedViews = new Set([
-        'all_tickets',
-        'all_unassigned',
-        'all_unresolved',
-        'all_resolved',
-        'slow_queues',
-        'reopened',
-        'my_due_today',
-        'my_overdue',
-        'my_unresolved',
-        'my_resolved',
-        'requested_by_me',
-        'sla_breached',
-        'archived',
-        'trash',
-      ]);
-      const mappedView = viewMap[viewParam] || viewParam;
-      const targetView = allowedViews.has(mappedView) ? mappedView : defaultView;
-      if (targetView !== activeView) {
-        setActiveView(targetView);
-      }
+    const targetView = resolveViewFromUrlParams(params, defaultView);
+    if (targetView !== null && targetView !== activeView) {
+      setActiveView(targetView);
     }
   }, [location.search, activeView, defaultView]);
 
