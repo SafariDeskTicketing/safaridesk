@@ -38,7 +38,6 @@ import TicketSettingsModal from '../../components/settings/TicketSettingsModal';
 import LabelGroup from '../../components/ui/LabelGroup';
 import ManageLabelsModal from '../../components/labels/ManageLabelsModal';
 import { getLabelNamesByIds, resolveLabelTokenIds } from '../../utils/labels';
-import { useCopilotStore } from '../../stores/copilotStore';
 import { Loader } from '../../components/loader/loader';
 import { BASE_URL } from '../../utils/base';
 import {
@@ -68,6 +67,8 @@ import { UpdateDepartmentModal } from './list/UpdateDepartmentModal';
 import { DeleteTicketModal } from './list/DeleteTicketModal';
 import { useTicketHoverPreview } from './list/useTicketHoverPreview';
 import { TicketHoverPreview } from './list/TicketHoverPreview';
+import { useCopilotActiveTicketSync } from './list/useCopilotActiveTicketSync';
+import { useTicketFiltersFromUrl } from './list/useTicketFiltersFromUrl';
 
 const BULK_EXPORT_FORMAT_OPTIONS = [
   { value: 'xlsx', label: 'Excel' },
@@ -101,7 +102,6 @@ const getStoredTicketViewMode = (): 'card' | 'list' => (
 export default function TicketManagementSystem() {
 
   const { user } = useAuthStore()
-  const setCopilotActiveTicket = useCopilotStore((state) => state.setActiveTicket);
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
@@ -214,27 +214,7 @@ export default function TicketManagementSystem() {
     closeTicketPreview,
   } = useTicketHoverPreview();
 
-  useEffect(() => {
-    if (!selectedTicket) {
-      setCopilotActiveTicket(null);
-      return;
-    }
-
-    setCopilotActiveTicket({
-      id: Number(selectedTicket.id),
-      ticketId: selectedTicket.ticket_id,
-      title: selectedTicket.title,
-      status: selectedTicket.status,
-      priority: selectedTicket.priority,
-      creatorName: selectedTicket.requester?.name,
-      creatorEmail: selectedTicket.requester?.email,
-      categoryName: typeof selectedTicket.category === 'string' ? selectedTicket.category : undefined,
-      hasNewReply: selectedTicket.has_new_reply,
-      breached: selectedTicket.breached,
-      linkedTasksCount: selectedTicket.linked_tasks_count,
-      commentsCount: selectedTicket.comments_count,
-    });
-  }, [selectedTicket, setCopilotActiveTicket]);
+  useCopilotActiveTicketSync(selectedTicket);
 
   useEffect(() => {
     const handleTicketEvent = (event: Event) => {
@@ -418,31 +398,16 @@ export default function TicketManagementSystem() {
     }
   }, [location.search, activeView, defaultView]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const urlStatus = params.get('status');
-    const allowedStatusFilters = new Set(['open', 'pending', 'in_progress', 'on_hold', 'closed', 'resolved']);
-
-    setStatusFilter(urlStatus && allowedStatusFilters.has(urlStatus) ? urlStatus : 'all');
-    setPriorityFilter(params.get('priority') || 'all');
-    setAssigneeFilter(params.get('assigned_to') || 'all');
-    setDepartmentFilter(params.get('department') || 'all');
-    setCategoryFilter(params.get('category') || 'all');
-    setDateFromFilter(params.get('date_from') || '');
-    setDateToFilter(params.get('date_to') || '');
-
-    const rawLabelIds = params.get('label_ids');
-    if (!rawLabelIds) {
-      setLabelFilterIds([]);
-      return;
-    }
-
-    const parsedLabelIds = rawLabelIds
-      .split(',')
-      .map((value) => Number(value))
-      .filter((value) => Number.isInteger(value) && value > 0);
-    setLabelFilterIds(parsedLabelIds);
-  }, [location.search]);
+  useTicketFiltersFromUrl(location.search, {
+    setStatusFilter,
+    setPriorityFilter,
+    setAssigneeFilter,
+    setDepartmentFilter,
+    setCategoryFilter,
+    setDateFromFilter,
+    setDateToFilter,
+    setLabelFilterIds,
+  });
 
   const {
     selectedTickets,
