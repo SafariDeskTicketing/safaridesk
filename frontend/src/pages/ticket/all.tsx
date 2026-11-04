@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
 import {
   Search, Plus, User, Clock, MessageCircle, FileText, ChevronDown, ChevronRight, ChevronLeft, ChevronUp, Paperclip, Grid3x3, Eye, Calendar, Mail, Phone, Tag, CheckCircle, Edit3, UserCheck, CheckSquare, AlertCircle, ShieldAlert, Archive, Trash2, Download, RotateCcw, Link as LinkIcon, Building, AlertTriangle, UserX, XCircle, Inbox, CreditCard, Settings, X, List, PauseCircle, Ticket as TicketIcon
 } from 'lucide-react';
-import { format, isToday } from 'date-fns';
+import { format } from 'date-fns';
 import Button from '../../components/ui/Button';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -66,6 +66,8 @@ import {
 import { buildTicketQueryParams } from './list/ticketListParams';
 import { useTicketFilterOptions } from './list/useTicketFilterOptions';
 import { resolveViewFromUrlParams } from './list/ticketViewResolution';
+import { TicketRow } from './list/TicketRow';
+import { LIST_GRID_COLS, statusLabel } from './list/ticketRowHelpers';
 import {
   useTicketsListQuery,
   transformApiTicket,
@@ -114,21 +116,6 @@ type TicketViewMode = 'detailed' | 'card' | 'list';
 const getStoredTicketViewMode = (): 'card' | 'list' => (
   localStorage.getItem('ticketViewMode') === 'card' ? 'card' : 'list'
 );
-
-const formatCreatedDateForList = (dateString: string | null | undefined): string => {
-  if (!dateString) {
-    return '—';
-  }
-
-  const createdAt = new Date(dateString);
-  if (Number.isNaN(createdAt.getTime())) {
-    return '—';
-  }
-
-  return isToday(createdAt)
-    ? format(createdAt, 'h:mm a')
-    : format(createdAt, 'MMM d, yy h:mm a');
-};
 
 const isRichHtmlDescription = (description?: string | null): boolean => {
   if (!description) return false;
@@ -418,20 +405,7 @@ export default function TicketManagementSystem() {
   const isLoading = ticketsQuery.isLoading;
   const isFetchingTickets = ticketsQuery.isFetching;
 
-  const statusPillClass = (status: string) =>
-    `inline-flex items-center justify-center px-3 py-1 rounded-full text-[14px] font-semibold whitespace-nowrap border ${getStatusColor(status)}`;
-
-  const priorityPillClass = (priority: string) =>
-    `inline-flex items-center justify-center px-3 py-1 rounded-full text-[14px] font-semibold whitespace-nowrap border ${getPriorityColor(priority)}`;
-
-  const statusLabel = (status: string) =>
-    status
-      .replace(/_/g, ' ')
-      .split(' ')
-      .filter(Boolean)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  const listGridCols = 'grid w-full min-w-full grid-cols-[50px_minmax(90px,110px)_minmax(200px,3fr)_minmax(110px,1fr)_minmax(100px,1fr)_minmax(120px,1.5fr)_minmax(110px,1.5fr)_minmax(120px,1.5fr)_minmax(130px,1.5fr)_minmax(80px,100px)]';
+  const listGridCols = LIST_GRID_COLS;
   const showDetailPanel = viewMode === 'detailed' && detailPanelOpen;
   const splitLayoutClass =
     viewMode === 'detailed' && showDetailPanel
@@ -2461,133 +2435,41 @@ export default function TicketManagementSystem() {
                               )}
                             </div>
                           ) : (
-                            listTickets.map(ticket => {
-                              const isSelected = selectedTickets.has(ticket.id);
-                              const createdDate = formatCreatedDateForList(ticket.createdAt);
-                              const tasks = ticket.linked_tasks_count ?? 0;
-                              return (
-                                <div
-                                  key={ticket.id}
-                                  onClick={() => handleListRowClick(ticket)}
-                                  className={`${listGridCols} items-center text-[14px] bg-gray-50 dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-hover cursor-pointer transition-colors ${isSelected ? 'ring-1 ring-primary-400 bg-primary-50/70 dark:bg-primary-900/20' : ''
-                                    }`}
-                                >
-                                  <div className="flex items-center justify-center py-3 px-3">
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onClick={(e) => e.stopPropagation()}
-                                      onChange={(e) => handleTicketSelection(ticket.id, e.target.checked)}
-                                      className="h-4 w-4 rounded border-gray-300 text-primary-400 focus:ring-primary-500"
-                                    />
-                                  </div>
-                                  <div className="py-3 px-3 text-left whitespace-nowrap text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300">
-                                    #{ticket.ticket_id}
-                                  </div>
-                                  <div className={`py-3 px-3 text-left text-gray-900 dark:text-[var(--text-primary)] ${(!ticket.is_opened || ticket.has_new_reply) ? 'font-bold' : 'font-normal'}`}>
-                                    <div className="flex items-center gap-2">
-                                      <div className="relative group min-w-0">
-                                        <span
-                                          className="block truncate text-[14px] leading-5"
-                                          onMouseEnter={(e) => showTicketPreview(ticket, e.currentTarget)}
-                                          onMouseLeave={scheduleHideTicketPreview}
-                                        >
-                                          {ticket.title}
-                                        </span>
-                                      </div>
-                                      {(!ticket.is_opened || ticket.has_new_reply) && <NewBadge />}
-                                    </div>
-                                    <LabelGroup labels={ticket.labels || []} size="table" maxVisible={3} className="mt-1" />
-                                  </div>
-                                  <div className="py-3 px-3 flex justify-center">
-                                    <button
-                                      className="focus:outline-none"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedTicket(ticket);
-                                        setSelectedStatus(ticket.status);
-                                        setShowStatusModal(true);
-                                      }}
-                                    >
-                                      <span className={statusPillClass(ticket.status)}>
-                                        {statusLabel(ticket.status)}
-                                      </span>
-                                    </button>
-                                  </div>
-                                  <div className="py-3 px-3 flex justify-center">
-                                    <button
-                                      className="focus:outline-none"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedTicket(ticket);
-                                        setSelectedPriority(ticket.priority);
-                                        setShowPriorityModal(true);
-                                      }}
-                                    >
-                                      <span className={priorityPillClass(ticket.priority)}>
-                                        {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
-                                      </span>
-                                    </button>
-                                  </div>
-                                  <div className="py-3 px-3 text-left text-[14px] text-gray-700 dark:text-[var(--text-primary)]">
-                                    <button
-                                      className="w-full truncate text-left font-medium"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        setSelectedTicket(ticket);
-                                        setSelectedDepartmentId(ticket.department?.id?.toString() || '');
-                                        setShowDepartmentModal(true);
-                                      }}
-                                    >
-                                      {ticket.department?.name || '—'}
-                                    </button>
-                                  </div>
-                                  <div className="py-3 px-3 text-left text-[14px] text-gray-700 dark:text-[var(--text-primary)]">
-                                    <span className="block truncate font-medium">{formatUserName(ticket.requester)}</span>
-                                  </div>
-                                  <div className="py-3 px-3 text-left text-[14px] text-gray-700 dark:text-[var(--text-primary)]">
-                                    <button
-                                      className="w-full truncate text-left font-medium"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        setSelectedTicket(ticket);
-                                        setShowAssignModal(true);
-                                      }}
-                                    >
-                                      {formatUserName(ticket.assignee)}
-                                    </button>
-                                  </div>
-                                  <div className="py-3 px-3 text-center whitespace-nowrap text-[14px] text-gray-700 dark:text-[var(--text-primary)]">
-                                    <button
-                                      className="w-full text-center font-medium"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedTicket(ticket);
-                                        setTaskDialogTicketId(ticket.id.toString());
-                                        setTaskDialogOpen(true);
-                                      }}
-                                    >
-                                      {createdDate}
-                                    </button>
-                                  </div>
-                                  <div className="py-3 px-3 text-center whitespace-nowrap text-[14px] text-gray-900 dark:text-[var(--text-primary)]">
-                                    <button
-                                      className="w-full text-center font-semibold"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedTicket(ticket);
-                                        setTaskDialogTicketId(ticket.id.toString());
-                                        setTaskDialogOpen(true);
-                                      }}
-                                    >
-                                      {tasks}
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })
+                            listTickets.map(ticket => (
+                              <TicketRow
+                                key={ticket.id}
+                                ticket={ticket}
+                                isSelected={selectedTickets.has(ticket.id)}
+                                onRowClick={handleListRowClick}
+                                onSelectionChange={handleTicketSelection}
+                                onStatusClick={(t) => {
+                                  setSelectedTicket(t);
+                                  setSelectedStatus(t.status);
+                                  setShowStatusModal(true);
+                                }}
+                                onPriorityClick={(t) => {
+                                  setSelectedTicket(t);
+                                  setSelectedPriority(t.priority);
+                                  setShowPriorityModal(true);
+                                }}
+                                onDepartmentClick={(t) => {
+                                  setSelectedTicket(t);
+                                  setSelectedDepartmentId(t.department?.id?.toString() || '');
+                                  setShowDepartmentModal(true);
+                                }}
+                                onAssigneeClick={(t) => {
+                                  setSelectedTicket(t);
+                                  setShowAssignModal(true);
+                                }}
+                                onTaskDialogOpen={(t) => {
+                                  setSelectedTicket(t);
+                                  setTaskDialogTicketId(t.id.toString());
+                                  setTaskDialogOpen(true);
+                                }}
+                                onPreviewEnter={showTicketPreview}
+                                onPreviewLeave={scheduleHideTicketPreview}
+                              />
+                            ))
                           )}
                         </div>
                       </div>
