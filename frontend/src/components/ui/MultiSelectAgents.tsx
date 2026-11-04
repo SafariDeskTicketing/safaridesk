@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useId, useState } from 'react';
+import { FloatingPortal } from '@floating-ui/react';
+import { ChevronDown, Search } from '../icons/AppIcons';
 import type { AgentType } from '../../types/agents';
+import { useAnchoredFloating } from './useAnchoredFloating';
 
 interface MultiSelectAgentsProps {
   agents: AgentType[];
@@ -19,65 +21,23 @@ const MultiSelectAgents: React.FC<MultiSelectAgentsProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties | null>(null);
+  const baseId = useId();
+  const buttonId = `${baseId}-button`;
+  const panelId = `${baseId}-panel`;
 
-  const handleToggle = () => setIsOpen(!isOpen);
+  const close = () => {
+    setIsOpen(false);
+    setSearchTerm('');
+  };
 
-  // Position the dropdown in a portal to avoid layout shifts
-  useEffect(() => {
-    if (!isOpen) {
-      setDropdownStyle(null);
-      return;
-    }
-
-    const updatePosition = () => {
-      const btn = buttonRef.current;
-      if (!btn) return;
-      const rect = btn.getBoundingClientRect();
-      // Use fixed positioning so the dropdown sits above transformed/stacked parents (modals)
-      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-      let left = rect.left;
-      const width = 288; // w-72
-      // Clamp to viewport to avoid overflow
-      if (left + width > vw - 8) {
-        left = Math.max(8, vw - width - 8);
-      }
-      setDropdownStyle({
-        position: 'fixed',
-        top: rect.bottom + 4,
-        left: left,
-        width: width,
-        zIndex: 99999,
-      });
-    };
-
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-
-    const handleOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        dropdownRef.current && dropdownRef.current.contains(target)
-      ) {
-        return;
-      }
-      if (buttonRef.current && buttonRef.current.contains(target)) {
-        return;
-      }
-      setIsOpen(false);
-    };
-
-    document.addEventListener('mousedown', handleOutside);
-
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-      document.removeEventListener('mousedown', handleOutside);
-    };
-  }, [isOpen]);
+  const { refs, floatingStyles, getReferenceProps, getFloatingProps } = useAnchoredFloating({
+    open: isOpen,
+    onOpenChange: (nextOpen) => {
+      if (!nextOpen) close();
+    },
+    placement: 'bottom-start',
+    gap: 4,
+  });
 
   const handleAgentToggle = (agentId: number) => {
     const newSelection = selectedAgents.includes(agentId)
@@ -95,87 +55,89 @@ const MultiSelectAgents: React.FC<MultiSelectAgentsProps> = ({
     .filter(Boolean) as string[];
 
   return (
-    <div className="relative overflow-visible">
-      <label className="block text-[14px] font-medium text-gray-700 dark:text-[var(--text-primary)] mb-1">
+    <div className="relative">
+      <label
+        htmlFor={buttonId}
+        className="mb-1.5 block text-[14px] font-medium text-[var(--text-secondary)]"
+      >
         {label}
       </label>
       <button
+        id={buttonId}
         type="button"
-        ref={buttonRef}
-        className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3.5 py-2.5 text-left text-[14px] text-gray-900 shadow-sm cursor-pointer focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-subtle dark:bg-surface-elevated dark:text-[var(--text-primary)]"
-        onClick={handleToggle}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? panelId : undefined}
+        className="flex h-[40px] w-full items-center justify-between rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--shell-field-bg)] px-3.5 text-left text-[14px] text-[var(--text-primary)] shadow-[var(--shell-shadow-sm)] cursor-pointer transition-colors duration-200 hover:border-[var(--shell-search-border)] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
+        {...getReferenceProps({
+          ref: refs.setReference,
+          onClick: () => (isOpen ? close() : setIsOpen(true)),
+        })}
       >
-        <span className="block truncate text-gray-900 dark:text-[var(--text-primary)]">
-          {selectedAgentNames.length > 0
-            ? selectedAgentNames.join(', ')
-            : placeholder}
+        <span className={`min-w-0 truncate ${selectedAgentNames.length > 0 ? '' : 'text-[var(--text-muted)]'}`}>
+          {selectedAgentNames.length > 0 ? selectedAgentNames.join(', ') : placeholder}
         </span>
-        <svg
-          className="-mr-1 ml-2 h-5 w-5 text-gray-400"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-            clipRule="evenodd"
-          />
-        </svg>
+        <ChevronDown
+          size={16}
+          stroke={1.8}
+          className={`ml-2 shrink-0 text-[var(--text-muted)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
 
-      {isOpen && dropdownStyle && ReactDOM.createPortal(
-        <div
-          ref={dropdownRef}
-          style={dropdownStyle}
-          className="bg-white dark:bg-surface-elevated shadow-lg rounded-md ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-        >
-          <div className="p-2">
-            <input
-              type="text"
-              className="block w-full rounded-md border border-gray-300 bg-white px-3.5 py-2.5 text-[14px] shadow-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-primary-500 dark:border-subtle dark:bg-surface-hover"
-              placeholder="Search agents..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoFocus
-            />
-          </div>
-          <ul
-            tabIndex={-1}
-            role="listbox"
-            aria-labelledby="listbox-label"
-            className="max-h-56 overflow-auto rounded-b-md py-1 text-[14px] ring-1 ring-black ring-opacity-5 focus:outline-none border-t-0"
-            style={{ marginBottom: 4 }}
+      {isOpen && (
+        <FloatingPortal>
+          <div
+            id={panelId}
+            ref={refs.setFloating}
+            style={floatingStyles}
+            aria-label={label}
+            className="w-72 rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] shadow-[var(--shell-shadow-md)]"
+            {...getFloatingProps({
+              role: 'dialog',
+              onKeyDown: (event: React.KeyboardEvent) => {
+                if (event.key === 'Escape') {
+                  // Close only this picker, not an enclosing Modal listening on document.
+                  event.stopPropagation();
+                  close();
+                  document.getElementById(buttonId)?.focus();
+                }
+              },
+            })}
           >
-            {filteredAgents.length === 0 ? (
-              <li className="relative py-2.5 pl-3.5 pr-9 text-gray-900 dark:text-[var(--text-primary)]">
-                No agents found.
-              </li>
-            ) : (
-              filteredAgents.map((agent) => (
-                <li
-                  key={agent.id}
-                  className="relative cursor-default select-none py-2.5 pl-3.5 pr-9 text-gray-900 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover"
-                  onClick={() => handleAgentToggle(agent.id)}
-                >
-                  <div className="flex items-center">
+            <div className="relative border-b border-[var(--border-color)] p-2">
+              <input
+                type="text"
+                aria-label="Search agents"
+                className="h-[38px] w-full rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--shell-field-bg)] px-3 pl-8 text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
+                placeholder="Search agents..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+              <Search size={16} stroke={1.8} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            </div>
+            <div role="group" aria-label={label} className="max-h-56 overflow-auto py-1 text-[14px]">
+              {filteredAgents.length === 0 ? (
+                <p className="px-3.5 py-2.5 text-[var(--text-muted)]">No agents found.</p>
+              ) : (
+                filteredAgents.map((agent) => (
+                  <label
+                    key={agent.id}
+                    className="flex min-h-[44px] cursor-pointer select-none items-center px-3.5 py-2.5 text-[var(--text-primary)] hover:bg-[var(--shell-nav-hover-bg)]"
+                  >
                     <input
                       type="checkbox"
-                      readOnly
                       checked={selectedAgents.includes(agent.id)}
-                      className="form-checkbox h-4 w-4 text-primary-600 transition duration-150 ease-in-out"
+                      onChange={() => handleAgentToggle(agent.id)}
+                      className="form-checkbox h-4 w-4 shrink-0 text-primary-600"
                     />
-                    <span className="ml-3 block truncate font-normal">
-                      {agent.name}
-                    </span>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>,
-        document.body
+                    <span className="ml-3 block truncate">{agent.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+        </FloatingPortal>
       )}
     </div>
   );
