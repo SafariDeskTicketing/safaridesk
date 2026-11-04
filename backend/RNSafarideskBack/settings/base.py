@@ -73,6 +73,19 @@ CELERY_BEAT_SCHEDULE = {
         "task": "shared.workers.Sla.check_sla_breaches",
         "schedule": crontab(minute="*/1"),
     },
+    "purge-expired-deletion-requests-daily": {
+        "task": "shared.workers.Deletion.purge_expired_deletion_requests",
+        "schedule": crontab(hour=2, minute=0),
+    },
+    # Deliberately NOT scheduled yet: shared.workers.BusinessDeletion.
+    # purge_expired_business_deletion_requests hard-deletes whole tenants past
+    # their grace period and has never run in any deployment. Enabling it is
+    # pending an explicit product decision; see PROGRESS.md.
+    "report-inactive-business-deletion-candidates-weekly": {
+        "task": "shared.workers.BusinessDeletion.report_inactive_business_deletion_candidates",
+        "schedule": crontab(day_of_week="mon", hour=0, minute=0),
+        "kwargs": {"days": 30},
+    },
 }
 
 # Application definition
