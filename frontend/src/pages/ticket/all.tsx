@@ -68,6 +68,8 @@ import { useTicketFilterOptions } from './list/useTicketFilterOptions';
 import { resolveViewFromUrlParams } from './list/ticketViewResolution';
 import { TicketRow } from './list/TicketRow';
 import { LIST_GRID_COLS, statusLabel } from './list/ticketRowHelpers';
+import { useColumnFilterPopover } from './list/useColumnFilterPopover';
+import { ColumnFilterPanel } from './list/ColumnFilterPanel';
 import {
   useTicketsListQuery,
   transformApiTicket,
@@ -255,10 +257,15 @@ export default function TicketManagementSystem() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const [activeColumnFilter, setActiveColumnFilter] = useState<ColumnFilterKey | null>(null);
-  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(null);
-  const [filterPosition, setFilterPosition] = useState<{ top: number; left: number; minWidth: number } | null>(null);
-  const [columnFilterSearch, setColumnFilterSearch] = useState('');
+  const {
+    activeColumnFilter,
+    filterPosition,
+    columnFilterSearch,
+    setColumnFilterSearch,
+    columnFilterRef,
+    openColumnFilter,
+    closeColumnFilter,
+  } = useColumnFilterPopover(() => setShowSearchFilterDropdown(false));
   const [ticketPreview, setTicketPreview] = useState<TicketPreviewState | null>(null);
   const ticketPreviewOpenTimeoutRef = useRef<number | null>(null);
   const ticketPreviewHideTimeoutRef = useRef<number | null>(null);
@@ -360,7 +367,6 @@ export default function TicketManagementSystem() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
-  const columnFilterRef = useRef<HTMLDivElement>(null);
 
   const { currentSortState, toggleSort } = useViewSortState(activeView);
   const sortField = currentSortState.field;
@@ -891,70 +897,6 @@ export default function TicketManagementSystem() {
     // Avoid stale selections when switching between normal/trash/archived views.
     setSelectedTickets(new Set());
   }, [activeView]);
-
-  const openColumnFilter = (key: ColumnFilterKey) => (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    if (activeColumnFilter === key) {
-      setActiveColumnFilter(null);
-      setFilterAnchorEl(null);
-      return;
-    }
-    setActiveColumnFilter(key);
-    setFilterAnchorEl(event.currentTarget as HTMLElement);
-    setColumnFilterSearch('');
-    setShowSearchFilterDropdown(false);
-  };
-
-  const closeColumnFilter = () => {
-    setActiveColumnFilter(null);
-    setFilterAnchorEl(null);
-    setColumnFilterSearch('');
-  };
-
-  const updateFilterPosition = useCallback(() => {
-    if (!filterAnchorEl) return;
-    const rect = filterAnchorEl.getBoundingClientRect();
-    const minWidth = 240;
-    const viewportPadding = 12;
-    const maxLeft = window.innerWidth - minWidth - viewportPadding;
-    const clampedLeft = Math.max(viewportPadding, Math.min(rect.left, maxLeft));
-    setFilterPosition({
-      top: rect.bottom + 6,
-      left: clampedLeft,
-      minWidth,
-    });
-  }, [filterAnchorEl]);
-
-  useEffect(() => {
-    if (!activeColumnFilter) return;
-    updateFilterPosition();
-    const handleScroll = () => updateFilterPosition();
-    window.addEventListener('resize', handleScroll);
-    window.addEventListener('scroll', handleScroll, true);
-    return () => {
-      window.removeEventListener('resize', handleScroll);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [activeColumnFilter, updateFilterPosition]);
-
-  useEffect(() => {
-    if (!activeColumnFilter) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (columnFilterRef.current?.contains(target)) return;
-      if (filterAnchorEl?.contains(target)) return;
-      closeColumnFilter();
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeColumnFilter();
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [activeColumnFilter, filterAnchorEl]);
 
   useEffect(() => {
     if (!showSearchFilterDropdown && !showSearchValueDropdown) return;
@@ -1497,400 +1439,6 @@ export default function TicketManagementSystem() {
       setIsSubmitting(false);
     }
   }
-
-  const renderColumnFilterContent = () => {
-    if (!activeColumnFilter) return null;
-    if (activeColumnFilter === 'status') {
-      const options = [
-        { value: 'all', label: 'All statuses', icon: List },
-        { value: 'open', label: 'Open', icon: UserCheck },
-        { value: 'in_progress', label: 'In progress', icon: Clock },
-        { value: 'pending', label: 'Pending', icon: AlertCircle },
-        { value: 'on_hold', label: 'On hold', icon: PauseCircle },
-        { value: 'closed', label: 'Closed', icon: CheckCircle },
-      ];
-      return (
-        <div className="flex flex-col gap-2">
-          <span className="text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-2">
-            <CheckCircle size={12} className="opacity-70" />
-            Filter by status
-          </span>
-          <div className="space-y-1">
-            {options.map(option => {
-              const Icon = option.icon;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    setStatusFilter(option.value);
-                    closeColumnFilter();
-                  }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${statusFilter === option.value
-                    ? 'bg-primary-600 text-white'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                    }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon size={14} className="opacity-70" />
-                    {option.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeColumnFilter === 'priority') {
-      const options = [
-        { value: 'all', label: 'All priorities', icon: List },
-        { value: 'low', label: 'Low', icon: ChevronDown },
-        { value: 'medium', label: 'Medium', icon: AlertCircle },
-        { value: 'high', label: 'High', icon: AlertTriangle },
-        { value: 'urgent', label: 'Urgent', icon: ShieldAlert },
-      ];
-      return (
-        <div className="flex flex-col gap-2">
-          <span className="text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-2">
-            <AlertTriangle size={12} className="opacity-70" />
-            Filter by priority
-          </span>
-          <div className="space-y-1">
-            {options.map(option => {
-              const Icon = option.icon;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    setPriorityFilter(option.value);
-                    closeColumnFilter();
-                  }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${priorityFilter === option.value
-                    ? 'bg-primary-600 text-white'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                    }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon size={14} className="opacity-70" />
-                    {option.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeColumnFilter === 'assignee') {
-      const normalizedQuery = columnFilterSearch.trim().toLowerCase();
-      const filteredAgents = (agents || []).filter(agent => {
-        const name = (agent.name || '').toLowerCase();
-        const email = (agent.email || '').toLowerCase();
-        return name.includes(normalizedQuery) || email.includes(normalizedQuery);
-      });
-      return (
-        <div className="flex flex-col gap-3">
-          <span className="text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-2">
-            <User size={12} className="opacity-70" />
-            Filter by assignee
-          </span>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[var(--text-muted)]" size={14} />
-            <input
-              type="text"
-              placeholder="Filter assignees"
-              value={columnFilterSearch}
-              onChange={(event) => setColumnFilterSearch(event.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-[length:var(--font-body)] rounded-md border border-[var(--border-color)] bg-[var(--surface-muted)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            <button
-              onClick={() => {
-                setAssigneeFilter('all');
-                closeColumnFilter();
-              }}
-              className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${assigneeFilter === 'all'
-                ? 'bg-primary-600 text-white'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                }`}
-            >
-              <span className="flex items-center gap-2">
-                <List size={14} className="opacity-70" />
-                All assignees
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                setAssigneeFilter('unassigned');
-                closeColumnFilter();
-              }}
-              className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${assigneeFilter === 'unassigned'
-                ? 'bg-primary-600 text-white'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                }`}
-            >
-              <span className="flex items-center gap-2">
-                <UserX size={14} className="opacity-70" />
-                Unassigned
-              </span>
-            </button>
-            {filteredAgents.map(agent => (
-              <button
-                key={agent.id}
-                onClick={() => {
-                  setAssigneeFilter(agent.id.toString());
-                  closeColumnFilter();
-                }}
-                className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${assigneeFilter === agent.id.toString()
-                  ? 'bg-primary-600 text-white'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                  }`}
-              >
-                <span className="flex items-center gap-2">
-                  <User size={14} className="opacity-70" />
-                  {agent.name || agent.email || 'Unknown agent'}
-                </span>
-              </button>
-            ))}
-            {filteredAgents.length === 0 && (
-              <div className="px-2.5 py-1.5 text-[length:var(--font-body)] text-[var(--text-muted)]">No assignees found.</div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeColumnFilter === 'department') {
-      return (
-        <div className="flex flex-col gap-2">
-          <span className="text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-2">
-            <Building size={12} className="opacity-70" />
-            Filter by department
-          </span>
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            <button
-              onClick={() => {
-                setDepartmentFilter('all');
-                closeColumnFilter();
-              }}
-              className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${departmentFilter === 'all'
-                ? 'bg-primary-600 text-white'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                }`}
-            >
-              <span className="flex items-center gap-2">
-                <List size={14} className="opacity-70" />
-                All departments
-              </span>
-            </button>
-            {departments.map(dept => (
-              <button
-                key={dept.id}
-                onClick={() => {
-                  setDepartmentFilter(dept.id.toString());
-                  closeColumnFilter();
-                }}
-                className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${departmentFilter === dept.id.toString()
-                  ? 'bg-primary-600 text-white'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                  }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Building size={14} className="opacity-70" />
-                  {dept.name}
-                </span>
-              </button>
-            ))}
-            {departments.length === 0 && (
-              <div className="px-2.5 py-1.5 text-[length:var(--font-body)] text-[var(--text-muted)]">No departments found.</div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeColumnFilter === 'category') {
-      return (
-        <div className="flex flex-col gap-2">
-          <span className="text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-2">
-            <Tag size={12} className="opacity-70" />
-            Filter by category
-          </span>
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            <button
-              onClick={() => {
-                setCategoryFilter('all');
-                closeColumnFilter();
-              }}
-              className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${categoryFilter === 'all'
-                ? 'bg-primary-600 text-white'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                }`}
-            >
-              <span className="flex items-center gap-2">
-                <List size={14} className="opacity-70" />
-                All categories
-              </span>
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  setCategoryFilter(cat.id.toString());
-                  closeColumnFilter();
-                }}
-                className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${categoryFilter === cat.id.toString()
-                  ? 'bg-primary-600 text-white'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                  }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Tag size={14} className="opacity-70" />
-                  {cat.name}
-                </span>
-              </button>
-            ))}
-            {categories.length === 0 && (
-              <div className="px-2.5 py-1.5 text-[length:var(--font-body)] text-[var(--text-muted)]">No categories found.</div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeColumnFilter === 'labels') {
-      const filteredLabels = labels.filter((labelItem) =>
-        `${labelItem.name} ${labelItem.description || ''}`.toLowerCase().includes(columnFilterSearch.trim().toLowerCase())
-      );
-      return (
-        <div className="flex flex-col gap-3">
-          <span className="text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-2">
-            <Tag size={12} className="opacity-70" />
-            Filter by labels
-          </span>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[var(--text-muted)]" size={14} />
-            <input
-              type="text"
-              placeholder="Search labels"
-              value={columnFilterSearch}
-              onChange={(event) => setColumnFilterSearch(event.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-[length:var(--font-body)] rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--surface-muted)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            <button
-              onClick={() => {
-                setLabelFilterIds([]);
-                closeColumnFilter();
-              }}
-              className={`w-full text-left px-2.5 py-1.5 rounded-md text-[length:var(--font-body)] transition-colors ${labelFilterIds.length === 0
-                ? 'bg-primary-600 text-white'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                }`}
-            >
-              <span className="flex items-center gap-2">
-                <List size={14} className="opacity-70" />
-                All labels
-              </span>
-            </button>
-            {filteredLabels.map((labelItem) => (
-              <button
-                key={labelItem.id}
-                onClick={() =>
-                  setLabelFilterIds((current) =>
-                    current.includes(labelItem.id)
-                      ? current.filter((labelId) => labelId !== labelItem.id)
-                      : [...current, labelItem.id],
-                  )
-                }
-                className={`w-full rounded-md border px-2.5 py-1.5 text-left text-[length:var(--font-body)] transition-colors ${
-                  labelFilterIds.includes(labelItem.id)
-                    ? 'border-primary-300 bg-[var(--surface-subtle)]'
-                    : 'border-transparent text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
-                }`}
-              >
-                <LabelGroup labels={[labelItem]} size="sm" />
-              </button>
-            ))}
-            {filteredLabels.length === 0 && (
-              <div className="px-2.5 py-1.5 text-[length:var(--font-body)] text-[var(--text-muted)]">No labels found.</div>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setLabelFilterIds([])}
-              className="px-2.5 py-1.5 text-[length:var(--font-body)] rounded-[var(--shell-radius)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]"
-            >
-              Clear
-            </button>
-            <button
-              onClick={closeColumnFilter}
-              className="px-2.5 py-1.5 text-[length:var(--font-body)] rounded-md bg-primary-600 text-white hover:bg-primary-700"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeColumnFilter === 'created_at') {
-      return (
-        <div className="flex flex-col gap-3">
-          <span className="text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)] flex items-center gap-2">
-            <Calendar size={12} className="opacity-70" />
-            Filter by created date
-          </span>
-          <div className="grid grid-cols-1 gap-2">
-            <label className="text-[length:var(--font-meta)] text-[var(--text-muted)]">From</label>
-            <input
-              type="date"
-              value={dateFromFilter}
-              onChange={(event) => setDateFromFilter(event.target.value)}
-              className="w-full rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--surface-muted)] px-2.5 py-1.5 text-[length:var(--font-body)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-            <label className="text-[length:var(--font-meta)] text-[var(--text-muted)]">To</label>
-            <input
-              type="date"
-              value={dateToFilter}
-              onChange={(event) => setDateToFilter(event.target.value)}
-              className="w-full rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--surface-muted)] px-2.5 py-1.5 text-[length:var(--font-body)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setDateFromFilter('');
-                setDateToFilter('');
-                closeColumnFilter();
-              }}
-              className="px-2.5 py-1.5 text-[length:var(--font-body)] rounded-[var(--shell-radius)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]"
-            >
-              <span className="flex items-center gap-2">
-                <X size={14} className="opacity-70" />
-                Clear
-              </span>
-            </button>
-            <button
-              onClick={closeColumnFilter}
-              className="px-2.5 py-1.5 text-[length:var(--font-body)] rounded-md bg-primary-600 text-white hover:bg-primary-700"
-            >
-              <span className="flex items-center gap-2">
-                <CheckCircle size={14} />
-                Apply
-              </span>
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
 
   return (
     <>
@@ -3443,7 +2991,32 @@ export default function TicketManagementSystem() {
               maxWidth: filterPosition.minWidth,
             }}
           >
-            {renderColumnFilterContent()}
+            <ColumnFilterPanel
+              activeColumnFilter={activeColumnFilter}
+              onClose={closeColumnFilter}
+              columnFilterSearch={columnFilterSearch}
+              setColumnFilterSearch={setColumnFilterSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              priorityFilter={priorityFilter}
+              setPriorityFilter={setPriorityFilter}
+              agents={agents}
+              assigneeFilter={assigneeFilter}
+              setAssigneeFilter={setAssigneeFilter}
+              departments={departments}
+              departmentFilter={departmentFilter}
+              setDepartmentFilter={setDepartmentFilter}
+              categories={categories}
+              categoryFilter={categoryFilter}
+              setCategoryFilter={setCategoryFilter}
+              labels={labels}
+              labelFilterIds={labelFilterIds}
+              setLabelFilterIds={setLabelFilterIds}
+              dateFromFilter={dateFromFilter}
+              setDateFromFilter={setDateFromFilter}
+              dateToFilter={dateToFilter}
+              setDateToFilter={setDateToFilter}
+            />
           </div>,
           document.body
         )}
