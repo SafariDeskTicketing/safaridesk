@@ -13,7 +13,6 @@ import AgentForm from './mini/AgentForm';
 import type { Agent } from '../../types';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { AdminCrudPage } from '../../components/layout';
-import { cacheDelete } from '../../utils/fetchCache';
 import { AGENTS_QUERY_KEY } from '../../services/agents';
 
 const AGENTS_ADMIN_KEY = ['agents-admin'] as const;
@@ -72,7 +71,6 @@ const AgentsPage: React.FC = () => {
   const invalidateAgents = () => {
     queryClient.invalidateQueries({ queryKey: AGENTS_ADMIN_KEY });
     queryClient.invalidateQueries({ queryKey: AGENTS_QUERY_KEY });
-    try { cacheDelete('modal:agents'); } catch {}
   };
 
   // Load departments when modal opens

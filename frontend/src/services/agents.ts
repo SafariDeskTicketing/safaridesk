@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { APIS } from '../services/apis';
 import http from '../services/http';
 import type { AgentType, ApiResponse } from '../types/agents';
-import { cacheDelete } from '../utils/fetchCache';
 import { errorNotification } from '../components/ui/Toast';
 
 export const getActiveAgents = (payload: ApiResponse | AgentType[] | unknown): AgentType[] => {
@@ -24,12 +23,13 @@ const fetchAgents = async (): Promise<ApiResponse> => {
 
 export const AGENTS_QUERY_KEY = ['agents'] as const;
 
-export const useFetchAgents = () => {
+export const useFetchAgents = (options: { enabled?: boolean } = {}) => {
   const query = useQuery<ApiResponse>({
     queryKey: AGENTS_QUERY_KEY,
     queryFn: fetchAgents,
     staleTime: 5 * 60 * 1000,  // agents rarely change; 5-minute cache
     gcTime: 15 * 60 * 1000,
+    enabled: options.enabled ?? true,
   });
 
   useEffect(() => {
@@ -44,13 +44,4 @@ export const useFetchAgents = () => {
     isError: query.isError,
     refetch: query.refetch,
   };
-};
-
-// Invalidate the global agent cache so the next consumer triggers a fresh fetch.
-export const invalidateAgentCache = (): void => {
-  try {
-    cacheDelete('modal:agents');
-  } catch {
-    // noop
-  }
 };

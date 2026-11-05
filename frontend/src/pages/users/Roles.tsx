@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, Edit, UserPlus } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -10,7 +11,7 @@ import { APIS } from '../../services/apis';
 import http from '../../services/http';
 import { errorNotification, successNotification } from '../../components/ui/Toast';
 import { PageCard, PageCardHeader, PageHeader } from '../../components/layout';
-import { cacheDelete } from '../../utils/fetchCache';
+import { AGENTS_QUERY_KEY } from '../../services/agents';
 
 interface User {
   id: number;
@@ -31,6 +32,7 @@ interface User {
 }
 
 const RolesPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [users, setUsers] = React.useState<User[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [showCreateModal, setShowCreateModal] = React.useState(false);
@@ -122,8 +124,8 @@ const RolesPage: React.FC = () => {
       });
 
       successNotification('Role updated successfully');
-      // Invalidate modal agents cache so assignment dropdowns refresh
-      try { cacheDelete('modal:agents'); } catch {}
+      // Invalidate the agents query so assignment dropdowns refresh
+      queryClient.invalidateQueries({ queryKey: AGENTS_QUERY_KEY });
       setShowEditModal(false);
       fetchAgents();
     } catch (error) {

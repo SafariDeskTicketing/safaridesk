@@ -16,11 +16,12 @@ import Button from '../ui/Button';
 import Select from '../ui/Select';
 import LabelPicker from '../ui/LabelPicker';
 import { AttachmentTrigger } from '../ui/AttachmentTrigger';
-import type { LabelItem } from '../../types';
-import { cacheGet, cacheSet } from '../../utils/fetchCache';
 import { TITLE_MAX_LENGTH, getTitleLengthMessage } from '../../utils/validationLimits';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { getActiveAgents } from '../../services/agents';
+import { useFetchAgents } from '../../services/agents';
+import { useFetchCategories, type CategoryOption } from '../../services/categories';
+import { useFetchDepartments, type DepartmentOption } from '../../services/departments';
+import { useFetchActiveLabels } from '../../services/labels';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_FILE_COUNT = 5;
@@ -48,27 +49,6 @@ const createTicketSchema = z.object({
 
 type CreateTicketFormData = z.infer<typeof createTicketSchema>;
 
-interface Category {
-  id: number;
-  name: string;
-  description: string;
-  department?: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Department {
-  id: number;
-  name: string;
-  slag: string;
-  created_at: string;
-}
-
-interface Agent {
-  id: number;
-  name: string;
-}
-
 type TicketFormVariant = 'internal' | 'customer';
 
 interface CreateTicketModalProps {
@@ -76,8 +56,8 @@ interface CreateTicketModalProps {
   onclose?: () => void;
   onSuccess?: () => void;
   loadFromApi?: boolean;
-  categories?: Category[];
-  departments?: Department[];
+  categories?: CategoryOption[];
+  departments?: DepartmentOption[];
   onDirtyChange?: (isDirty: boolean) => void;
   variant?: TicketFormVariant;
 }
@@ -105,17 +85,25 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
   const { user } = useAuthStore();
   const { businessId } = useValidateDomain();
 
+  // Customer-facing variant gets its category/department lists as props
+  // (fetched once by the surrounding page); only the internal variant
+  // fetches its own, and agents/labels never apply to customers at all.
+  const shouldFetchFromApi = variant !== 'customer' && Boolean(loadFromApi) && Boolean(user);
+
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>(propCategories || []);
-  const [departments, setDepartments] = useState<Department[]>(propDepartments || []);
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [labels, setLabels] = useState<LabelItem[]>([]);
+  const { data: fetchedCategories, isLoading: loadingCategoriesQuery } = useFetchCategories({ enabled: shouldFetchFromApi });
+  const { data: fetchedDepartments, isLoading: loadingDepartmentsQuery } = useFetchDepartments({ enabled: shouldFetchFromApi });
+  const { data: agentsResponse, isLoading: loadingAgents } = useFetchAgents({ enabled: shouldFetchFromApi });
+  const { data: labels, isLoading: loadingLabels } = useFetchActiveLabels({ enabled: shouldFetchFromApi });
+
+  const categories = shouldFetchFromApi ? fetchedCategories : (propCategories || []);
+  const departments = shouldFetchFromApi ? fetchedDepartments : (propDepartments || []);
+  const agents = shouldFetchFromApi ? (agentsResponse?.results ?? []) : [];
+  const loadingCategories = shouldFetchFromApi && loadingCategoriesQuery;
+  const loadingDepartments = shouldFetchFromApi && loadingDepartmentsQuery;
+
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentErrors, setAttachmentErrors] = useState<string[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [loadingDepartments, setLoadingDepartments] = useState(false);
-  const [loadingAgents, setLoadingAgents] = useState(false);
-  const [loadingLabels, setLoadingLabels] = useState(false);
 
   const {
     register,
@@ -170,85 +158,6 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
       }
     }
   }, [user, setValue]);
-
-  const fetchCategories = async () => {
-    const cached = cacheGet<Category[]>('modal:categories');
-    if (cached) {
-      setCategories(cached);
-      void http.get(`${APIS.LIST_TICKET_CATEGORIES}?pagination=no`).then(r => { cacheSet('modal:categories', r.data); setCategories(r.data); }).catch(() => {});
-      return;
-    }
-    setLoadingCategories(true);
-    try {
-      const r = await http.get(`${APIS.LIST_TICKET_CATEGORIES}?pagination=no`);
-      cacheSet('modal:categories', r.data);
-      setCategories(r.data);
-    } catch { /* silent */ } finally { setLoadingCategories(false); }
-  };
-
-  const fetchDepartments = async () => {
-    const cached = cacheGet<Department[]>('modal:departments');
-    if (cached) {
-      setDepartments(cached);
-      void http.get(`${APIS.LIST_DEPARTMENTS}?pagination=no`).then(r => { cacheSet('modal:departments', r.data); setDepartments(r.data); }).catch(() => {});
-      return;
-    }
-    setLoadingDepartments(true);
-    try {
-      const r = await http.get(`${APIS.LIST_DEPARTMENTS}?pagination=no`);
-      cacheSet('modal:departments', r.data);
-      setDepartments(r.data);
-    } catch { /* silent */ } finally { setLoadingDepartments(false); }
-  };
-
-  const fetchAgents = async () => {
-    // Try to fetch a fresh list first. If the network request fails,
-    // fall back to any cached agents to avoid showing stale deleted/deactivated users.
-    setLoadingAgents(true);
-    try {
-      const r = await http.get(`${APIS.LIST_AGENTS}?pagination=no`);
-      const activeAgents = getActiveAgents(r.data);
-      cacheSet('modal:agents', activeAgents);
-      setAgents(activeAgents);
-    } catch {
-      const cached = cacheGet<Agent[]>('modal:agents');
-      if (cached) {
-        setAgents(getActiveAgents(cached));
-      } else {
-        setAgents([]);
-      }
-    } finally {
-      setLoadingAgents(false);
-    }
-  };
-
-  const fetchLabels = async () => {
-    const cached = cacheGet<LabelItem[]>('modal:labels');
-    if (cached) {
-      setLabels(cached);
-      void http.get(APIS.LABELS_BASE, { params: { pagination: 'no', active_only: true } }).then(r => { const d = r.data?.results || r.data || []; cacheSet('modal:labels', d); setLabels(d); }).catch(() => {});
-      return;
-    }
-    setLoadingLabels(true);
-    try {
-      const r = await http.get(APIS.LABELS_BASE, { params: { pagination: 'no', active_only: true } });
-      const d = r.data?.results || r.data || [];
-      cacheSet('modal:labels', d);
-      setLabels(d);
-    } catch { /* silent */ } finally { setLoadingLabels(false); }
-  };
-
-  useEffect(() => {
-    if (variant !== 'customer' && loadFromApi && user) {
-      fetchCategories();
-      fetchDepartments();
-      fetchAgents();
-      fetchLabels();
-    } else if (propCategories && propDepartments) {
-      setCategories(propCategories);
-      setDepartments(propDepartments);
-    }
-  }, [user, loadFromApi, propCategories, propDepartments, variant]);
 
   const filteredCategories = useMemo(() => {
     if (!watchedDepartment) return categories;

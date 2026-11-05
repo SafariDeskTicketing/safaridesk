@@ -11,21 +11,12 @@ import { formatFileSize } from '../../utils/helper';
 import { emitLocalNotificationCreated, playNotificationSound } from '../../utils/notificationSound';
 import LabelPicker from '../ui/LabelPicker';
 import { AttachmentTrigger } from '../ui/AttachmentTrigger';
-import type { LabelItem } from '../../types';
-import { cacheGet, cacheSet } from '../../utils/fetchCache';
 import { isRichTextEmpty } from '../../utils/richText';
 import { TITLE_MAX_LENGTH, getTitleLengthMessage } from '../../utils/validationLimits';
-import { getActiveAgents } from '../../services/agents';
-
-interface Agent {
-  id: number;
-  name: string;
-}
-
-interface Department {
-  id: number;
-  name: string;
-}
+import { useFetchAgents } from '../../services/agents';
+import { useFetchDepartments } from '../../services/departments';
+import { useFetchActiveLabels } from '../../services/labels';
+import { useFetchLinkableTickets } from '../../services/tickets';
 
 interface NewTask {
   title: string;
@@ -42,12 +33,6 @@ interface CreateTaskModalProps {
   onSuccess?: () => void;
   onDirtyChange?: (isDirty: boolean) => void;
   ticketId?: number;
-}
-
-interface Ticket {
-  id: number;
-  ticket_id: string;
-  title: string;
 }
 
 type TaskFieldErrors = {
@@ -83,18 +68,15 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     priority: 'medium',
   });
 
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [labels, setLabels] = useState<LabelItem[]>([]);
+  const { data: agentsData, isLoading: loadingAgents } = useFetchAgents();
+  const agents = agentsData?.results ?? [];
+  const { data: departments, isLoading: loadingDepartments } = useFetchDepartments();
+  const { data: labels, isLoading: loadingLabels } = useFetchActiveLabels();
+  const { data: tickets, isLoading: loadingTickets } = useFetchLinkableTickets({ enabled: !ticketId });
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [selectedOption, setSelectedOption] = useState('');
   const [selectedTicketId, setSelectedTicketId] = useState('');
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loadingAgents, setLoadingAgents] = useState(false);
-  const [loadingDepartments, setLoadingDepartments] = useState(false);
-  const [loadingLabels, setLoadingLabels] = useState(false);
-  const [loadingTickets, setLoadingTickets] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -118,81 +100,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       onDirtyChange(isDirty);
     }
   }, [newTask, selectedOption, selectedTicketId, selectedLabelIds, attachments, onDirtyChange]);
-
-  const fetchAgents = async () => {
-    // Fetch fresh agents first; fallback to cache on network error.
-    setLoadingAgents(true);
-    try {
-      const r = await http.get(`${APIS.LIST_AGENTS}?pagination=no`);
-      const activeAgents = getActiveAgents(r.data);
-      cacheSet('modal:agents', activeAgents);
-      setAgents(activeAgents);
-    } catch {
-      const cached = cacheGet<Agent[]>('modal:agents');
-      if (cached) {
-        setAgents(getActiveAgents(cached));
-      } else {
-        setAgents([]);
-      }
-    } finally {
-      setLoadingAgents(false);
-    }
-  };
-
-  const fetchDepartments = async () => {
-    const cached = cacheGet<Department[]>('modal:departments');
-    if (cached) {
-      setDepartments(cached);
-      void http.get(`${APIS.LIST_DEPARTMENTS}?pagination=no`).then(r => { cacheSet('modal:departments', r.data); setDepartments(r.data); }).catch(() => {});
-      return;
-    }
-    setLoadingDepartments(true);
-    try {
-      const r = await http.get(`${APIS.LIST_DEPARTMENTS}?pagination=no`);
-      cacheSet('modal:departments', r.data);
-      setDepartments(r.data);
-    } catch { /* silent */ } finally { setLoadingDepartments(false); }
-  };
-
-  const fetchTickets = async () => {
-    if (ticketId) return;
-    const cached = cacheGet<Ticket[]>('modal:tickets');
-    if (cached) {
-      setTickets(cached);
-      void http.get(`${APIS.LIST_TICKETS}?pagination=no`).then(r => { const d = r.data.results || r.data; cacheSet('modal:tickets', d); setTickets(d); }).catch(() => {});
-      return;
-    }
-    setLoadingTickets(true);
-    try {
-      const r = await http.get(`${APIS.LIST_TICKETS}?pagination=no`);
-      const d = r.data.results || r.data;
-      cacheSet('modal:tickets', d);
-      setTickets(d);
-    } catch { /* silent */ } finally { setLoadingTickets(false); }
-  };
-
-  const fetchLabels = async () => {
-    const cached = cacheGet<LabelItem[]>('modal:labels');
-    if (cached) {
-      setLabels(cached);
-      void http.get(APIS.LABELS_BASE, { params: { pagination: 'no', active_only: true } }).then(r => { const d = r.data?.results || r.data || []; cacheSet('modal:labels', d); setLabels(d); }).catch(() => {});
-      return;
-    }
-    setLoadingLabels(true);
-    try {
-      const r = await http.get(APIS.LABELS_BASE, { params: { pagination: 'no', active_only: true } });
-      const d = r.data?.results || r.data || [];
-      cacheSet('modal:labels', d);
-      setLabels(d);
-    } catch { /* silent */ } finally { setLoadingLabels(false); }
-  };
-
-  useEffect(() => {
-    fetchAgents();
-    fetchDepartments();
-    fetchLabels();
-    fetchTickets();
-  }, []);
 
   const handleInputChange = (field: keyof NewTask, value: string | number | undefined) => {
     setNewTask(prev => ({
