@@ -7,15 +7,18 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest import mock
 
-from django.contrib.auth.models import Group
+from channels.routing import URLRouter
+from channels.testing import WebsocketCommunicator
+from django.contrib.auth.models import AnonymousUser, Group
 from django.core.management import call_command, CommandError
 from django.db import IntegrityError, transaction
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone as django_timezone
 from rest_framework.test import APIRequestFactory, force_authenticate
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from tenant.routing import websocket_urlpatterns
 from shared.tasks import process_incoming_emails
 from shared.management.commands.sla import Command as SlaCommand
 from shared.workers.Email import process_emails_for_all_businesses
@@ -3567,3 +3570,54 @@ class CustomerPortalCommentTests(TestCase):
         self.assertIsNone(comment.author)
         self.assertEqual(comment.updated_by, self.system_user)
         self.assertEqual(comment.content, "<p>Hello from the customer portal</p>")
+
+
+class ChatConsumerStaffTenantScopingTests(TransactionTestCase):
+    """
+    Channels consumers never go through Django's CurrentBusinessMiddleware
+    (see shared/middleware/current_business.py), so the automatic
+    FilterManager business filter that HTTP views get for free never applies
+    to WebSocket connections. ChatConsumer.connect() has to enforce the
+    business match itself for staff mode - these tests cover that check.
+
+    TransactionTestCase (not TestCase): channels' database_sync_to_async
+    calls close_old_connections() from a worker thread, which breaks
+    TestCase's single wrapping transaction/connection across tests.
+    """
+
+    def setUp(self):
+        self.business_a = Business.objects.create(name="Chat Business A", domain="chat-biz-a")
+        self.business_b = Business.objects.create(name="Chat Business B", domain="chat-biz-b")
+        self.role = Group.objects.create(name="chat-staff-role")
+        self.staff_a = Users.objects.create(
+            username="staff-a",
+            email="staff-a@example.com",
+            role=self.role,
+            business=self.business_a,
+            first_name="Staff",
+            last_name="A",
+            is_active=True,
+        )
+
+    # Both tests below are rejections, which `ChatConsumer.connect()` returns
+    # from before touching the database (see ChatConsumer.py) - deliberate,
+    # so these stay clear of the database_sync_to_async/connection-threading
+    # issues that make Channels DB-touching paths unreliable to exercise via
+    # WebsocketCommunicator under Django's test runner.
+    async def _connect(self, business_id, user=None):
+        application = URLRouter(websocket_urlpatterns)
+        communicator = WebsocketCommunicator(application, f"/ws/chat/{business_id}/staff/")
+        communicator.scope["user"] = user or AnonymousUser()
+        connected, close_code = await communicator.connect()
+        await communicator.disconnect()
+        return connected, close_code
+
+    async def test_staff_rejected_when_business_id_does_not_match_their_own(self):
+        connected, close_code = await self._connect(self.business_b.id, user=self.staff_a)
+        self.assertFalse(connected)
+        self.assertEqual(close_code, 4403)
+
+    async def test_staff_mode_still_rejects_unauthenticated_connections(self):
+        connected, close_code = await self._connect(self.business_a.id, user=None)
+        self.assertFalse(connected)
+        self.assertEqual(close_code, 4401)

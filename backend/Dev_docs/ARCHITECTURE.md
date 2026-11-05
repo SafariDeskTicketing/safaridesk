@@ -1240,16 +1240,6 @@ python manage.py sla
 
 ---
 
-#### 3. **SetupConsumer**
-**File**: `tenant/setup_consumer.py`  
-**URL**: `ws://api.safaridesk.io/ws/setup/{business_id}/`
-
-**Purpose**: Real-time setup progress updates
-
-**Use Case**: Business onboarding, showing progress of setup steps
-
----
-
 ### Channel Groups
 
 **Notification Groups**:

@@ -41,8 +41,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not user or isinstance(user, AnonymousUser) or not user.is_authenticated:
                 await self.close(code=4401)
                 return
+
+            # Tenant scoping: Channels consumers never go through Django's
+            # CurrentBusinessMiddleware (see shared/middleware/current_business.py),
+            # so the automatic FilterManager business filter that HTTP views get
+            # for free never applies here. Without this check, any authenticated
+            # staff user could connect with another business's business_id in the
+            # URL and read/write that business's chatbot config, KB, and tickets.
+            # `user.business_id` is a plain FK id column, no query needed.
+            if user.business_id is None or str(user.business_id) != str(self.business_id):
+                await self.close(code=4403)
+                return
+
             self.session_group_name = f'user_session_{user.id}'
             await self.channel_layer.group_add(self.session_group_name, self.channel_name)
+        else:
+            # customer mode is intentionally unauthenticated: this is the
+            # public-facing chatbot widget, scoped only by the business_id
+            # embedded in the page that serves it (same trust model as the
+            # public KB/magic-link flows elsewhere in this codebase).
+            pass
 
         # Reject connection if chatbot is disabled
         config = await self._get_config()
