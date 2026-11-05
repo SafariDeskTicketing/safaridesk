@@ -13,7 +13,15 @@ from tenant.services.tickets.naming import generate_ticket_id, render_ticket_tit
 from users.models import Business, Users
 
 DEFAULT_BUSINESS_NAME = "Dev Test Co"
-DEFAULT_DOMAIN = "devtest.local"
+# Business.domain must be the bare subdomain label CustomDomainMiddleware
+# resolves ("<label>.localhost" -> Business.objects.filter(domain=label)) -
+# it is NOT a real domain name. DEFAULT_EMAIL_DOMAIN is separate and only
+# used to build realistic-looking email addresses; it was previously the
+# same value as the tenant domain, which meant the seeded business could
+# never actually be reached at <DEFAULT_DOMAIN>.localhost since the lookup
+# label ("devtest.local") never matched the host label ("devtest").
+DEFAULT_SUBDOMAIN = "devtest"
+DEFAULT_EMAIL_DOMAIN = "devtest.local"
 DEFAULT_PASSWORD = "DevPass123!"
 
 
@@ -88,8 +96,8 @@ class Command(BaseCommand):
         business, _ = Business.objects.get_or_create(
             name=name,
             defaults={
-                "domain": DEFAULT_DOMAIN,
-                "domain_url": f"https://{DEFAULT_DOMAIN}",
+                "domain": DEFAULT_SUBDOMAIN,
+                "domain_url": f"http://{DEFAULT_SUBDOMAIN}.localhost",
                 "is_active": True,
             },
         )
@@ -106,7 +114,7 @@ class Command(BaseCommand):
         is_staff: bool = False,
         is_superuser: bool = False,
     ) -> Users:
-        email = f"{local_part}@{DEFAULT_DOMAIN}"
+        email = f"{local_part}@{DEFAULT_EMAIL_DOMAIN}"
         role, _ = Group.objects.get_or_create(name="admin" if is_superuser else "agent")
 
         user, created = Users.objects.get_or_create(
@@ -138,7 +146,7 @@ class Command(BaseCommand):
             department, _ = Department.objects.get_or_create(
                 business=business,
                 name=name,
-                defaults={"support_email": f"{name.lower().replace(' ', '-')}@{DEFAULT_DOMAIN}", "created_by": admin_user},
+                defaults={"support_email": f"{name.lower().replace(' ', '-')}@{DEFAULT_EMAIL_DOMAIN}", "created_by": admin_user},
             )
             departments.append(department)
         return departments
@@ -248,6 +256,7 @@ class Command(BaseCommand):
     def _print_summary(self, business, password, admin_user, agents, tickets, slack_integration) -> None:
         self.stdout.write(self.style.SUCCESS("\n=== Dev seed complete ==="))
         self.stdout.write(f"Business: {business.name} (id={business.id})")
+        self.stdout.write(f"URL:      {business.domain_url}")
         self.stdout.write("\nLogin credentials (all users share this password):")
         self.stdout.write(f"  password: {password}")
         self.stdout.write(f"  admin:    {admin_user.email}")
