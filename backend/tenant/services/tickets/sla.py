@@ -1,8 +1,48 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 
 from tenant.models import Ticket
+from tenant.models.SlaXModel import BusinessHoursx, Holidays
+
+
+def get_breached_ticket_ids(tickets: Iterable[Ticket]) -> set[int]:
+    """
+    Compute SLA-breach status for a batch of tickets without the N+1 query
+    `ticket.is_sla_breached` makes per-ticket (a fresh query for the SLA
+    target, business hours and holidays each time it's called in a loop).
+
+    Fetches holidays and each distinct business's hours once, then reuses
+    them across every ticket. For this to actually save queries, pass a
+    queryset with `.select_related('sla')` and
+    `.prefetch_related('sla__targets')` already applied — this function
+    still returns correct results without that, just without the saving.
+    """
+    tickets = list(tickets)
+    if not tickets:
+        return set()
+
+    holidays_cache = set(Holidays.objects.filter(is_active=True).values_list('date', flat=True))
+
+    business_hours_cache: Dict[int, dict] = {}
+    for business_id in {t.business_id for t in tickets if t.business_id}:
+        hours: dict = {}
+        for h in BusinessHoursx.objects.filter(business_id=business_id):
+            hours[h.day_of_week] = {
+                'start_time': h.start_time,
+                'end_time': h.end_time,
+                'is_working_day': h.is_working_day,
+            }
+        business_hours_cache[business_id] = hours
+
+    return {
+        t.id for t in tickets
+        if t.get_is_sla_breached(
+            use_prefetched=True,
+            business_hours_cache=business_hours_cache.get(t.business_id),
+            holidays_cache=holidays_cache,
+        )
+    }
 
 
 def get_sla(*, ticket_id) -> Dict[str, Any]:

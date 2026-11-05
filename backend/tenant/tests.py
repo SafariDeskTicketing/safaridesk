@@ -20,7 +20,8 @@ from shared.tasks import process_incoming_emails
 from shared.management.commands.sla import Command as SlaCommand
 from shared.workers.Email import process_emails_for_all_businesses
 from shared.workers.Ticket import _build_auto_ack_activity_content, _send_ticket_notification
-from tenant.models import Contact, Department, EmailMessageRecord, Label, MailIntegration, SLAPolicy, SLATracker, Task, Ticket, TicketCallLog, TicketCategories, TicketConfig, TicketWatchers
+from tenant.models import Contact, Department, EmailMessageRecord, Label, MailIntegration, Task, Ticket, TicketCallLog, TicketCategories, TicketConfig, TicketWatchers
+from tenant.models.SlaXModel import SLA, SLATarget
 from tenant.models.TicketModel import TicketReopen
 from tenant.serializers.MailValidationSerializer import MailCredentialValidationSerializer
 from tenant.views.TicketView import TicketView, _parse_ai_email_draft
@@ -1302,6 +1303,89 @@ class TicketEmailActivityStreamTests(TestCase):
         self.assertEqual(positive_comment["email_meta"]["direction"], "outgoing")
         self.assertEqual(positive_comment["content"], "Customer-facing reply")
         self.assertFalse(any(item["type"] == "comment" and item["id"] < 0 for item in response.data))
+
+
+class TicketDetailSlaBreachTests(TestCase):
+    """
+    Regression test for the bug AUDIT_TRACKER.md flagged: the ticket detail
+    endpoint (`read_by_ticket_id`) used to reimplement SLA-breach detection by
+    hand instead of calling `Ticket.is_sla_breached`, and the two disagreed on
+    whether a resolved ticket still counts as breached. The view now just
+    returns `ticket.is_sla_breached`, so this test is really pinning that
+    property's own resolved/closed behavior through the HTTP layer.
+    """
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.view = TicketView.as_view({"get": "read_by_ticket_id"})
+        self.business = Business.objects.create(name="SLA Detail Biz", domain="sla-detail-biz")
+        self.role = Group.objects.create(name="Agent")
+        self.agent = Users.objects.create(
+            username="sla-detail-agent",
+            email="agent@sla-detail.test",
+            role=self.role,
+            business=self.business,
+        )
+        self.sla = SLA.objects.create(
+            business=self.business,
+            name="Detail View SLA",
+            is_active=True,
+            auto_apply=False,
+            evaluation_method="ticket_creation",
+        )
+        SLATarget.objects.create(
+            sla=self.sla,
+            priority="medium",
+            first_response_time=1,
+            first_response_unit="minutes",
+            resolution_time=1,
+            resolution_unit="minutes",
+            operational_hours="calendar",
+        )
+
+    def _create_overdue_ticket(self, *, status, ticket_id, resolved_at=None):
+        ticket = Ticket.objects.create(
+            business=self.business,
+            title="Overdue ticket",
+            creator_name="Customer",
+            creator_email="customer@example.com",
+            ticket_id=ticket_id,
+            status=status,
+            priority="medium",
+            sla=self.sla,
+            resolved_at=resolved_at,
+        )
+        # SLA resolution_time is 1 minute; back-date creation well past that.
+        Ticket.objects.filter(pk=ticket.pk).update(created_at=django_timezone.now() - timedelta(hours=1))
+        ticket.refresh_from_db()
+        return ticket
+
+    def test_open_overdue_ticket_is_reported_breached(self):
+        ticket = self._create_overdue_ticket(status="open", ticket_id="SLA-0001")
+
+        request = self.factory.get(f"/api/v1/ticket/get/{ticket.ticket_id}")
+        force_authenticate(request, user=self.agent)
+        response = self.view(request, ticket_id=ticket.ticket_id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["ticket"]["breached"])
+
+    def test_resolved_overdue_ticket_is_not_reported_breached(self):
+        # Same overdue timing as the open ticket above, but resolved -- this is
+        # exactly the case the two code paths used to disagree on.
+        ticket = self._create_overdue_ticket(
+            status="resolved", ticket_id="SLA-0002", resolved_at=django_timezone.now()
+        )
+
+        request = self.factory.get(f"/api/v1/ticket/get/{ticket.ticket_id}")
+        force_authenticate(request, user=self.agent)
+        response = self.view(request, ticket_id=ticket.ticket_id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["ticket"]["breached"])
+        # And it must agree with the model property used elsewhere (serializer,
+        # dashboard, PublicView) -- no more "two different answers" bug.
+        self.assertEqual(response.data["ticket"]["breached"], ticket.is_sla_breached)
 
 
 class TicketCallLogTests(TestCase):
@@ -2789,14 +2873,6 @@ class DashboardViewTests(TestCase):
             business=self.business,
             department=self.support,
         )
-        self.sla_policy = SLAPolicy.objects.create(
-            name="Default SLA",
-            business=self.business,
-            response_time=60,
-            resolution_time=240,
-            is_active=True,
-        )
-
         Ticket.objects.create(
             business=self.business,
             department=self.support,
@@ -2834,14 +2910,39 @@ class DashboardViewTests(TestCase):
         )
 
     def _mark_ticket_breached(self, ticket: Ticket) -> None:
-        SLATracker.objects.create(
-            ticket=ticket,
-            sla_policy=self.sla_policy,
-            first_response_due=django_timezone.now() - timedelta(hours=2),
-            resolution_due=django_timezone.now() - timedelta(hours=1),
-            first_response_status="breached",
-            resolution_status="breached",
+        """
+        Give `ticket` a live, already-overdue SLA so the dashboard's real
+        breach computation (`Ticket.is_sla_breached`, via
+        `tenant.services.tickets.sla.get_breached_ticket_ids`) reports it as
+        breached.
+
+        This used to create an `SLATracker` row instead — that model is dead
+        code (nothing populates it for real tickets; see FIXES_LOG), so this
+        test helper was only exercising the dashboard's old, equally-dead
+        `sla_tracker`-based query, not real breach detection. `resolution_time=0`
+        means "due the instant it was created", so this works regardless of
+        what `created_at` the caller already set (including deliberately-old
+        timestamps used elsewhere in these tests to simulate out-of-period
+        tickets) without this helper needing to touch `created_at` itself.
+        """
+        sla, _ = SLA.objects.get_or_create(
+            business=self.business,
+            name="Test Breach SLA",
+            defaults={"is_active": True, "auto_apply": False, "evaluation_method": "ticket_creation"},
         )
+        SLATarget.objects.get_or_create(
+            sla=sla,
+            priority="medium",
+            defaults={
+                "first_response_time": 0,
+                "first_response_unit": "minutes",
+                "resolution_time": 0,
+                "resolution_unit": "minutes",
+                "operational_hours": "calendar",
+            },
+        )
+        ticket.sla = sla
+        ticket.save(update_fields=["sla"])
 
     def test_admin_dashboard_payload_returns_admin_sections(self):
         request = self.factory.get("/api/v1/dashboard/data/?q=week")

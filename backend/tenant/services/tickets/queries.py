@@ -10,6 +10,7 @@ from tenant.models import Task, Ticket
 from tenant.models.TicketModel import TicketReopen
 from tenant.services.labels import apply_label_filter, parse_label_ids
 from tenant.services.tickets.shared import parse_date_input
+from tenant.services.tickets.sla import get_breached_ticket_ids
 from users.models import Users
 
 
@@ -118,9 +119,11 @@ def list_tickets_queryset(*, user: Users, query_params):
         elif view == 'requested_by_me':
             queryset = queryset.filter(created_by=user, is_merged=False)
         elif view == 'sla_breached':
-            # This is inefficient. A better approach is needed for production.
-            breached_tickets = [ticket.id for ticket in queryset.filter(is_merged=False) if ticket.is_sla_breached]
-            queryset = queryset.filter(id__in=breached_tickets)
+            candidates = queryset.filter(is_merged=False, sla__isnull=False).exclude(
+                status__in=['closed', 'resolved']
+            ).select_related('sla').prefetch_related('sla__targets')
+            breached_ticket_ids = get_breached_ticket_ids(candidates)
+            queryset = queryset.filter(id__in=breached_ticket_ids)
         elif view == 'slow_queues':
             queryset = queryset.filter(status__in=['closed', 'resolved'], resolved_at__isnull=False, is_merged=False).annotate(
                 resolution_duration=ExpressionWrapper(
@@ -352,8 +355,10 @@ def ticket_counts(*, user: Users, query_params) -> Dict[str, Any]:
     filtered_archived = apply_filters(archived_queryset)
     filtered_trash = apply_filters(trash_queryset)
 
-    # This is inefficient for SLA breached. A better approach is needed for production.
-    sla_breached_count = sum(1 for ticket in filtered_active if ticket.is_sla_breached)
+    sla_candidates = filtered_active.filter(sla__isnull=False).exclude(
+        status__in=['closed', 'resolved']
+    ).select_related('sla').prefetch_related('sla__targets')
+    sla_breached_count = len(get_breached_ticket_ids(sla_candidates))
 
     # Count tickets that have been reopened (tickets with at least one reopen record)
     reopened_ticket_ids = TicketReopen.objects.filter(

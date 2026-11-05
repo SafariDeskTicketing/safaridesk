@@ -5,11 +5,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Iterable
 
-from django.db.models import Avg, Count, Q, QuerySet
+from django.db.models import Avg, Count, QuerySet
 from django.utils import timezone
 
 from tenant.models import Department, MailIntegration, Ticket
 from tenant.models.TicketModel import TicketReopen
+from tenant.services.tickets.sla import get_breached_ticket_ids
 from users.models import Users
 
 
@@ -188,11 +189,28 @@ def _bucket_ranges(window: DashboardWindow) -> list[dict[str, datetime | str]]:
     return buckets
 
 
+def _sla_candidate_queryset(queryset: QuerySet[Ticket]) -> QuerySet[Ticket]:
+    """Tickets worth running the breach computation on: have an SLA, still open."""
+    return queryset.filter(sla__isnull=False).exclude(status__in=CLOSED_STATUSES).select_related(
+        "sla"
+    ).prefetch_related("sla__targets")
+
+
 def _sla_breached_queryset(queryset: QuerySet[Ticket]) -> QuerySet[Ticket]:
-    return queryset.exclude(status="closed").filter(
-        Q(sla_tracker__first_response_status="breached")
-        | Q(sla_tracker__resolution_status="breached")
-    )
+    """
+    Tickets in `queryset` currently breaching their SLA.
+
+    Previously filtered on `sla_tracker__first_response_status`/`resolution_status`
+    — fields on the `SLATracker` model, which nothing populates for live tickets
+    (confirmed dead; see `PublicView.py`'s own comment on the same system). That
+    made this always return an empty queryset in production — the admin/agent
+    dashboard's "SLA Breached" count, compliance %, and breached-by-department
+    breakdown were silently always zero/100%. Now backed by the same live
+    `Ticket.is_sla_breached` computation the rest of the app uses, batched via
+    `get_breached_ticket_ids` to avoid a query per ticket.
+    """
+    breached_ids = get_breached_ticket_ids(_sla_candidate_queryset(queryset))
+    return queryset.filter(id__in=breached_ids)
 
 
 def _backlog_queryset(queryset: QuerySet[Ticket]) -> QuerySet[Ticket]:
@@ -204,13 +222,13 @@ def _count_sla_breached(queryset: QuerySet[Ticket]) -> int:
 
 
 def _compute_sla_compliance(queryset: QuerySet[Ticket]) -> float:
-    with_sla = queryset.filter(sla_tracker__isnull=False)
+    """See `_sla_breached_queryset` for why this no longer reads `sla_tracker`."""
+    with_sla = queryset.filter(sla__isnull=False)
     total = with_sla.count()
     if total == 0:
         return 0.0
-    compliant = with_sla.exclude(sla_tracker__first_response_status="breached").exclude(
-        sla_tracker__resolution_status="breached"
-    ).count()
+    breached_ids = get_breached_ticket_ids(_sla_candidate_queryset(queryset))
+    compliant = total - len(breached_ids)
     return round((compliant / total) * 100, 1)
 
 
@@ -585,11 +603,17 @@ def _at_risk_agents(scoped_tickets: QuerySet[Ticket]) -> list[dict]:
     open_tickets = list(
         _backlog_queryset(scoped_tickets)
         .filter(assigned_to__isnull=False)
-        .select_related("assigned_to", "department")
+        .select_related("assigned_to", "department", "sla")
+        .prefetch_related("sla__targets")
         .order_by("assigned_to_id", "created_at")
     )
     if not open_tickets:
         return []
+
+    # Computed once for the whole batch instead of once per ticket (each
+    # `ticket.is_sla_breached` call would otherwise re-query the SLA target,
+    # business hours and holidays for every single ticket here).
+    breached_ids = get_breached_ticket_ids(t for t in open_tickets if t.sla_id)
 
     grouped: dict[int, dict] = {}
     for ticket in open_tickets:
@@ -608,7 +632,7 @@ def _at_risk_agents(scoped_tickets: QuerySet[Ticket]) -> list[dict]:
         )
         entry["open_tickets"] += 1
         entry["age_hours_total"] += (timezone.now() - ticket.created_at).total_seconds() / 3600
-        if ticket.is_sla_breached:
+        if ticket.id in breached_ids:
             entry["breached_tickets"] += 1
         if ticket.department:
             entry["department_names"].append(ticket.department.name)

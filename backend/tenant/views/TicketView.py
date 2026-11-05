@@ -424,29 +424,13 @@ class TicketView(viewsets.ModelViewSet):
             ticket.save(update_fields=update_fields)
 
 
-        # Calculate SLA status based on first response and resolution dates
-        sla_status = ticket.get_sla_status()
-        breached = False
-
-        if sla_status and sla_status.get('has_sla'):
-            current_time = timezone.now()
-
-            # If ticket is resolved or closed, SLA is not breached
-            if ticket.status in ('closed', 'resolved'):
-                breached = False
-            else:
-                # Check first response status
-                first_response_info = sla_status.get('first_response', {})
-                if first_response_info.get('due_time'):
-                    if ticket.first_response_at:
-                        # First response has been made - check resolution status
-                        resolution_info = sla_status.get('resolution', {})
-                        if (resolution_info.get('due_time') and
-                            current_time > resolution_info['due_time']):
-                            breached = True
-                    elif current_time > first_response_info['due_time']:
-                        # First response is overdue and not yet responded to
-                        breached = True
+        # SLA breach status — single source of truth is `Ticket.is_sla_breached`.
+        # This used to be reimplemented here by hand, and disagreed with the
+        # model property in two ways: it didn't check whether the *first
+        # response itself* was late when resolution wasn't yet overdue, and
+        # (separately) it's the version the AUDIT_TRACKER flagged as the
+        # "two different answers depending on endpoint" bug.
+        breached = ticket.is_sla_breached
 
         ticket_data = {
             "id": ticket.id,

@@ -241,15 +241,27 @@ class Ticket(BaseEntity):
         """
         return self.sla
 
-    def get_applicable_sla_target(self):
+    def get_applicable_sla_target(self, use_prefetched=False):
         """
         Get the SLA target that applies to this ticket's priority.
         Requires the SLA to be set on the ticket.
+
+        `use_prefetched=True` reads `self.sla.targets.all()` (relying on the
+        caller having prefetch_related('sla__targets')) and filters in Python
+        instead of issuing a fresh `.filter()` query — used by bulk callers
+        (dashboard/list breach computation) to avoid a query per ticket.
         """
         if not self.sla:
             return None
 
         try:
+            if use_prefetched:
+                targets = list(self.sla.targets.all())
+                sla_target = next((t for t in targets if t.priority == self.priority), None)
+                if not sla_target and self.priority != 'normal':
+                    sla_target = next((t for t in targets if t.priority == 'normal'), None)
+                return sla_target
+
             sla_target = self.sla.targets.filter(
                 priority=self.priority
             ).first()
@@ -263,11 +275,15 @@ class Ticket(BaseEntity):
             logger.warning("sla_target_error", extra={"ticket_id": self.ticket_id, "error": str(e)})
             return None
 
-    def calculate_sla_due_times(self):
+    def calculate_sla_due_times(self, use_prefetched=False, business_hours_cache=None, holidays_cache=None):
         """
         Calculate SLA due times based on the applicable SLA target.
+
+        `business_hours_cache`/`holidays_cache` let bulk callers pass in data
+        fetched once per business instead of once per ticket (see
+        `_add_business_time` / `tenant.services.tickets.sla.get_breached_ticket_ids`).
         """
-        sla_target = self.get_applicable_sla_target()
+        sla_target = self.get_applicable_sla_target(use_prefetched=use_prefetched)
         if not sla_target:
             return None
 
@@ -285,7 +301,9 @@ class Ticket(BaseEntity):
             base_time,
             sla_target.first_response_time,
             sla_target.first_response_unit,
-            sla_target.operational_hours
+            sla_target.operational_hours,
+            business_hours_cache=business_hours_cache,
+            holidays_cache=holidays_cache,
         )
 
         # Calculate resolution due time
@@ -293,7 +311,9 @@ class Ticket(BaseEntity):
             base_time,
             sla_target.resolution_time,
             sla_target.resolution_unit,
-            sla_target.operational_hours
+            sla_target.operational_hours,
+            business_hours_cache=business_hours_cache,
+            holidays_cache=holidays_cache,
         )
 
         # Calculate next response due time if applicable
@@ -303,7 +323,9 @@ class Ticket(BaseEntity):
                 self.first_response_at or base_time, # Base on first response or creation
                 sla_target.next_response_time,
                 sla_target.next_response_unit,
-                sla_target.operational_hours
+                sla_target.operational_hours,
+                business_hours_cache=business_hours_cache,
+                holidays_cache=holidays_cache,
             )
 
         return {
@@ -313,7 +335,7 @@ class Ticket(BaseEntity):
             'sla_target': sla_target
         }
 
-    def _calculate_due_time(self, start_time, duration, unit, operational_hours):
+    def _calculate_due_time(self, start_time, duration, unit, operational_hours, business_hours_cache=None, holidays_cache=None):
         """
         Calculate due time considering operational hours.
         """
@@ -326,11 +348,11 @@ class Ticket(BaseEntity):
 
         # For business hours, calculate considering working hours only
         elif operational_hours == 'business':
-            return self._add_business_time(start_time, total_minutes)
+            return self._add_business_time(start_time, total_minutes, business_hours_cache, holidays_cache)
 
         # For custom hours, implement your custom logic
         else:
-            return self._add_business_time(start_time, total_minutes)
+            return self._add_business_time(start_time, total_minutes, business_hours_cache, holidays_cache)
 
     def _convert_to_minutes(self, duration, unit):
         """Convert duration to minutes and cap to a reasonable maximum to prevent OverflowError."""
@@ -353,23 +375,31 @@ class Ticket(BaseEntity):
             return MAX_SLA_MINUTES
         return total_minutes
 
-    def _add_business_time(self, start_time, minutes_to_add):
+    def _add_business_time(self, start_time, minutes_to_add, business_hours_cache=None, holidays_cache=None):
         """
-        Add business minutes to a datetime, considering only business hours
+        Add business minutes to a datetime, considering only business hours.
+
+        Pass `business_hours_cache`/`holidays_cache` (pre-fetched once per
+        business by the caller) to skip the two DB lookups this method would
+        otherwise make on every call — the fix for the SLA-breach N+1 query
+        when checking a whole list of tickets at once.
         """
-        from tenant.models import BusinessHoursx, Holidays
+        from tenant.models import Holidays
 
         current_time = start_time
         remaining_minutes = minutes_to_add
 
         # Get business hours configuration
-        business_hours = self._get_business_hours_config()
+        business_hours = business_hours_cache if business_hours_cache is not None else self._get_business_hours_config()
         if not business_hours:
             # Fallback to calendar time if no business hours configured
             return start_time + timedelta(minutes=minutes_to_add)
 
         # Get holidays
-        holidays = set(Holidays.objects.filter(is_active=True).values_list('date', flat=True))
+        holidays = (
+            holidays_cache if holidays_cache is not None
+            else set(Holidays.objects.filter(is_active=True).values_list('date', flat=True))
+        )
 
         while remaining_minutes > 0:
             current_date = current_time.date()
@@ -728,11 +758,15 @@ class Ticket(BaseEntity):
 
         return violations
 
-    def get_sla_status(self):
+    def get_sla_status(self, use_prefetched=False, business_hours_cache=None, holidays_cache=None):
         """
         Get comprehensive SLA status for this ticket.
         """
-        sla_due_times = self.calculate_sla_due_times()
+        sla_due_times = self.calculate_sla_due_times(
+            use_prefetched=use_prefetched,
+            business_hours_cache=business_hours_cache,
+            holidays_cache=holidays_cache,
+        )
         if not sla_due_times:
             return {
                 'has_sla': False,
@@ -780,29 +814,30 @@ class Ticket(BaseEntity):
             } if sla_due_times['next_response_due'] else None
         }
 
-    # @property
-    # def is_sla_breached(self):
-    #     """
-    #     Quick check if any SLA is currently breached.
-    #     """
-    #     status = self.get_sla_status()
-    #     if not status['has_sla']:
-    #         return False
-
-    #     return (status['first_response']['status'] == 'breached' or
-    #             status['resolution']['status'] == 'breached')
-
-    @property
-    def is_sla_breached(self):
+    def get_is_sla_breached(self, use_prefetched=False, business_hours_cache=None, holidays_cache=None):
         """
         Quick check if any SLA is currently breached.
-        Returns False if ticket is closed.
+        Returns False once the ticket is resolved or closed.
+
+        This is the single source of truth for "is this ticket breached" —
+        callers that previously recomputed this independently (the ticket
+        detail view) now call it directly instead of reimplementing it,
+        which used to disagree with this method on resolved tickets.
+
+        `use_prefetched`/`business_hours_cache`/`holidays_cache` let bulk
+        callers (dashboard summaries, list-view breach filters) avoid the
+        per-ticket DB queries this method would otherwise make — see
+        `tenant.services.tickets.sla.get_breached_ticket_ids`.
         """
-        # ✅ If ticket is already closed, SLA breach no longer applies
-        if self.status == "closed":
+        # If the ticket is already resolved or closed, SLA breach no longer applies
+        if self.status in ("closed", "resolved"):
             return False
 
-        status = self.get_sla_status()
+        status = self.get_sla_status(
+            use_prefetched=use_prefetched,
+            business_hours_cache=business_hours_cache,
+            holidays_cache=holidays_cache,
+        )
         if not status['has_sla']:
             return False
 
@@ -810,6 +845,11 @@ class Ticket(BaseEntity):
             status['first_response']['status'] == 'breached'
             or status['resolution']['status'] == 'breached'
         )
+
+    @property
+    def is_sla_breached(self):
+        """Quick check if any SLA is currently breached. See `get_is_sla_breached`."""
+        return self.get_is_sla_breached()
 
 
     def pause_sla(self, reason=""):
