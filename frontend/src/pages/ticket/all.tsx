@@ -5,18 +5,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Search, Plus, User, Clock, MessageCircle, ChevronDown, ChevronRight, ChevronLeft, ChevronUp, Grid3x3, Tag, CheckCircle, UserCheck, AlertCircle, ShieldAlert, Trash2, Building, AlertTriangle, UserX, XCircle, Inbox, CreditCard, Settings, X, List, PauseCircle
 } from 'lucide-react';
-import { format } from 'date-fns';
 import Button from '../../components/ui/Button';
 import { useAuthStore } from '../../stores/authStore';
 import { APIS } from '../../services/apis';
 import http from '../../services/http';
 import { errorNotification, successNotification } from '../../components/ui/Toast';
 import type { Agent, LabelItem, Ticket } from '../../types';
-import { SOURCE_OPTIONS, getStatusColor, getPriorityColor } from '../../utils/displayHelpers';
 import Select from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
-import { useFetchAgents } from '../../services/agents';
-import type { AgentType, ApiResponse as AgentApiResponse } from '../../types/agents';
 import EmptyState from '../../components/ui/EmptyState';
 import TicketDetailSkeleton from '../../components/ui/TicketDetailSkeleton';
 import { TableSkeleton } from '../../components/ui/TableSkeleton';
@@ -32,7 +28,6 @@ import UpdateStatusModal from '../../components/tickets/UpdateStatusModal';
 import UpdatePriorityModal from '../../components/tickets/UpdatePriorityModal';
 import { TaskListDialog } from '../../components/tickets/TaskListDialog';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import { NewBadge } from '../../components/ui/NewBadge';
 import { AGENT_TICKET_VIEW_ITEMS, TICKET_VIEW_ITEMS } from '../../components/layout/viewConfigs';
 import TicketSettingsModal from '../../components/settings/TicketSettingsModal';
 import LabelGroup from '../../components/ui/LabelGroup';
@@ -45,7 +40,6 @@ import {
   SEARCH_FILTER_OPTIONS,
   SEARCH_FILTER_ICONS,
   parseSearchQuery,
-  resolveStatusToken,
   resolveCreatedDateToken,
 } from './list/ticketSearch';
 import { buildTicketQueryParams } from './list/ticketListParams';
@@ -62,7 +56,6 @@ import {
 } from './list/ticketListData';
 import { useViewSortState } from './list/useViewSortState';
 import { useTicketBulkActions, type BulkExportFormat } from './list/useTicketBulkActions';
-import { TicketDetailPanel } from './list/TicketDetailPanel';
 import { UpdateDepartmentModal } from './list/UpdateDepartmentModal';
 import { DeleteTicketModal } from './list/DeleteTicketModal';
 import { useTicketHoverPreview } from './list/useTicketHoverPreview';
@@ -76,24 +69,7 @@ const BULK_EXPORT_FORMAT_OPTIONS = [
   { value: 'json', label: 'JSON' },
 ];
 
-// Type definitions based on your API response
-interface Watcher {
-  id: number;
-  name: string;
-  email: string;
-  avatar_url: string | null;
-}
-
-interface AssignTicketPayload {
-  ticket_id: string;
-  agent_id: number;
-}
-
-interface AddWatchersPayload {
-  watchers: number[];
-}
-
-type TicketViewMode = 'detailed' | 'card' | 'list';
+type TicketViewMode = 'card' | 'list';
 
 const getStoredTicketViewMode = (): 'card' | 'list' => (
   localStorage.getItem('ticketViewMode') === 'card' ? 'card' : 'list'
@@ -137,7 +113,6 @@ export default function TicketManagementSystem() {
   // State from ViewTicket
   const [reloader, setReloader] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAssigning, setIsAssigning] = useState(false);
   const { agents, departments, categories, labels, refetchLabels } = useTicketFilterOptions();
 
   // Refs to avoid triggering fetchTickets recreation when lookup data changes —
@@ -148,27 +123,15 @@ export default function TicketManagementSystem() {
   const departmentsRef = useRef<Array<{ id: number; name: string }>>([]);
   const categoriesRef = useRef<Array<{ id: number; name: string; department?: number | null }>>([]);
   const labelsRef = useRef<LabelItem[]>([]);
-  const [selectedAgentId, setSelectedAgentId] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [statusDescription, setStatusDescription] = useState("");
   const [comment, setComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
-  const [selectedWatchers, setSelectedWatchers] = useState<number[]>([]);
-  const [ticketWatchers, setTicketWatchers] = useState<Watcher[]>([]);
   const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
-  const [selectedPriority, setSelectedPriority] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDepartmentModal, setShowDepartmentModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const { data: agentResponse = [] } = useFetchAgents();
-  const agentsData: AgentType[] = (agentResponse as AgentApiResponse)?.results || [];
-  const isUserWatcher = ticketWatchers.some(watcher => watcher.id === user?.user_id);
-  const isTicketClosed = selectedTicket?.status === 'closed';
   const selectedTicketLabels = selectedTicket?.labels || [];
 
-
-  const [activeTab, setActiveTab] = useState('activity');
   const [searchQuery, setSearchQuery] = useState('');
   // Debounced so fast typing doesn't fire a server request per keystroke; the
   // local `filteredTickets` memo below still updates instantly off `searchQuery`.
@@ -186,7 +149,6 @@ export default function TicketManagementSystem() {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
   const [viewMode, setViewMode] = useState<TicketViewMode>(getStoredTicketViewMode());
-  const [detailPanelOpen, setDetailPanelOpen] = useState(true);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showSearchFilterDropdown, setShowSearchFilterDropdown] = useState(false);
   const [showSearchValueDropdown, setShowSearchValueDropdown] = useState(false);
@@ -229,18 +191,11 @@ export default function TicketManagementSystem() {
   }, [selectedTicket, reloader]);
 
   useEffect(() => {
-    if (viewMode === 'detailed') {
-      setViewMode('list');
-      localStorage.setItem('ticketViewMode', 'list');
-      return;
-    }
     localStorage.setItem('ticketViewMode', viewMode);
   }, [viewMode]);
   const [isCreateTicketModalDirty, setIsCreateTicketModalDirty] = useState(false);
   const [showCreateTicketCloseConfirm, setShowCreateTicketCloseConfirm] = useState(false);
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
-  const [linkedTasksCount, setLinkedTasksCount] = useState(0);
-  const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(0);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showPriorityModal, setShowPriorityModal] = useState(false);
@@ -293,11 +248,6 @@ export default function TicketManagementSystem() {
   const isFetchingTickets = ticketsQuery.isFetching;
 
   const listGridCols = LIST_GRID_COLS;
-  const showDetailPanel = viewMode === 'detailed' && detailPanelOpen;
-  const splitLayoutClass =
-    viewMode === 'detailed' && showDetailPanel
-      ? 'grid grid-cols-[clamp(300px,30vw,420px)_minmax(0,1fr)]'
-      : 'flex';
   const filteredTickets = useMemo(() => {
     const { cleanedQuery } = parseSearchQuery(searchQuery);
     if (!cleanedQuery) return tickets;
@@ -380,15 +330,6 @@ export default function TicketManagementSystem() {
     );
   };
 
-  useEffect(() => {
-    if (viewMode === 'detailed') {
-      setViewMode('list');
-      localStorage.setItem('ticketViewMode', 'list');
-      return;
-    }
-    localStorage.setItem('ticketViewMode', viewMode);
-  }, [viewMode]);
-
   // Sync activeView with URL parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -441,13 +382,6 @@ export default function TicketManagementSystem() {
       console.error('Error deleting ticket:', error);
       errorNotification(error?.response?.data?.message || 'Failed to delete ticket');
     }
-  };
-
-  // Helper to select ticket and set linked tasks count from API response
-  const selectTicket = (ticket: Ticket | null) => {
-    setSelectedTicket(ticket);
-    // Use linked_tasks_count from ticket data if available
-    setLinkedTasksCount(ticket?.linked_tasks_count ?? 0);
   };
 
   const handleListRowClick = (ticket: Ticket) => {
@@ -741,8 +675,6 @@ export default function TicketManagementSystem() {
     return () => window.removeEventListener('ticket_event', handler);
   }, [currentPage, activeView]);
 
-  // Detailed view shows inline - no navigation needed
-
   const allVisibleSelected = filteredTickets.length > 0 && filteredTickets.every(t => selectedTickets.has(t.id));
   const someVisibleSelected = filteredTickets.some(t => selectedTickets.has(t.id));
 
@@ -753,33 +685,8 @@ export default function TicketManagementSystem() {
   }, [someVisibleSelected, allVisibleSelected]);
 
   useEffect(() => {
-    if (viewMode === 'detailed') {
-      if (tickets.length > 0) {
-        setSelectedTicket((currentSelected) => {
-          const isSelectedInList = tickets.some((ticket) => ticket.id === currentSelected?.id);
-          return isSelectedInList ? currentSelected : tickets[0];
-        });
-      } else {
-        setSelectedTicket(null);
-      }
-    } else {
-      setSelectedTicket(null);
-    }
+    setSelectedTicket(null);
   }, [tickets, viewMode]);
-
-  const handleNextTicket = () => {
-    if (!selectedTicket || filteredTickets.length <= 1) return;
-    const currentIndex = filteredTickets.findIndex(t => t.id === selectedTicket.id);
-    const nextIndex = (currentIndex + 1) % filteredTickets.length;
-    selectTicket(filteredTickets[nextIndex]);
-  };
-
-  const handlePreviousTicket = () => {
-    if (!selectedTicket || filteredTickets.length <= 1) return;
-    const currentIndex = filteredTickets.findIndex(t => t.id === selectedTicket.id);
-    const prevIndex = (currentIndex - 1 + filteredTickets.length) % filteredTickets.length;
-    selectTicket(filteredTickets[prevIndex]);
-  };
 
   const handleNextPage = () => {
     const totalPages = Math.ceil(totalCount / limit);
@@ -835,104 +742,8 @@ export default function TicketManagementSystem() {
     ];
   }, [agents, selectedTicket]);
 
-  const fetchWatchers = async (currentTicketId: string) => {
-    try {
-      const response = await http.get(`${APIS.LIST_WATCHERS}/${currentTicketId}`);
-      setTicketWatchers(response.data);
-      setSelectedWatchers(response.data.map((watcher: Watcher) => watcher.id));
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to load watchers";
-      errorNotification(errorMsg);
-    }
-  };
-
   // Agents/departments/categories/labels are now fetched declaratively by
   // useTicketFilterOptions() above — no manual trigger-on-mount needed.
-
-  useEffect(() => {
-    if (selectedTicket) {
-      setSelectedStatus(selectedTicket.status);
-      fetchWatchers(selectedTicket.id);
-    }
-  }, [selectedTicket]);
-
-  async function handleStatusUpdate() {
-    if (!selectedTicket) return;
-    try {
-      const normalizedStatus = (resolveStatusToken(selectedStatus) ?? selectedStatus) as Ticket['status'];
-      setIsSubmitting(true)
-      const response = await http.put(`${APIS.TICKET_UPDATE_STATUS}/${selectedTicket.id}`, {
-        status: normalizedStatus,
-        notes: statusDescription
-      });
-
-      // Immediately update the selected ticket
-      const updatedTicket: Ticket = {
-        ...selectedTicket,
-        status: normalizedStatus
-      };
-      setSelectedTicket(updatedTicket);
-
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-
-      // If ticket is moved to terminal state from unresolved views, switch table to closed view.
-      // handleViewSelect already resets currentPage, which changes the query key and
-      // triggers its own refetch — no separate fetch call needed here.
-      if (normalizedStatus === 'closed' && (activeView === openViewKey || activeView === 'all_unresolved' || activeView === 'my_unresolved')) {
-        handleViewSelect(closedViewKey);
-      }
-
-      successNotification(response.data.message)
-    } catch (error: unknown) {
-      const apiMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      if (apiMessage?.toLowerCase().includes('assign this ticket')) {
-        setShowAssignModal(true);
-        errorNotification(apiMessage);
-        return;
-      }
-      const errorMsg = apiMessage || (error instanceof Error ? error.message : "An error occurred");
-      errorNotification(errorMsg);
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleAssignToMe = async () => {
-    if (!selectedTicket) return;
-    setIsAssigning(true);
-    try {
-      const response = await http.get(`${APIS.TICKET_ASSIGN_TO_ME}${selectedTicket.id}`);
-      successNotification(response.data.message);
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      fetchTicketDetails(selectedTicket.id);
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to assign ticket';
-      errorNotification(errorMsg);
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-
-  async function handleAssign() {
-    if (!selectedTicket) return;
-    try {
-      setIsSubmitting(true)
-      const payload: AssignTicketPayload = {
-        ticket_id: selectedTicket.id.toString(),
-        agent_id: Number(selectedAgentId)
-      };
-      const response = await http.post(`${APIS.TICKET_ASSIGN}`, payload);
-      successNotification(response.data.message)
-      // Refresh list and selected ticket
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      fetchTicketDetails(selectedTicket.id);
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "An error occurred";
-      errorNotification(errorMsg);
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   async function handleComment(files?: FileList) {
     if (!selectedTicket) return;
@@ -958,24 +769,6 @@ export default function TicketManagementSystem() {
       errorNotification(errorMsg);
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  async function handleAddWatchers() {
-    if (!selectedTicket) return;
-    try {
-      setIsSubmitting(true);
-      const payload: AddWatchersPayload = { watchers: selectedWatchers };
-      const response = await http.put(`${APIS.ADD_WATCHERS}/${selectedTicket.id}`, payload);
-      fetchWatchers(selectedTicket.id);
-      fetchTicketDetails(selectedTicket.id); // Refresh ticket details
-      successNotification(response.data.message);
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to add watchers";
-      errorNotification(errorMsg);
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -1035,28 +828,6 @@ export default function TicketManagementSystem() {
       setSelectedDepartmentId("");
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "Failed to update department";
-      errorNotification(errorMsg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleUpdatePriority() {
-    if (!selectedTicket || !selectedPriority) return;
-    try {
-      setIsSubmitting(true);
-      const payload = { priority: selectedPriority };
-      const response = await http.put(`${APIS.TICKET_UPDATE_PRIORITY}/${selectedTicket.id}`, payload);
-
-      const updatedTicket: Ticket = { ...selectedTicket, priority: selectedPriority } as Ticket;
-      setSelectedTicket(updatedTicket);
-
-      successNotification(response.data.message || 'Priority updated successfully');
-      setSelectedPriority("");
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      fetchTicketDetails(selectedTicket.id);
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to update priority";
       errorNotification(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -1459,23 +1230,15 @@ export default function TicketManagementSystem() {
                   <div className="hidden lg:flex">
                     <ViewModeDropdown viewMode={viewMode === 'card' ? 'card' : 'list'} onViewChange={(mode) => setViewMode(mode)} />
                   </div>
-                  {viewMode === 'detailed' && (
-                    <button
-                      onClick={() => setDetailPanelOpen(prev => !prev)}
-                      className="px-3 py-2 text-[length:var(--font-body)] font-medium rounded-lg border border-gray-200 dark:border-subtle bg-white dark:bg-surface-elevated text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-surface-hover transition-colors"
-                    >
-                      {detailPanelOpen ? 'Hide Details' : 'Show Details'}
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           </header>
 
-          <div className={`flex-1 min-w-0 overflow-hidden ${splitLayoutClass}`}>
+          <div className="flex-1 min-w-0 overflow-hidden flex">
             {isFetchingTickets && <Loader />}
             {/* Tickets List */}
-            <div className={`${viewMode === 'detailed' && showDetailPanel ? 'min-w-0' : 'w-full'} min-w-0 bg-white dark:bg-surface-elevated border-r border-gray-200 dark:border-subtle flex flex-col`}>
+            <div className="w-full min-w-0 bg-white dark:bg-surface-elevated border-r border-gray-200 dark:border-subtle flex flex-col">
               {/* Bulk Actions - Show when tickets are selected */}
               {selectedTickets.size > 0 && (
                 <div className="m-4 flex items-center gap-2 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
@@ -1615,12 +1378,10 @@ export default function TicketManagementSystem() {
                                 onSelectionChange={handleTicketSelection}
                                 onStatusClick={(t) => {
                                   setSelectedTicket(t);
-                                  setSelectedStatus(t.status);
                                   setShowStatusModal(true);
                                 }}
                                 onPriorityClick={(t) => {
                                   setSelectedTicket(t);
-                                  setSelectedPriority(t.priority);
                                   setShowPriorityModal(true);
                                 }}
                                 onDepartmentClick={(t) => {
@@ -1648,57 +1409,15 @@ export default function TicketManagementSystem() {
                   </div>
                 ) : filteredTickets.length === 0 ? (
                   <EmptyState />
-                ) : viewMode === 'detailed' ? (
-                  filteredTickets.map((ticket) => (
-                    <div
-                      key={ticket.id}
-                      onClick={() => setSelectedTicket(ticket)}
-                      className={`mx-3 my-1.5 cursor-pointer rounded-[12px] border p-3 transition-colors ${selectedTicket?.id === ticket.id
-                        ? 'border-primary-300 bg-primary-50/70 dark:border-primary-700 dark:bg-primary-900/20'
-                        : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-subtle dark:bg-surface-elevated dark:hover:bg-surface-hover'
-                        } ${ticket.breached ? 'border-red-300 dark:border-red-700' : ''}`}
-                    >
-                      <div className="flex items-start space-x-2.5">
-                        <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white font-medium text-[length:var(--font-meta)] overflow-hidden flex-shrink-0">
-                          {ticket.requester && ticket.requester.avatar ? (
-                            <img src={ticket.requester.avatar} alt={`${ticket.requester.firstName} ${ticket.requester.lastName}`} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{`${ticket.requester.firstName[0]?.toUpperCase() || ''}${ticket.requester.lastName[0]?.toUpperCase() || ''}`}</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="mb-1 flex items-start justify-between gap-2">
-                            <div className={`flex items-center gap-2 ${!ticket.is_opened ? 'font-semibold' : 'font-medium'}`}>
-                              <h3 className="truncate text-[length:var(--font-body)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">{ticket.title}</h3>
-                              {(!ticket.is_opened || ticket.has_new_reply) && <NewBadge />}
-                            </div>
-                            <span className="text-[length:var(--font-meta)] font-medium text-[var(--text-muted)]">{format(new Date(ticket.createdAt), 'dd MMM')}</span>
-                          </div>
-                          <LabelGroup labels={ticket.labels || []} maxVisible={3} className="mb-2" />
-                          <p className="mb-2 line-clamp-1 text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300">#{ticket.ticket_id}</p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 rounded-full text-[length:var(--font-meta)] font-medium border ${getStatusColor(ticket.status)}`}>
-                                {ticket.status.replace('_', ' ')}
-                              </span>
-                              <span className={`px-2 py-1 rounded-full text-[length:var(--font-meta)] font-medium ${getPriorityColor(ticket.priority)}`}>
-                                {ticket.priority}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
                 ) : viewMode === 'card' ? (
                   <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
                     {filteredTickets.map(ticket => (
                       <GridTicketCard
                         key={ticket.id}
                         ticket={ticket}
-                        openDropdownId={selectedTicket?.id || null}
-                        onDropdownToggle={(ticketid) => setSelectedTicket(filteredTickets.find(t => t.id === ticketid) || null)}
-                        onDropdownClose={() => setSelectedTicket(null)}
+                        openDropdownId={openDropdownId}
+                        onDropdownToggle={(ticketid) => setOpenDropdownId(openDropdownId === ticketid ? null : ticketid)}
+                        onDropdownClose={() => setOpenDropdownId(null)}
                         onAction={(action, ticket) => handleAction(action, ticket)}
                         isActive={selectedTicket?.id === ticket.id}
                         isSelected={selectedTickets.has(ticket.id)}
@@ -1760,55 +1479,6 @@ export default function TicketManagementSystem() {
             {/* Ticket Details */}
             {isLoading ? (
               <TicketDetailSkeleton />
-            ) : selectedTicket && showDetailPanel ? (
-              <TicketDetailPanel
-                selectedTicket={selectedTicket}
-                selectedTicketLabels={selectedTicketLabels}
-                user={user}
-                selectedPriority={selectedPriority}
-                setSelectedPriority={setSelectedPriority}
-                handleUpdatePriority={handleUpdatePriority}
-                isSubmitting={isSubmitting}
-                isTicketClosed={isTicketClosed}
-                setIsReopenModalOpen={setIsReopenModalOpen}
-                handleAssignToMe={handleAssignToMe}
-                isAssigning={isAssigning}
-                isUserWatcher={isUserWatcher}
-                selectedStatus={selectedStatus}
-                setSelectedStatus={setSelectedStatus}
-                statusDescription={statusDescription}
-                setStatusDescription={setStatusDescription}
-                handleStatusUpdate={handleStatusUpdate}
-                selectedDepartmentId={selectedDepartmentId}
-                setSelectedDepartmentId={setSelectedDepartmentId}
-                departments={departments}
-                handleUpdateDepartment={handleUpdateDepartment}
-                selectedAgentId={selectedAgentId}
-                setSelectedAgentId={setSelectedAgentId}
-                agents={agents}
-                handleAssign={handleAssign}
-                agentsData={agentsData}
-                selectedWatchers={selectedWatchers}
-                setSelectedWatchers={setSelectedWatchers}
-                handleAddWatchers={handleAddWatchers}
-                setShowLabelsModal={setShowLabelsModal}
-                setShowAssignModal={setShowAssignModal}
-                setShowDepartmentModal={setShowDepartmentModal}
-                setShowCategoryModal={setShowCategoryModal}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                taskRefreshTrigger={taskRefreshTrigger}
-                setTaskRefreshTrigger={setTaskRefreshTrigger}
-                linkedTasksCount={linkedTasksCount}
-                setLinkedTasksCount={setLinkedTasksCount}
-                ticketWatchers={ticketWatchers}
-                reloader={reloader}
-                fetchTicketDetails={fetchTicketDetails}
-              />
-            ) : viewMode === 'detailed' && showDetailPanel ? (
-              <div className="flex-1 flex items-center justify-center">
-                <EmptyState title="No ticket selected" message="Please select a ticket to view its details." />
-              </div>
             ) : null}
           </div>
       </div>
