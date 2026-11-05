@@ -6,6 +6,7 @@ import {
 } from './list/taskListData';
 import { buildTaskQueryParams } from './list/taskListParams';
 import { useTaskFilterOptions } from './list/useTaskFilterOptions';
+import { resolveViewFromUrlParams } from './list/taskViewResolution';
 import {
   type ColumnFilterKey,
   SEARCH_FILTER_OPTIONS,
@@ -1043,10 +1044,7 @@ export default function TaskManagementSystem() {
   // Watch for URL parameter changes and update activeView
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const viewParam = searchParams.get('view');
-    // Valid views: all_tasks, my_tasks, open_tasks, in_progress_tasks, completed_tasks, overdue_tasks, archived_tasks, trash_tasks
-    const validViews = ['all_tasks', 'my_tasks', 'open_tasks', 'in_progress_tasks', 'completed_tasks', 'overdue_tasks', 'archived_tasks', 'trash_tasks'];
-    const targetView = viewParam && validViews.includes(viewParam) ? viewParam : defaultView;
+    const targetView = resolveViewFromUrlParams(searchParams, defaultView);
 
     if (targetView !== activeView) {
       setActiveView(targetView);
