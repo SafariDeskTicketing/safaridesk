@@ -4,6 +4,8 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
 
+from shared.middleware.channels_jwt_auth_middleware import ACCESS_TOKEN_SUBPROTOCOL
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -31,7 +33,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.business_group_name, self.channel_name)
         await self.channel_layer.group_add(self.session_group_name, self.channel_name)
 
-        await self.accept()
+        await self.accept(subprotocol=ACCESS_TOKEN_SUBPROTOCOL)
         await self.send(text_data=json.dumps({
             'type': 'connection_established',
             'message': 'Connected to notification stream',

@@ -18,10 +18,17 @@ def csv_config(name, default=""):
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-mn5i2vgz1md6mmm_&$*k+n#d0&5si-t0^4$fv*y8&+q6)5&1#_"
+# Read here (not re-read per-environment) so SIMPLE_JWT["SIGNING_KEY"] below
+# is always built from the real value — prod.py previously re-assigned
+# SECRET_KEY *after* this module had already baked the old value into
+# SIMPLE_JWT, so every JWT was signed with one key and verified against
+# another wherever code read settings.SIMPLE_JWT["SIGNING_KEY"] vs
+# settings.SECRET_KEY directly. No insecure default: every environment must
+# supply SECRET_KEY via the environment.
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = csv_config("ALLOWED_HOSTS", default="*")
 

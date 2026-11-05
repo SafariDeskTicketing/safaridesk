@@ -21,6 +21,7 @@ from tenant.services.ai.kb_search import KBSearchService
 from tenant.services.ai.ticket_extractor import TicketExtractor
 from tenant.services.tickets.creation import create_ticket_from_payload
 from asgiref.sync import async_to_sync, sync_to_async
+from shared.middleware.channels_jwt_auth_middleware import ACCESS_TOKEN_SUBPROTOCOL
 
 
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Create a conversation on connect
         self.conversation = await self._get_or_create_conversation()
-        await self.accept()
+        await self.accept(subprotocol=ACCESS_TOKEN_SUBPROTOCOL if self.mode == 'staff' else None)
 
         # Optional greeting from config
         if config and config.greeting_message:

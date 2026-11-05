@@ -3,7 +3,9 @@ from decouple import config
 from .base import *
 
 DEBUG = config("DEBUG", default=False, cast=bool)
-SECRET_KEY = config("SECRET_KEY")
+# SECRET_KEY is read once in base.py, before SIMPLE_JWT["SIGNING_KEY"] is
+# built from it — re-reading it here would leave SIMPLE_JWT holding a
+# different value than settings.SECRET_KEY. See base.py.
 
 DATABASES = {
     'default': {

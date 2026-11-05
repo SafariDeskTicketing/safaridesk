@@ -29,12 +29,16 @@ export const useChatbotSocket = ({ businessId, mode = 'customer', token }: ChatS
 
   const url = useMemo(() => {
     if (!businessId) return null;
-
-    // Construct URL using CHAT_WS_BASE from env/config
-    const qp = mode === 'staff' && token ? `?token=${encodeURIComponent(token)}` : '';
     // CHAT_WS_BASE is e.g. "ws://localhost:8101"
-    return `${CHAT_WS_BASE}/ws/chat/${businessId}/${mode}/${qp}`.replace(/\/$/, '');
-  }, [businessId, mode, token]);
+    return `${CHAT_WS_BASE}/ws/chat/${businessId}/${mode}/`.replace(/\/$/, '');
+  }, [businessId, mode]);
+
+  // Token rides as a WebSocket subprotocol, not a query param — a query
+  // string gets written to nginx access logs in plaintext, a header does not.
+  const protocols = useMemo<string[] | undefined>(
+    () => (mode === 'staff' && token ? ['access_token', token] : undefined),
+    [mode, token],
+  );
 
   const sendMessage = useCallback((content: string) => {
     if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
@@ -56,7 +60,7 @@ export const useChatbotSocket = ({ businessId, mode = 'customer', token }: ChatS
   useEffect(() => {
     if (!url) return;
     setError(null);
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(url, protocols);
     socketRef.current = ws;
 
     ws.onopen = () => {
@@ -93,7 +97,7 @@ export const useChatbotSocket = ({ businessId, mode = 'customer', token }: ChatS
     return () => {
       ws.close();
     };
-  }, [url]);
+  }, [url, protocols]);
 
   return { connected, typing, error, messages, contactRequest, sendMessage, sendContactInfo };
 };

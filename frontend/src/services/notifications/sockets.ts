@@ -25,7 +25,9 @@ export const useNotificationSocket = (
     if (socketRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
-      const ws = new WebSocket(`${SOCKET_URL}?token=${token}`);
+      // Token rides as a WebSocket subprotocol, not a query param — a query
+      // string gets written to nginx access logs in plaintext, a header does not.
+      const ws = new WebSocket(SOCKET_URL, ["access_token", token]);
       socketRef.current = ws;
 
       ws.onopen = () => {
