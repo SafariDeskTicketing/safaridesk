@@ -43,7 +43,7 @@ from tenant.services.exports import (
 )
 from tenant.services.labels import apply_label_filter, parse_label_ids, sync_legacy_tag_field
 from tenant.services.reports import build_selected_task_export_dataset, selected_task_export_row_count
-from tenant.views.TicketView import _build_storage_paths
+from tenant.services.tickets.attachments import _build_storage_paths
 
 logger = logging.getLogger(__name__)
 

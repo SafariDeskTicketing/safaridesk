@@ -452,7 +452,7 @@ def send_email_reply_task(
     try:
         replay_attachments = TicketReplayAttachment.objects.filter(comment=comment)
         if replay_attachments.exists():
-            from tenant.views.TicketView import _build_storage_paths
+            from tenant.services.tickets.attachments import _build_storage_paths
             properties_dir, _ = _build_storage_paths(ticket.business, subfolder='files')
 
             for att in replay_attachments:

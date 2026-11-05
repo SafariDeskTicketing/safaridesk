@@ -1157,7 +1157,9 @@ class TicketEmailActivityStreamTests(TestCase):
              mock.patch("shared.workers.Ticket._send_email_via_provider", return_value=True):
             _send_ticket_notification(self.ticket.id, "NEW_TICKET_AUTO_REPLY", self.ticket.creator_email)
 
-        response = self.view(self.factory.get(f"/api/v1/ticket/get/activity-stream/{self.ticket.id}"), id=self.ticket.id)
+        request = self.factory.get(f"/api/v1/ticket/get/activity-stream/{self.ticket.id}")
+        force_authenticate(request, user=self.agent)
+        response = self.view(request, id=self.ticket.id)
         self.assertEqual(response.status_code, 200)
 
         comment = self.ticket.comments.get(email_to=[self.ticket.creator_email])
@@ -1291,7 +1293,9 @@ class TicketEmailActivityStreamTests(TestCase):
             received_at=datetime(2026, 4, 7, 13, 50, tzinfo=timezone.utc),
         )
 
-        response = self.view(self.factory.get(f"/api/v1/ticket/get/activity-stream/{self.ticket.id}"), id=self.ticket.id)
+        request = self.factory.get(f"/api/v1/ticket/get/activity-stream/{self.ticket.id}")
+        force_authenticate(request, user=self.agent)
+        response = self.view(request, id=self.ticket.id)
         self.assertEqual(response.status_code, 200)
 
         positive_comment = next(item for item in response.data if item["type"] == "comment" and item["id"] == comment.id)
@@ -1638,7 +1642,7 @@ class TicketConfigEndpointTests(SimpleTestCase):
         chain = mock.Mock()
         chain.first.return_value = config
 
-        with mock.patch("tenant.views.TicketView.TicketConfig.objects.for_business", return_value=chain):
+        with mock.patch("tenant.services.tickets.config.TicketConfig.objects.for_business", return_value=chain):
             response = view.get_config(request)
 
         self.assertEqual(response.status_code, 200)
@@ -1665,6 +1669,10 @@ class PublicViewDomainValidationTests(TestCase):
             {"url": "https://acme.safaridesk.io/helpcenter"},
             format="json",
         )
+        # CustomDomainMiddleware (which resolves this from the real Host header
+        # in production) doesn't run here since the view is invoked directly;
+        # set what it would have set.
+        request.tenant = self.business
         response = self.view(request)
 
         self.assertEqual(response.status_code, 200)
@@ -1683,6 +1691,7 @@ class PublicViewDomainValidationTests(TestCase):
             {"url": "https://support.acme.com/helpcenter"},
             format="json",
         )
+        request.tenant = self.business
         response = self.view(request)
 
         self.assertEqual(response.status_code, 200)
@@ -1716,6 +1725,12 @@ class PublicViewCreateValidationTests(TestCase):
         self.department_b = Department.objects.create(name="Support B", business=self.business_b)
 
     def test_create_rejects_cross_business_category_department(self):
+        # category_id/department_id lookups are scoped to the resolved business
+        # (business_a here), so a department belonging to a different business
+        # (business_b) can't be found at all — this comes back 404, not a
+        # same-business mismatch 400. That mismatch branch is unreachable now
+        # that both lookups share the same business filter; a 404 also avoids
+        # confirming to an anonymous caller that department_b exists elsewhere.
         request = self.factory.post(
             "/api/v1/public/create/",
             {
@@ -1724,12 +1739,13 @@ class PublicViewCreateValidationTests(TestCase):
                 "category_id": self.category_a.id,
                 "department_id": self.department_b.id,
                 "priority": "medium",
+                "business_id": self.business_a.id,
             },
             format="multipart",
         )
         response = self.view(request)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("same business", response.data["message"])
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Department", response.data["message"])
 
     def test_create_rejects_title_longer_than_summary_limit(self):
         request = self.factory.post(
@@ -1740,6 +1756,7 @@ class PublicViewCreateValidationTests(TestCase):
                 "category_id": self.category_a.id,
                 "department_id": self.department_a.id,
                 "priority": "medium",
+                "business_id": self.business_a.id,
             },
             format="multipart",
         )
@@ -1760,6 +1777,7 @@ class PublicViewCreateValidationTests(TestCase):
                 "category_id": self.category_a.id,
                 "department_id": self.department_a.id,
                 "priority": "medium",
+                "business_id": self.business_a.id,
             },
             format="multipart",
         )
