@@ -34,6 +34,9 @@ def add_ticket_watchers(*, ticket_id, data: Dict[str, Any], user: Users) -> Dict
     for user_id in user_ids:
         try:
             watcher_user = Users.objects.filter(id=user_id, business=user.business).first()
+            if watcher_user is None:
+                errors.append({"id": user_id, "error": "User not found"})
+                continue
 
             # Check if user is already a watcher
             if TicketWatchers.objects.filter(ticket=ticket, watcher=watcher_user).exists():

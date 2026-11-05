@@ -162,13 +162,20 @@ class PublicView(viewsets.ModelViewSet):  # or ModelViewSet if you're using it
                 category_filters["business"] = resolved_business
                 department_filters["business"] = resolved_business
 
-            category = TicketCategories.objects.filter(**category_filters).first()
+            # .unscoped(): category_filters/department_filters above already carry
+            # the explicit `business=resolved_business` scope. The default manager
+            # would additionally AND in the ambient host-resolved tenant (set by
+            # CurrentBusinessMiddleware for every request, including this AllowAny
+            # one) and silently return nothing when a client-supplied business_id
+            # differs from the request's host (e.g. a shared/embedded widget
+            # domain) — same bug class fixed in reference_resolver.py.
+            category = TicketCategories.objects.unscoped().filter(**category_filters).first()
             if not category:
                 return Response({
                     "message": f"Category with id {category_id} not found"
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            department = Department.objects.filter(**department_filters).first()
+            department = Department.objects.unscoped().filter(**department_filters).first()
             if not department:
                 return Response({
                     "message": f"Department with id {department_id} not found"
