@@ -34,9 +34,20 @@ from shared.workers.safari_sms_notifications import (
 def store_initial_ticket_state(sender, instance, **kwargs):
     """
     Store the initial state of the ticket instance to detect changes on save.
+
+    Guards against Django's own internal partial loads — the cascade-delete
+    collector (e.g. Business.delete()), or any `.only()`/`.defer()` query —
+    where `status` or `assigned_to_id` aren't fetched. Touching a deferred
+    field here used to trigger `refresh_from_db`, which re-instantiates the
+    model and fires this same post_init signal again with the *other* field
+    now deferred instead: infinite recursion (RecursionError), which is what
+    made every cascading Business/tenant delete blow up. Skipping the
+    assignment when deferred is safe — handle_ticket_notifications below
+    already falls back to None via getattr(..., None).
     """
-    instance._original_status = instance.status
-    instance._original_assigned_to = instance.assigned_to
+    deferred = instance.get_deferred_fields()
+    instance._original_status = instance.status if 'status' not in deferred else None
+    instance._original_assigned_to_id = instance.assigned_to_id if 'assigned_to_id' not in deferred else None
 
 @receiver(post_save, sender=Ticket)
 def handle_ticket_notifications(sender, instance, created, **kwargs):
@@ -57,10 +68,10 @@ def handle_ticket_notifications(sender, instance, created, **kwargs):
     else:
         # Ticket updated, check for changes
         original_status = getattr(instance, '_original_status', None)
-        original_assigned_to = getattr(instance, '_original_assigned_to', None)
-        
+        original_assigned_to_id = getattr(instance, '_original_assigned_to_id', None)
+
         status_changed = instance.status != original_status
-        assignment_changed = instance.assigned_to != original_assigned_to
+        assignment_changed = instance.assigned_to_id != original_assigned_to_id
         
         if assignment_changed and instance.assigned_to:
             # Send Slack notification for assignment

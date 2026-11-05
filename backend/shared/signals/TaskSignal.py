@@ -16,9 +16,18 @@ from shared.services.ticket_broadcast import broadcast_task_event
 def store_initial_task_state(sender, instance, **kwargs):
     """
     Store the initial state of the task instance to detect changes on save.
+
+    Guards against Django's own internal partial loads — the cascade-delete
+    collector (e.g. Business.delete()), or any `.only()`/`.defer()` query —
+    where `task_status`/`assigned_to_id` aren't fetched. Touching a deferred
+    field here triggers `refresh_from_db`, which re-instantiates the model
+    and fires this same post_init signal again with the *other* field now
+    deferred instead: infinite recursion (same bug fixed in ticketSignal.py
+    for Ticket; see that file for the full explanation).
     """
-    instance._original_status = instance.task_status
-    instance._original_assigned_to = instance.assigned_to
+    deferred = instance.get_deferred_fields()
+    instance._original_status = instance.task_status if 'task_status' not in deferred else None
+    instance._original_assigned_to_id = instance.assigned_to_id if 'assigned_to_id' not in deferred else None
 
 @receiver(post_save, sender=Task)
 def handle_task_notifications(sender, instance, created, **kwargs):
@@ -32,8 +41,11 @@ def handle_task_notifications(sender, instance, created, **kwargs):
         if business_id:
             transaction.on_commit(lambda: broadcast_task_event(business_id, {'action': 'created', 'task_id': instance.id}))
     else:
-        status_changed = instance.task_status != instance._original_status
-        assignment_changed = instance.assigned_to != instance._original_assigned_to
+        original_status = getattr(instance, '_original_status', None)
+        original_assigned_to_id = getattr(instance, '_original_assigned_to_id', None)
+
+        status_changed = instance.task_status != original_status
+        assignment_changed = instance.assigned_to_id != original_assigned_to_id
 
         if assignment_changed:
             transaction.on_commit(lambda: task_assigned_notification.delay(instance.id))
