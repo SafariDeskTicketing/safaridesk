@@ -36,8 +36,7 @@ Run SafariDesk locally from the repository root:
 
 ```bash
 cp .env.example .env
-docker compose pull
-docker compose up -d
+docker compose up -d --build
 sh deploy/scripts/migrate.sh
 sh deploy/scripts/collectstatic.sh
 sh deploy/scripts/create-admin.sh
@@ -45,7 +44,17 @@ docker compose exec backend python manage.py safari
 docker compose exec backend python manage.py sync_email_templates
 ```
 
-Open SafariDesk at `http://localhost`.
+Build from source (`--build`) rather than `docker compose pull` for local development — the published `:latest` images on Docker Hub can lag behind `main`'s migrations, and a stale image will migrate cleanly but fail on the next step that touches a column it doesn't know about yet.
+
+SafariDesk resolves which business/tenant you're hitting from the request's **subdomain**, not from a path or header — so `http://localhost` alone will always 404 with "Business Not Found". You need a business whose domain resolves to a `*.localhost` host. The fastest way to get one locally:
+
+```bash
+docker compose exec backend python manage.py seed_dev_data
+```
+
+This creates a throwaway business plus an admin and two agent accounts with sample tickets, and prints their login URL/credentials at the end — use that instead of the `/join` self-signup flow for local dev, since `/join` emails a generated password and silently does nothing useful without SMTP configured.
+
+Open the URL the seed command prints (or your own business's subdomain once you've created one).
 
 For a production-ready setup, read the [installation guide](https://docs.safaridesk.io/installation) and [production deployment guide](https://docs.safaridesk.io/production) before exposing the service publicly.
 
