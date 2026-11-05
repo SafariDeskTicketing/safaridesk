@@ -88,7 +88,7 @@ const PREVIEW_CLOSE_DELAY_MS = 160;
 const PREVIEW_CARD_WIDTH = 544;
 const PREVIEW_CARD_SAFE_HEIGHT = 560;
 const PREVIEW_VIEWPORT_PADDING = 20;
-type TaskViewMode = 'detailed' | 'card' | 'list';
+type TaskViewMode = 'card' | 'list';
 
 const getStoredTaskViewMode = (): 'card' | 'list' => (
   localStorage.getItem('taskViewMode') === 'card' ? 'card' : 'list'
@@ -254,15 +254,9 @@ export default function TaskManagementSystem() {
   const [columnFilterSearch, setColumnFilterSearch] = useState('');
 
   useEffect(() => {
-    if (viewMode === 'detailed') {
-      setViewMode('list');
-      localStorage.setItem('taskViewMode', 'list');
-      return;
-    }
     localStorage.setItem('taskViewMode', viewMode);
   }, [viewMode]);
   const [showCreateTaskCloseConfirm, setShowCreateTaskCloseConfirm] = useState(false);
-  const [detailPanelOpen, setDetailPanelOpen] = useState(true);
   const [taskPreview, setTaskPreview] = useState<TaskPreviewState | null>(null);
   const columnFilterRef = useRef<HTMLDivElement>(null);
   const taskPreviewOpenTimeoutRef = useRef<number | null>(null);
@@ -399,15 +393,6 @@ export default function TaskManagementSystem() {
       return aStr < bStr ? 1 : -1;
     });
   }, [filteredTasks, taskSortField, taskSortDirection]);
-
-  useEffect(() => {
-    if (viewMode === 'detailed') {
-      setViewMode('list');
-      localStorage.setItem('taskViewMode', 'list');
-      return;
-    }
-    localStorage.setItem('taskViewMode', viewMode);
-  }, [viewMode]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
   // Selection state for bulk actions
@@ -700,12 +685,6 @@ export default function TaskManagementSystem() {
   const openTaskCount = taskCounts[openTaskViewKey] ?? 0;
   const closedTaskCount = taskCounts[closedTaskViewKey] ?? 0;
   const taskListGridCols = 'grid w-full min-w-full grid-cols-[50px_minmax(94px,118px)_minmax(220px,2fr)_minmax(130px,1fr)_minmax(120px,150px)_minmax(110px,130px)_minmax(110px,130px)_minmax(110px,130px)_minmax(140px,160px)]';
-  const showDetailPanel = viewMode === 'detailed' && detailPanelOpen;
-  const splitLayoutClass =
-    viewMode === 'detailed' && showDetailPanel
-      ? 'grid grid-cols-[clamp(300px,30vw,420px)_minmax(0,1fr)]'
-      : 'flex';
-
   const taskPreviewGap = 14;
   const taskPreviewPosition = useMemo(() => {
     if (!taskPreview) return null;
@@ -1053,41 +1032,13 @@ export default function TaskManagementSystem() {
   }, [location.search, activeView, defaultView]);
 
   useEffect(() => {
-    if (viewMode === 'detailed') {
-      if (tasks.length > 0) {
-        setSelectedTask(currentSelected => {
-          const isSelectedInList = tasks.some(t => t.id === currentSelected?.id);
-          if (isSelectedInList) {
-            return currentSelected;
-          }
-          return tasks[0];
-        });
-      } else {
-        setSelectedTask(null);
-      }
-    } else {
-      setSelectedTask(null);
-    }
+    setSelectedTask(null);
   }, [tasks, viewMode]);
 
   useEffect(() => {
     // Avoid carrying stale selections across normal/trash/archive views.
     setSelectedTasks(new Set());
   }, [activeView]);
-
-  const handleNextTask = () => {
-    if (!selectedTask || filteredTasks.length <= 1) return;
-    const currentIndex = filteredTasks.findIndex(t => t.id === selectedTask.id);
-    const nextIndex = (currentIndex + 1) % filteredTasks.length;
-    setSelectedTask(filteredTasks[nextIndex]);
-  };
-
-  const handlePreviousTask = () => {
-    if (!selectedTask || filteredTasks.length <= 1) return;
-    const currentIndex = filteredTasks.findIndex(t => t.id === selectedTask.id);
-    const prevIndex = (currentIndex - 1 + filteredTasks.length) % filteredTasks.length;
-    setSelectedTask(filteredTasks[prevIndex]);
-  };
 
   const handleNextPage = () => {
     const totalPages = Math.ceil(totalCount / limit);
@@ -1953,22 +1904,14 @@ export default function TaskManagementSystem() {
                 <div className="hidden lg:flex">
                   <ViewModeDropdown viewMode={viewMode === 'card' ? 'card' : 'list'} onViewChange={(mode) => setViewMode(mode)} />
                 </div>
-                {viewMode === 'detailed' && (
-                  <button
-                    onClick={() => setDetailPanelOpen(prev => !prev)}
-                    className="px-2.5 py-1.5 text-[length:var(--font-body)] font-medium rounded-lg border border-gray-200 dark:border-subtle bg-white dark:bg-surface-elevated text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-surface-hover transition-colors"
-                  >
-                    {detailPanelOpen ? 'Hide Details' : 'Show Details'}
-                  </button>
-                )}
               </div>
             </div>
           </div>
         </header>
 
-        <div className={`flex-1 min-w-0 overflow-hidden ${splitLayoutClass}`}>
+        <div className="flex-1 min-w-0 overflow-hidden flex">
           {/* Tasks List */}
-          <div className={`${viewMode === 'detailed' && showDetailPanel ? 'min-w-0' : 'w-full'} min-w-0 flex flex-col`} style={{ background: 'var(--card-bg)', borderRight: '1px solid var(--border-color)' }}>
+          <div className="w-full min-w-0 flex flex-col" style={{ background: 'var(--card-bg)', borderRight: '1px solid var(--border-color)' }}>
 
             {/* Bulk Actions - Show when tasks are selected */}
             {selectedTasks.size > 0 && (
@@ -2208,45 +2151,6 @@ export default function TaskManagementSystem() {
                 </div>
               ) : filteredTasks.length === 0 ? (
                 <EmptyState />
-              ) : viewMode === 'detailed' ? (
-                filteredTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    onClick={() => setSelectedTask(task)}
-                    className={`mx-3 my-1.5 cursor-pointer rounded-[12px] border p-3 transition-colors ${selectedTask?.id === task.id
-                      ? 'border-primary-300 bg-primary-50/70 dark:border-primary-700 dark:bg-primary-900/20'
-                      : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-subtle dark:bg-surface-elevated dark:hover:bg-surface-hover'
-                      }`}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="w-9 h-9 bg-primary-500 rounded-full flex items-center justify-center text-white font-medium text-[length:var(--font-meta)]">
-                        {task.title.charAt(0)?.toUpperCase() || 'T'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="truncate text-[length:var(--font-body)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">{task.title}</h3>
-                          <span className="text-[length:var(--font-meta)] font-medium text-[var(--text-muted)]">{format(new Date(task.created_at), 'dd MMM')}</span>
-                        </div>
-                        <LabelGroup labels={task.labels || []} maxVisible={3} className="mb-2" />
-                        <p className="mb-2 line-clamp-1 text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300">#{task.task_trackid}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 rounded-full text-[length:var(--font-meta)] font-medium border ${getStatusColor(task.task_status)}`}>
-                              {task.task_status.replace('_', ' ')}
-                            </span>
-                            <span className={`px-2 py-1 rounded-full text-[length:var(--font-meta)] font-medium ${getPriorityColor(task.priority)}`}>
-                              {task.priority}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-[length:var(--font-meta)] text-[var(--text-muted)]">
-                            <MessageCircle size={14} />
-                            <span>{task.comments_count || 0}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
               ) : viewMode === 'card' ? (
                 <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredTasks.map((task) => (
@@ -2320,266 +2224,6 @@ export default function TaskManagementSystem() {
           {/* Task Details */}
           {isLoading ? (
             <TicketDetailSkeleton />
-          ) : selectedTask && showDetailPanel ? (
-            <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-gray-50 dark:bg-surface">
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Header and Summary Section */}
-                <div className="bg-white dark:bg-surface-elevated rounded-lg border border-gray-200 dark:border-subtle overflow-hidden">
-                  {/* Header Section */}
-                  <div className="px-5 py-3 border-b border-gray-200 dark:border-subtle">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h1 className="text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-1 truncate">
-                          {selectedTask.title}
-                        </h1>
-                        <LabelGroup labels={selectedTask.labels || []} className="mb-3" emptyText="" />
-                        <div className="flex items-center space-x-4 mb-3">
-                          <span className="text-[length:var(--font-body)] font-medium text-gray-600 dark:text-[var(--text-muted)]">
-                            {selectedTask.task_trackid}
-                          </span>
-                          <span className="text-[length:var(--font-body)] text-[var(--text-muted)]">
-                            Created {formatRelativeTime(selectedTask.created_at)}
-                          </span>
-                        </div>
-                        <div className="flex items-center flex-wrap gap-2">
-                          <span className={`px-3 py-1 rounded-full text-[length:var(--font-meta)] font-semibold border ${getStatusColor(selectedTask.task_status)}`}>
-                            {selectedTask.task_status.replace("_", " ").toUpperCase()}
-                          </span>
-                          <span className={`px-3 py-1 rounded-full text-[length:var(--font-meta)] font-semibold border ${getPriorityColor(selectedTask.priority)}`}>
-                            {selectedTask.priority?.toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="ml-4 flex shrink-0 flex-wrap items-center justify-end gap-2">
-                        {!selectedTask.assigned_to && (
-                          <button
-                            onClick={handleAssignToMe}
-                            disabled={isAssigning}
-                            className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white text-[length:var(--font-body)] font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            {isAssigning ? 'Assigning...' : 'Assign to me'}
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => setShowLabelsModal(true)}
-                          className="inline-flex items-center px-4 py-2.5 border border-gray-200 dark:border-subtle bg-white dark:bg-surface-elevated text-[length:var(--font-body)] font-semibold rounded-xl text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-surface-hover transition-colors"
-                        >
-                          <Tag className="w-4 h-4 mr-2" />
-                          Manage Labels
-                        </button>
-
-                        <div className="flex items-center bg-white dark:bg-surface-elevated rounded-xl border border-gray-200 dark:border-subtle p-1 shadow-sm">
-                          <div className="flex items-center space-x-1">
-                            <Tooltip
-                              key={`status-tooltip-${selectedTask.task_status}`}
-                              content={
-                                <div className="p-4">
-                                  <UpdateTaskStatus
-                                    handleStatusUpdate={handleStatusUpdate}
-                                    isSubmitting={isSubmitting}
-                                    selectedOption={selectedStatus}
-                                    setSelectedOption={setSelectedStatus}
-                                    statusDescription={statusDescription}
-                                    setStatusDescription={setStatusDescription}
-                                    currentStatus={selectedTask.task_status}
-                                  />
-                                </div>
-                              }
-                            >
-                              <button
-                                className="inline-flex items-center justify-center w-10 h-10 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all duration-200 group"
-                                title="Update Status"
-                              >
-                                <Edit3 size={18} className="group-hover:scale-110 transition-transform" />
-                              </button>
-                            </Tooltip>
-
-                            {user?.role.toUpperCase() === "ADMIN" && (
-                              <Tooltip
-                                content={
-                                  <div className="p-4">
-                                    <Select
-                                      id="assign-agent"
-                                      label="Select Agent"
-                                      value={selectedAgentId}
-                                      onChange={setSelectedAgentId}
-                                      options={[
-                                        { value: "", label: "Choose agent...", disabled: true },
-                                        ...(agents && agents.length > 0
-                                          ? agents
-                                            .filter(agent => agent.id !== selectedTask.assigned_to?.id)
-                                            .map(agent => ({
-                                              value: agent.id.toString(),
-                                              label: getAgentDisplayName(agent)
-                                            }))
-                                          : [{ value: "", label: "No agents found", disabled: true }]
-                                        )
-                                      ]}
-                                      placeholder="Choose agent..."
-                                      size="md"
-                                      required={true}
-                                      allowSearch={true}
-                                    />
-                                    <div className="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200">
-                                      <button
-                                        onClick={handleAssign}
-                                        disabled={isSubmitting || !selectedAgentId}
-                                        className="px-2.5 py-1.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors text-[length:var(--font-body)] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        {isSubmitting ? "Please wait.. " : "Reassign"}
-                                      </button>
-                                    </div>
-                                  </div>
-                                }
-                              >
-                                <button
-                                  className="inline-flex items-center justify-center w-10 h-10 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-all duration-200 group"
-                                  title={selectedTask.assigned_to ? "Reassign Task" : "Assign Task"}
-                                >
-                                  <UserCheck size={18} className="group-hover:scale-110 transition-transform" />
-                                </button>
-                              </Tooltip>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                      <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg p-4 border border-primary-200 dark:border-primary-800">
-                        <div className="flex items-center mb-3">
-                          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-3">
-                            <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                          </div>
-                          <h3 className="text-[length:var(--font-body)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">Assignee</h3>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center text-[length:var(--font-body)] text-gray-700 dark:text-[var(--text-primary)]">
-                    <User className="w-4 h-4 mr-2 text-[var(--text-muted)]" />
-                            <span
-                              className="font-medium cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                              title="Click to change assignee"
-                              onClick={() => setAssignModalOpen(true)}
-                            >
-                              {formatUserDisplayName(selectedTask.assigned_to as any, 'Unassigned')}
-                              <Edit3 size={12} className="inline ml-1 opacity-50" />
-                            </span>
-                          </div>
-                          <div className="flex items-center text-[length:var(--font-body)] text-gray-600 dark:text-[var(--text-muted)]">
-                    <Tag className="w-4 h-4 mr-2 text-[var(--text-muted)]" />
-                            General
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg p-4 border border-primary-200 dark:border-primary-800">
-                        <div className="flex items-center mb-3">
-                          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-3">
-                            <CheckCircle className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                          </div>
-                          <h3 className="text-[length:var(--font-body)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">Status & Priority</h3>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center text-[length:var(--font-body)] text-gray-700 dark:text-[var(--text-primary)]">
-                    <CheckCircle className="w-4 h-4 mr-2 text-[var(--text-muted)]" />
-                            <span
-                              className="font-medium cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors capitalize"
-                              title="Click to change status"
-                              onClick={() => setUpdateStatusModalOpen(true)}
-                            >
-                              {selectedTask.task_status.replace('_', ' ')}
-                              <Edit3 size={12} className="inline ml-1 opacity-50" />
-                            </span>
-                          </div>
-                          <div className="flex items-center text-[length:var(--font-body)] text-gray-700 dark:text-[var(--text-primary)]">
-                    <AlertTriangle className="w-4 h-4 mr-2 text-[var(--text-muted)]" />
-                            <span
-                              className="font-medium cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors capitalize"
-                              title="Click to change priority"
-                              onClick={() => setPriorityModalOpen(true)}
-                            >
-                              {selectedTask.priority || 'N/A'}
-                              <Edit3 size={12} className="inline ml-1 opacity-50" />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                        <div className="flex items-center mb-3">
-                          <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mr-3">
-                            <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <h3 className="text-[length:var(--font-body)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">Timeline</h3>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center text-[length:var(--font-body)] text-gray-600 dark:text-[var(--text-muted)]">
-                    <Calendar className="w-4 h-4 mr-2 text-[var(--text-muted)]" />
-                            Created: {formatDate(selectedTask.created_at)}
-                          </div>
-                          <div className="flex items-center text-[length:var(--font-body)] text-gray-600 dark:text-[var(--text-muted)]">
-                    <Clock className="w-4 h-4 mr-2 text-[var(--text-muted)]" />
-                            Due: {formatDueDateWithTime(selectedTask.due_date)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-subtle dark:bg-surface-elevated">
-                      <div className="mb-3 flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-[var(--text-muted)]" />
-                        <h3 className="text-[length:var(--font-body)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">Labels</h3>
-                      </div>
-                      <LabelGroup labels={selectedTask.labels || []} size="md" emptyText="No labels assigned" />
-                    </div>
-
-                    <div className="bg-gray-50 dark:bg-surface-elevated rounded-lg p-4">
-                      <div className="flex items-center mb-3">
-                        <FileText className="w-4 h-4 text-gray-600 dark:text-[var(--text-muted)] mr-2" />
-                        <h3 className="text-[length:var(--font-body)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">Description</h3>
-                      </div>
-                      {selectedTask.description ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none  overflow-y-auto"
-                          dangerouslySetInnerHTML={{ __html: sanitizeHTML(selectedTask.description) }}
-                        />
-                      ) : (
-                        <span className="text-[length:var(--font-body)] text-[var(--text-muted)] italic">No description provided</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white dark:bg-surface-elevated rounded-lg border border-gray-200 dark:border-subtle">
-                  <div className="border-b border-gray-200 dark:border-subtle">
-                    <nav className="flex space-x-8 overflow-x-auto whitespace-nowrap px-6" aria-label="Tabs">
-                      <button onClick={() => setActiveTab('activity')} className={`py-4 px-1 border-b-2 font-medium text-[length:var(--font-body)] flex items-center space-x-2 ${activeTab === 'activity' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-[var(--text-primary)] dark:hover:text-gray-300'}`}>
-                        <MessageCircle className="w-4 h-4" />
-                        <span>Activity Stream</span>
-                      </button>
-                    </nav>
-                  </div>
-
-                  <div className="p-6">
-                    {activeTab === 'activity' && (
-                      <TaskActivityStream
-                        taskId={selectedTask.id}
-                        reloader={reloader}
-                        isCustomerView={false}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : viewMode === 'detailed' && showDetailPanel ? (
-            <div className="flex-1 flex items-center justify-center">
-              <EmptyState title="No task selected" message="Please select a task to view its details." />
-            </div>
           ) : null}
         </div>
       </div>
