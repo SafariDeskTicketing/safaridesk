@@ -22,6 +22,20 @@ class AgentView(viewsets.ModelViewSet):
     serializer_class = AgentSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        # Every actually-routed action (list/retrieve/update/
+        # deactivate_activate_agent) already overrides this with its own
+        # business-scoped lookup, so this is defense-in-depth: the class-level
+        # `queryset = Users.objects.all()` above is unscoped and frozen at
+        # import time (no ambient business filter runs at module load), so
+        # any future default ModelViewSet action (destroy, a router-registered
+        # <pk> route) added without its own override would otherwise leak
+        # every business's users. Same landmine shape as the TicketView fix
+        # in FIXES_LOG's batch 1 finding #4.
+        if not self.request.user.is_authenticated or not self.request.user.business:
+            return Users.objects.none()
+        return Users.objects.filter(business=self.request.user.business)
+
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return AgentReadSerializer

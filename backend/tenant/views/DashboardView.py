@@ -16,6 +16,17 @@ class DashView(viewsets.ModelViewSet):
     queryset = Users.objects.all()
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        # Defense-in-depth, same shape as AgentView's fix: every actually-
+        # routed action here (load/get_started/update_onboarding_state)
+        # builds its own scoped queries and never touches self.get_queryset(),
+        # but the class-level `queryset = Users.objects.all()` above is
+        # unscoped and frozen at import time, so any future default
+        # ModelViewSet action added without its own override would leak
+        # every business's users.
+        if not self.request.user.is_authenticated or not self.request.user.business:
+            return Users.objects.none()
+        return Users.objects.filter(business=self.request.user.business)
 
     def get_started(self, request):
         user = request.user
