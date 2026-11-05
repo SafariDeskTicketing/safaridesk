@@ -591,10 +591,10 @@ class TicketView(viewsets.ModelViewSet):
         """List all tickets, optionally without pagination"""
         return Response(queries_service.my_customer_dashboard(user=request.user), status=status.HTTP_200_OK)
 
-    @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:
-            result = creation_service.create_ticket_from_request(request=request)
+            with transaction.atomic():
+                result = creation_service.create_ticket_from_request(request=request)
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except ValidationError as e:
@@ -612,12 +612,12 @@ class TicketView(viewsets.ModelViewSet):
 
         return Response(result, status=status.HTTP_201_CREATED)
 
-    @transaction.atomic
     def add_ticket_watchers(self, request, *args, **kwargs):
         try:
-            result = watchers_service.add_ticket_watchers(
-                ticket_id=kwargs.get("id"), data=request.data, user=request.user,
-            )
+            with transaction.atomic():
+                result = watchers_service.add_ticket_watchers(
+                    ticket_id=kwargs.get("id"), data=request.data, user=request.user,
+                )
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         return Response(result, status=status.HTTP_200_OK)
@@ -629,28 +629,28 @@ class TicketView(viewsets.ModelViewSet):
         watcher_list = watchers_service.get_watchers(ticket_id=kwargs.get("id"))
         return Response(watcher_list, status=status.HTTP_200_OK)
 
-    @transaction.atomic
     def add_ticket_tags(self, request, *args, **kwargs):
         try:
-            result = labels_service.add_ticket_tags(
-                ticket_id=kwargs.get("id"), data=request.data, user=request.user,
-            )
+            with transaction.atomic():
+                result = labels_service.add_ticket_tags(
+                    ticket_id=kwargs.get("id"), data=request.data, user=request.user,
+                )
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         return Response(result, status=status.HTTP_200_OK)
 
-    @transaction.atomic
     def update_labels(self, request, *args, **kwargs):
         ticket_id = kwargs.get("id")
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            result = labels_service.update_labels(
-                ticket_id=ticket_id,
-                label_ids=serializer.validated_data.get("label_ids", []),
-                user=request.user,
-            )
+            with transaction.atomic():
+                result = labels_service.update_labels(
+                    ticket_id=ticket_id,
+                    label_ids=serializer.validated_data.get("label_ids", []),
+                    user=request.user,
+                )
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
 
@@ -660,12 +660,12 @@ class TicketView(viewsets.ModelViewSet):
         result = labels_service.get_tags(ticket_id=kwargs.get("id"), user=request.user)
         return Response(result, status=status.HTTP_200_OK)
 
-    @transaction.atomic
     def assign(self, request, *args, **kwargs):
         ticket_id = request.data.get('ticket_id')
         agent_id = request.data.get('agent_id')
         try:
-            result = assignment_service.assign(request=request)
+            with transaction.atomic():
+                result = assignment_service.assign(request=request)
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except Ticket.DoesNotExist:
@@ -684,11 +684,11 @@ class TicketView(viewsets.ModelViewSet):
 
         return Response(result, status=status.HTTP_200_OK)
 
-    @transaction.atomic
     def assign_to_me(self, request, *args, **kwargs):
         ticket_id = kwargs.get('id')
         try:
-            result = assignment_service.assign_to_me(ticket_id=ticket_id, user=request.user)
+            with transaction.atomic():
+                result = assignment_service.assign_to_me(ticket_id=ticket_id, user=request.user)
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except Ticket.DoesNotExist:
@@ -703,7 +703,6 @@ class TicketView(viewsets.ModelViewSet):
 
         return Response(result, status=status.HTTP_200_OK)
 
-    @transaction.atomic
     def update_status(self, request, *args, **kwargs):
         ticket_id = kwargs.get('id')
 
@@ -713,7 +712,8 @@ class TicketView(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            result = status_transitions_service.update_status(request=request, ticket_id=ticket_id)
+            with transaction.atomic():
+                result = status_transitions_service.update_status(request=request, ticket_id=ticket_id)
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except Ticket.DoesNotExist:
@@ -843,13 +843,13 @@ class TicketView(viewsets.ModelViewSet):
             logger.warning(f"Ticket with ID {ticket_id} not found for business {request.user.business}")
             return Response({"message": "Ticket not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    @transaction.atomic
     @action(detail=True, methods=['post'], url_path='add-note')
     def add_note(self, request, *args, **kwargs):
         try:
-            result = comments_service.add_note(
-                ticket_id=kwargs.get('pk'), data=request.data, user=request.user,
-            )
+            with transaction.atomic():
+                result = comments_service.add_note(
+                    ticket_id=kwargs.get('pk'), data=request.data, user=request.user,
+                )
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except Ticket.DoesNotExist:
@@ -857,12 +857,12 @@ class TicketView(viewsets.ModelViewSet):
 
         return Response(result, status=status.HTTP_201_CREATED)
 
-    @transaction.atomic
     def add_comment(self, request, *args, **kwargs):
         try:
-            result = comments_service.add_comment(
-                ticket_id=kwargs.get('id'), data=request.data, user=request.user, files=request.FILES,
-            )
+            with transaction.atomic():
+                result = comments_service.add_comment(
+                    ticket_id=kwargs.get('id'), data=request.data, user=request.user, files=request.FILES,
+                )
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except Ticket.DoesNotExist:
@@ -876,7 +876,6 @@ class TicketView(viewsets.ModelViewSet):
 
         return Response(result, status=status.HTTP_201_CREATED)
 
-    @transaction.atomic
     @action(detail=True, methods=['post'], url_path='email-reply')
     def send_email_reply(self, request, pk=None, *args, **kwargs):
         """
@@ -884,7 +883,8 @@ class TicketView(viewsets.ModelViewSet):
         Supports JSON and multipart/form-data payloads with optional attachments.
         """
         try:
-            result = email_reply_service.send_email_reply(request=request, pk=pk)
+            with transaction.atomic():
+                result = email_reply_service.send_email_reply(request=request, pk=pk)
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except ValidationError as e:
@@ -901,16 +901,15 @@ class TicketView(viewsets.ModelViewSet):
 
         return Response(result, status=status.HTTP_201_CREATED)
 
-    @transaction.atomic
     def log_call(self, request, *args, **kwargs):
         try:
-            result = call_logs_service.log_call(request=request, ticket_id=kwargs.get('id'))
+            with transaction.atomic():
+                result = call_logs_service.log_call(request=request, ticket_id=kwargs.get('id'))
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
 
         return Response(result, status=status.HTTP_201_CREATED)
 
-    @transaction.atomic
     @action(detail=True, methods=['post'])
     def reopen(self, request, *args, **kwargs):
         ticket_id = kwargs.get('pk')
@@ -923,7 +922,8 @@ class TicketView(viewsets.ModelViewSet):
             return Response({"message": "Reason is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            result = status_transitions_service.reopen(request=request, ticket_id=ticket_id, reason=reason)
+            with transaction.atomic():
+                result = status_transitions_service.reopen(request=request, ticket_id=ticket_id, reason=reason)
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
         except Ticket.DoesNotExist:
@@ -1069,7 +1069,6 @@ class TicketView(viewsets.ModelViewSet):
 
         return Response(result, status=status.HTTP_200_OK)
 
-    @transaction.atomic
     @action(detail=True, methods=['post'])
     def merge(self, request, *args, **kwargs):
         """
@@ -1077,7 +1076,8 @@ class TicketView(viewsets.ModelViewSet):
         Soft-link strategy: mark source tickets as merged/closed without moving related records.
         """
         try:
-            result = merge_service.merge(request=request, primary_id=kwargs.get('pk'))
+            with transaction.atomic():
+                result = merge_service.merge(request=request, primary_id=kwargs.get('pk'))
         except TicketActionError as exc:
             return Response(exc.payload, status=exc.status_code)
 

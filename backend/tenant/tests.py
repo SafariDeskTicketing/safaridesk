@@ -10,6 +10,7 @@ from unittest import mock
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth.models import AnonymousUser, Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command, CommandError
 from django.db import IntegrityError, transaction
 from django.test import SimpleTestCase, TestCase, TransactionTestCase, override_settings
@@ -3621,3 +3622,92 @@ class ChatConsumerStaffTenantScopingTests(TransactionTestCase):
         connected, close_code = await self._connect(self.business_a.id, user=None)
         self.assertFalse(connected)
         self.assertEqual(close_code, 4401)
+
+
+class TicketActionTransactionRollbackTests(TestCase):
+    """
+    TicketView.add_comment/merge (and the other @transaction.atomic actions)
+    used to catch the service's TicketActionError and `return Response(...)`
+    from inside the atomic block. Django only rolls back on an exception that
+    propagates OUT of transaction.atomic() - a caught-and-returned exception
+    looks like a normal exit, so whatever the service had already written
+    committed anyway despite the client getting an error response. These
+    tests fail on the pre-fix code (where the service call sits directly
+    under the `@transaction.atomic` method decorator) and pass now that the
+    atomic block wraps only the service call, with the except clauses outside
+    it so the rollback actually happens before the error Response is built.
+    """
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.business = Business.objects.create(name="Rollback Biz", domain="rollback-biz")
+        self.role = Group.objects.create(name="rollback-admin")
+        self.admin = Users.objects.create(
+            username="rollback-admin@example.com",
+            email="rollback-admin@example.com",
+            role=self.role,
+            business=self.business,
+            first_name="Rollback",
+            last_name="Admin",
+            is_active=True,
+        )
+        self.department = Department.objects.create(name="Support", business=self.business)
+        self.category = TicketCategories.objects.create(
+            name="General",
+            description="General support",
+            business=self.business,
+            department=self.department,
+        )
+
+    def _make_ticket(self, ticket_id, **overrides):
+        return Ticket.objects.create(
+            business=self.business,
+            department=self.department,
+            category=self.category,
+            title=overrides.pop("title", "Rollback ticket"),
+            description="Needs help",
+            ticket_id=ticket_id,
+            status=overrides.pop("status", "open"),
+            **overrides,
+        )
+
+    def test_add_comment_rolls_back_when_attachment_save_fails(self):
+        ticket = self._make_ticket("TKT-9101")
+        request = self.factory.post(
+            "/api/v1/ticket/comment/add/",
+            {
+                "comment": "Here is a file",
+                "file": SimpleUploadedFile("note.txt", b"hello"),
+            },
+        )
+        request.user = self.admin
+
+        with mock.patch(
+            "tenant.services.tickets.comments._build_storage_paths",
+            side_effect=OSError("disk full"),
+        ):
+            response = TicketView.as_view({"post": "add_comment"})(request, id=ticket.id)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(ticket.comments.count(), 0)
+
+    def test_merge_rolls_back_all_sources_when_one_is_already_merged(self):
+        primary = self._make_ticket("TKT-9201")
+        src1 = self._make_ticket("TKT-9202")
+        src2 = self._make_ticket("TKT-9203", is_merged=True, merged_into=primary, status="closed")
+        src3 = self._make_ticket("TKT-9204")
+
+        request = self.factory.post(
+            f"/api/v1/ticket/{primary.id}/merge/",
+            {"source_ids": [src1.id, src2.id, src3.id]},
+            format="json",
+        )
+        request.user = self.admin
+
+        response = TicketView.as_view({"post": "merge"})(request, pk=primary.id)
+
+        self.assertEqual(response.status_code, 400)
+        src1.refresh_from_db()
+        src3.refresh_from_db()
+        self.assertFalse(src1.is_merged)
+        self.assertFalse(src3.is_merged)
