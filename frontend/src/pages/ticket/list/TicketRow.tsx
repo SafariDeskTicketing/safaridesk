@@ -58,7 +58,10 @@ export const TicketRow = ({
           className="h-4 w-4 rounded border-gray-300 text-primary-400 focus:ring-primary-500"
         />
       </div>
-      <div className="py-3 px-3 text-left whitespace-nowrap text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300">
+      <div
+        className="py-3 px-3 text-left truncate text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300"
+        title={`#${ticket.ticket_id}`}
+      >
         #{ticket.ticket_id}
       </div>
       <div className={`py-3 px-3 text-left text-gray-900 dark:text-[var(--text-primary)] ${(!ticket.is_opened || ticket.has_new_reply) ? 'font-bold' : 'font-normal'}`}>
