@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-dev \
     libgirepository1.0-dev \
     libpango1.0-dev \
-    supervisor \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,19 +27,11 @@ RUN chmod -R 777 /var/log/gunicorn /var/log/celery
 # Copy application code
 COPY . /app/
 
-
-# Copy Supervisor config
-COPY supervisor.conf /etc/supervisor/conf.d/
-
 # Set environment variables
 ENV APP_ENV=prod
 EXPOSE 8100
 
-
-# Copy and set permissions for start.sh
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
-# Set entrypoint to start.sh
-CMD ["/app/start.sh"]
+# docker-compose.yml overrides this with gunicorn/daphne/celery worker/celery beat
+# per service; this is only the fallback for running the image standalone.
+CMD ["gunicorn", "RNSafarideskBack.wsgi:application", "--bind", "0.0.0.0:8100", "--workers", "3"]
 
