@@ -78,7 +78,7 @@ Browser
   |
   v
 Nginx :80
-  |-- /              -> frontend:80
+  |-- /              -> frontend:8080
   |-- /api/          -> backend:8100
   |-- /ws/           -> channels:8101
   |-- /uploads/      -> backend:8100
@@ -87,7 +87,7 @@ Nginx :80
   |-- /redoc/        -> backend:8100
   |
   v
-Internal Docker network
+Internal Docker network ("public" + "data", see below)
   |
   |-- backend  -> db + redis + uploads + staticfiles
   |-- channels -> db + redis + uploads
@@ -96,6 +96,8 @@ Internal Docker network
   |-- db       -> postgresdata volume
   |-- redis    -> redisdata volume
 ```
+
+`nginx`/`frontend` sit on a `public` Docker network; `worker`/`beat`/`db`/`redis` sit on a `data` network with no route from `public`. `backend`/`channels` are on both, since nginx needs to reach them and they need to reach the data tier.
 
 ---
 
@@ -107,7 +109,7 @@ Public by default:
 
 Private inside Docker Compose:
 
-- `frontend:80`
+- `frontend:8080`
 - `backend:8100`
 - `channels:8101`
 - `db:5432`
@@ -125,7 +127,7 @@ The default self-hosted deployment uses same-domain routing.
 
 | Public path | Target service | Notes |
 |---|---|---|
-| `/` | `frontend:80` | React application |
+| `/` | `frontend:8080` | React application |
 | `/api/` | `backend:8100` | Django API |
 | `/ws/` | `channels:8101` | WebSocket connections |
 | `/uploads/` | `backend:8100` | Uploaded media served through backend media routing |

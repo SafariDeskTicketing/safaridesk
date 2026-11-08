@@ -6,9 +6,11 @@ dist
 npm-debug.log*
 yarn-error.log*
 
-# .env.production/.env.development are tracked, non-secret Vite build config
-# (VITE_* public URLs only) and are needed at build time — keep those, but
-# never bake a local override file with real secrets into the image.
-.env
-.env.local
-.env.*.local
+# Exclude every .env* variant, then explicitly allow back the two that are
+# tracked, non-secret Vite build config (VITE_* public URLs only) and are
+# needed at build time — same "exclude all, allowlist the safe ones"
+# pattern as backend/.dockerignore, so a future .env.<anything> mistake is
+# excluded by default instead of needing its own ignore rule.
+.env*
+!.env.production
+!.env.development
