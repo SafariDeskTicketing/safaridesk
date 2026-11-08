@@ -23,9 +23,10 @@ COPY . ./
 # Vite automatically uses .env.production for production builds
 RUN npm run build
 
-# Stage 2: Serve 
-FROM nginx:alpine
-
+# Stage 2: Serve — the official image's "nginx" user (already created, just
+# unused by default) runs as non-root on port 8080: no CAP_NET_BIND_SERVICE
+# needed, and pidfile/cache dirs are handed to it instead of root.
+FROM nginx:1.27-alpine
 
 # Remove default NGINX config and copy the custom config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -34,8 +35,12 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 ENV REACT_APP_ENV=prod
 
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /usr/share/nginx/html /etc/nginx/conf.d
+
 # Expose the port NGINX will serve on
-EXPOSE 80
+EXPOSE 8080
+USER nginx
 
 # Start NGINX
 CMD ["nginx", "-g", "daemon off;"]

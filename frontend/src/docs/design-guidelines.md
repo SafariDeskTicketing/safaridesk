@@ -2,7 +2,8 @@
 
 > **Last updated:** April 2026 — Updated to reflect visual revamp direction.  
 > See `typography-system.md` for the full type scale reference.  
-> See `visual-revamp-master-plan.md` for the phased execution plan.
+> See `visual-revamp-master-plan.md` for the phased execution plan.  
+> See `anti-ai-slop-design-principles.md` first — the design philosophy these tokens serve. Read it before any `/impeccable` pass or other UI/UX work.
 
 ---
 

@@ -1,37 +1,42 @@
-# Use the base Python image
-FROM python:3.10-slim
+# Stage 1: build dependencies that need a compiler.
+FROM python:3.10-slim AS builder
 
-# Set the working directory
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
-    libglib2.0-dev \
-    libgirepository1.0-dev \
-    libpango1.0-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python dependencies
+WORKDIR /app
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Create necessary log directories
-RUN mkdir -p /var/log/gunicorn /var/log/celery
-RUN chmod -R 777 /var/log/gunicorn /var/log/celery
+# Stage 2: runtime image — no compiler, no -dev headers, non-root.
+FROM python:3.10-slim AS runtime
 
-# Copy application code
-COPY . /app/
+RUN groupadd --system appuser && \
+    useradd --system --gid appuser --home-dir /app --shell /sbin/nologin appuser
 
-# Set environment variables
-ENV APP_ENV=prod
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    APP_ENV=prod
+
+WORKDIR /app
+
+# Create directories that get bind-mounted as named volumes so they have the
+# right ownership the first time Docker populates the volume from the image.
+RUN mkdir -p /var/log/gunicorn /var/log/celery /app/staticfiles /mnt/safaridesk && \
+    chown -R appuser:appuser /app /var/log/gunicorn /var/log/celery /mnt/safaridesk
+
+COPY --chown=appuser:appuser . /app/
+
 EXPOSE 8100
+USER appuser
 
 # docker-compose.yml overrides this with gunicorn/daphne/celery worker/celery beat
 # per service; this is only the fallback for running the image standalone.
 CMD ["gunicorn", "RNSafarideskBack.wsgi:application", "--bind", "0.0.0.0:8100", "--workers", "3"]
-

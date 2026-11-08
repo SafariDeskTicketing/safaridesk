@@ -5,3 +5,10 @@ dist
 .gitlab-ci.yml
 npm-debug.log*
 yarn-error.log*
+
+# .env.production/.env.development are tracked, non-secret Vite build config
+# (VITE_* public URLs only) and are needed at build time — keep those, but
+# never bake a local override file with real secrets into the image.
+.env
+.env.local
+.env.*.local

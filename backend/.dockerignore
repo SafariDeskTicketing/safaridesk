@@ -8,3 +8,8 @@ __pycache__
 venv
 media
 staticfiles
+
+# Never bake secrets into an image layer, even if someone drops a local
+# override file into backend/ before building.
+.env*
+!.env.example
