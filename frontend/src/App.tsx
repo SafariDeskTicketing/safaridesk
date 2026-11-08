@@ -357,6 +357,7 @@ const SessionTimeoutWrapper: React.FC = () => {
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const TicketManagementSystem = lazy(() => import('./pages/ticket/all'));
 const TasksPage = lazy(() => import('./pages/task/TasksPage'));
+const AssetManagementPage = lazy(() => import('./pages/asset-management/AssetManagementPage'));
 
 const KnowledgePage = lazy(() => import('./pages/KnowledgePage'));
 const ConfigPage = lazy(() => import('./pages/config'));
@@ -511,6 +512,7 @@ const router = createBrowserRouter(
               children: [{ index: true, element: <TaskInfo /> }],
             },
 
+            { path: 'assets',        element: <AssetManagementPage /> },
             { path: 'knowledge/*',    element: <KnowledgePage /> },
             { path: 'reports/*',      element: <ReportsPage /> },
             { path: 'settings/*',     element: <LegacySettingsRedirect /> },

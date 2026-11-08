@@ -23,7 +23,6 @@ import {
 	FileText,
 } from "lucide-react";
 import type { NavigationItem } from "../types";
-// import AssetManagementPage from "../pages/asset-management/AssetManagementPage";
 
 export const navigationItems: NavigationItem[] = [
 	{

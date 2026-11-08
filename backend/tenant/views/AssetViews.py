@@ -27,6 +27,7 @@ from tenant.serializers.AssetSerializer import (
 
 
 class AssetCategoryViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetCategory.objects.all()
     serializer_class = AssetCategorySerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -52,6 +53,7 @@ class AssetCategoryViewSet(viewsets.ModelViewSet):
 
 
 class VendorViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -77,6 +79,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 
 
 class AssetTypeViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetType.objects.all()
     serializer_class = AssetTypeSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -117,6 +120,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
 
 class AssetLocationViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetLocation.objects.all()
     serializer_class = AssetLocationSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -143,6 +147,7 @@ class AssetLocationViewSet(viewsets.ModelViewSet):
 
 
 class SoftwareLicenseViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = SoftwareLicense.objects.all()
     serializer_class = SoftwareLicenseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -155,6 +160,7 @@ class SoftwareLicenseViewSet(viewsets.ModelViewSet):
 
 
 class ContractViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Contract.objects.all()
     serializer_class = ContractSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -167,6 +173,7 @@ class ContractViewSet(viewsets.ModelViewSet):
 
 
 class PurchaseViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -179,6 +186,7 @@ class PurchaseViewSet(viewsets.ModelViewSet):
 
 
 class DisposalViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Disposal.objects.all()
     serializer_class = DisposalSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -191,6 +199,7 @@ class DisposalViewSet(viewsets.ModelViewSet):
 
 
 class AssetUserMappingViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetUserMapping.objects.all()
     serializer_class = AssetUserMappingSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -203,6 +212,7 @@ class AssetUserMappingViewSet(viewsets.ModelViewSet):
 
 
 class AssetTicketViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetTicket.objects.all()
     serializer_class = AssetTicketSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -215,6 +225,7 @@ class AssetTicketViewSet(viewsets.ModelViewSet):
 
 
 class AssetDependencyViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetDependency.objects.all()
     serializer_class = AssetDependencySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -227,6 +238,7 @@ class AssetDependencyViewSet(viewsets.ModelViewSet):
 
 
 class DiscoveryAgentViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = DiscoveryAgent.objects.all()
     serializer_class = DiscoveryAgentSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -239,6 +251,7 @@ class DiscoveryAgentViewSet(viewsets.ModelViewSet):
 
 
 class DiscoveryResultViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = DiscoveryResult.objects.all()
     serializer_class = DiscoveryResultSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -251,6 +264,7 @@ class DiscoveryResultViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class SecurityVulnerabilityViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = SecurityVulnerability.objects.all()
     serializer_class = SecurityVulnerabilitySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -263,6 +277,7 @@ class SecurityVulnerabilityViewSet(viewsets.ModelViewSet):
 
 
 class PatchLevelViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = PatchLevel.objects.all()
     serializer_class = PatchLevelSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -275,6 +290,7 @@ class PatchLevelViewSet(viewsets.ModelViewSet):
 
 
 class DepreciationRuleViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = DepreciationRule.objects.all()
     serializer_class = DepreciationRuleSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -287,6 +303,7 @@ class DepreciationRuleViewSet(viewsets.ModelViewSet):
 
 
 class AlertViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Alert.objects.all()
     serializer_class = AlertSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -306,6 +323,7 @@ class AlertViewSet(viewsets.ModelViewSet):
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AuditLog.objects.all()
     serializer_class = AuditLogSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -318,6 +336,7 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class AssetHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetHistory.objects.all()
     serializer_class = AssetHistorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -330,6 +349,7 @@ class AssetHistoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class AssetMaintenanceViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = AssetMaintenance.objects.all()
     serializer_class = AssetMaintenanceSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]

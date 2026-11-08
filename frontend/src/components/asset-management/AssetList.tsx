@@ -1,204 +1,135 @@
-import * as React from "react"
-import { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "../ui/data-table"
-import { Checkbox } from "../ui/checkbox"
-import { Button } from "../ui/Button"
-import { Input } from "../ui/Input"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu"
-
-interface Asset {
-  id: number;
-  name: string;
-  description: string;
-  serial_number: string;
-  category: string;
-  vendor: string;
-  brand: string;
-  model: string;
-  status: string;
-  condition: string;
-  location: string;
-  purchase_price: number;
-  purchase_date: string;
-  supplier: string;
-  invoice_number: string;
-  warranty_start_date: string; // Added
-  warranty_end_date: string;   // Added
-  last_maintenance: string;
-  next_maintenance: string;
-  notes: string;
-  is_critical: boolean;
-}
+import * as React from 'react';
+import { MoreVertical, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Table } from '../ui/Table';
+import { Dropdown } from '../ui/Dropdown';
+import { Button } from '../ui/Button';
+import type { Asset } from '../../types';
 
 interface AssetListProps {
   assets: Asset[];
+  onView: (asset: Asset) => void;
+  onEdit: (asset: Asset) => void;
+  onDelete: (asset: Asset) => void;
+  selectedIds: string[];
+  onToggleSelected: (id: string, selected: boolean) => void;
+  onToggleSelectAll: (selected: boolean) => void;
 }
 
-export const columns: ColumnDef<Asset>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "id",
-    header: "ID",
-  },
-  {
-    accessorKey: "name",
-    header: "Asset Name",
-  },
-  {
-    accessorKey: "serial_number",
-    header: "Serial Number",
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-  },
-  {
-    accessorKey: "vendor",
-    header: "Vendor",
-  },
-  {
-    accessorKey: "brand",
-    header: "Brand",
-  },
-  {
-    accessorKey: "model",
-    header: "Model",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-  },
-  {
-    accessorKey: "condition",
-    header: "Condition",
-  },
-  {
-    accessorKey: "location",
-    header: "Location",
-  },
-  {
-    accessorKey: "purchase_price",
-    header: "Purchase Price",
-  },
-  {
-    accessorKey: "purchase_date",
-    header: "Purchase Date",
-  },
-  {
-    accessorKey: "supplier",
-    header: "Supplier",
-  },
-  {
-    accessorKey: "invoice_number",
-    header: "Invoice Number",
-  },
-  {
-    accessorKey: "warranty_start_date",
-    header: "Warranty Start Date",
-  },
-  {
-    accessorKey: "warranty_end_date",
-    header: "Warranty End Date",
-  },
-  {
-    accessorKey: "last_maintenance",
-    header: "Last Maintenance",
-  },
-  {
-    accessorKey: "next_maintenance",
-    header: "Next Maintenance",
-  },
-  {
-    accessorKey: "notes",
-    header: "Notes",
-  },
-  {
-    accessorKey: "is_critical",
-    header: "Is Critical",
-    cell: ({ row }) => (row.original.is_critical ? "Yes" : "No"),
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const asset = row.original
+const STATUS_BADGE: Record<string, string> = {
+  available: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  in_use: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  maintenance: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  repair: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  retired: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  lost: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  stolen: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+};
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              ... {/* Ellipsis icon */}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(asset.id.toString())}
-            >
-              Copy asset ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View Asset</DropdownMenuItem>
-            <DropdownMenuItem>Edit Asset</DropdownMenuItem>
-            <DropdownMenuItem>Delete Asset</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+const AssetList: React.FC<AssetListProps> = ({
+  assets,
+  onView,
+  onEdit,
+  onDelete,
+  selectedIds,
+  onToggleSelected,
+  onToggleSelectAll,
+}) => {
+  const allSelected = assets.length > 0 && selectedIds.length === assets.length;
+
+  const columns = [
+    {
+      key: 'id' as keyof Asset,
+      header: '',
+      render: (_: unknown, row: Asset) => (
+        <input
+          type="checkbox"
+          className="rounded"
+          checked={selectedIds.includes(row.id)}
+          onChange={(e) => onToggleSelected(row.id, e.target.checked)}
+          aria-label={`Select ${row.name}`}
+        />
+      ),
     },
-  },
-]
-
-const AssetList: React.FC<AssetListProps> = ({ assets }) => {
-  const [searchTerm, setSearchTerm] = React.useState("");
-
-  const filteredAssets = assets.filter(asset =>
-    Object.values(asset).some(value =>
-      String(value).toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+    {
+      key: 'name' as keyof Asset,
+      header: 'Asset',
+      render: (_: unknown, row: Asset) => (
+        <div>
+          <p className="font-medium text-[var(--text-primary)]">{row.name}</p>
+          <p className="text-[length:var(--font-meta)] text-gray-500">
+            {row.asset_tag || row.serial_number || '—'}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'category' as keyof Asset,
+      header: 'Category',
+      render: (_: unknown, row: Asset) => row.category?.name || '—',
+    },
+    {
+      key: 'vendor' as keyof Asset,
+      header: 'Vendor',
+      render: (_: unknown, row: Asset) => row.vendor?.name || '—',
+    },
+    {
+      key: 'status' as keyof Asset,
+      header: 'Status',
+      render: (_: unknown, row: Asset) => (
+        <span
+          className={`px-2 py-1 rounded-full text-[length:var(--font-meta)] font-medium ${
+            STATUS_BADGE[row.status] || 'bg-gray-100 text-gray-700'
+          }`}
+        >
+          {row.status.replace('_', ' ')}
+        </span>
+      ),
+    },
+    {
+      key: 'location' as keyof Asset,
+      header: 'Location',
+      render: (_: unknown, row: Asset) => row.location || '—',
+    },
+    {
+      key: 'is_critical' as keyof Asset,
+      header: 'Critical',
+      render: (_: unknown, row: Asset) => (row.is_critical ? 'Yes' : 'No'),
+    },
+    {
+      key: 'updated_at' as keyof Asset,
+      header: 'Actions',
+      render: (_: unknown, row: Asset) => (
+        <Dropdown
+          trigger={
+            <Button variant="ghost" size="sm" icon={MoreVertical} aria-label="Asset actions" />
+          }
+          options={[
+            { label: 'View', icon: Eye, onClick: () => onView(row) },
+            { label: 'Edit', icon: Pencil, onClick: () => onEdit(row) },
+            { label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => onDelete(row) },
+          ]}
+        />
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Asset List</h2>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Search assets..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+    <div className="surface-card overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-4 py-2.5">
+        <input
+          type="checkbox"
+          className="rounded"
+          checked={allSelected}
+          onChange={(e) => onToggleSelectAll(e.target.checked)}
+          aria-label="Select all assets"
         />
+        <span className="text-[length:var(--font-meta)] text-gray-500">
+          {selectedIds.length > 0 ? `${selectedIds.length} selected` : 'Select all'}
+        </span>
       </div>
-      <DataTable columns={columns} data={filteredAssets} />
+      <Table<Asset> data={assets} columns={columns} showPagination={false} />
     </div>
-  )
-}
+  );
+};
 
 export default AssetList;

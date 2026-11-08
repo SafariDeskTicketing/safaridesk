@@ -12,7 +12,9 @@ export interface Vendor {
 }
 
 export const getCategories = async (): Promise<Category[]> => {
-  const response = await http.get(APIS.ASSET_MANAGEMENT_CATEGORIES);
+  // `pagination=no` is required here: the list endpoint paginates by default
+  // and returns a {count, next, previous, results} envelope, not a bare array.
+  const response = await http.get(`${APIS.ASSET_MANAGEMENT_CATEGORIES}?pagination=no`);
   return response.data;
 };
 
@@ -31,7 +33,7 @@ export const deleteCategory = async (id: number): Promise<void> => {
 };
 
 export const getVendors = async (): Promise<Vendor[]> => {
-  const response = await http.get(APIS.ASSET_MANAGEMENT_VENDORS);
+  const response = await http.get(`${APIS.ASSET_MANAGEMENT_VENDORS}?pagination=no`);
   return response.data;
 };
 

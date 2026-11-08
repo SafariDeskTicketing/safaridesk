@@ -191,7 +191,6 @@ export interface Asset {
   needs_maintenance?: boolean;
   age_in_days?: number;
   get_current_value?: number;
-  workspaceId: string;
   created_at: string;
   updated_at: string;
   // Relationships
