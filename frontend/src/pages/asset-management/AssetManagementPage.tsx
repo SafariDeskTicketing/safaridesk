@@ -57,6 +57,7 @@ const AssetManagementPage: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
+    setSelectedIds([]);
   }, [search, status]);
 
   const { data, isLoading, isFetching } = useAssetsQuery({ search, status, page, pageSize: PAGE_SIZE });
@@ -81,6 +82,16 @@ const AssetManagementPage: React.FC = () => {
   const assets = data?.results ?? [];
   const totalCount = data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  // A delete can empty the page the user is on (e.g. the last item on page 2)
+  // without changing `totalCount` enough to notice via the search/status
+  // effect above, which would otherwise strand them on an empty page with no
+  // way back via the (now-hidden) pagination controls.
+  useEffect(() => {
+    if (!isLoading && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [isLoading, page, totalPages]);
 
   const openCreateModal = () => {
     setFormValues(EMPTY_ASSET_FORM_VALUES);

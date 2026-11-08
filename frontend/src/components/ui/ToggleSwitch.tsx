@@ -16,6 +16,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   return (
     <div className="flex items-center">
       <button
+        type="button"
         onClick={onChange}
         disabled={disabled}
         className={`
