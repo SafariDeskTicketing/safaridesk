@@ -50,6 +50,23 @@ logger = logging.getLogger(__name__)
 MENTION_PATTERN = re.compile(r'(?<![\w@])@([A-Za-z0-9._-]+(?:\s+[A-Za-z0-9._-]+)*)')
 
 
+class TaskActionError(Exception):
+    """
+    Raised for an expected, user-facing failure partway through a
+    @transaction.atomic view method, so the atomic block's `with` sees an
+    exception and rolls back instead of a `return Response(...)` committing
+    whatever writes already happened. The caller catches this right outside
+    the `with transaction.atomic():` block and turns it into the same
+    Response it used to build inline.
+    """
+
+    def __init__(self, payload, status_code):
+        self.payload = payload
+        self.status_code = status_code
+        message = payload.get("message") or payload.get("error") if isinstance(payload, dict) else None
+        super().__init__(message or str(payload))
+
+
 def _parse_date_input(value: str):
     if not value:
         return None
@@ -188,7 +205,6 @@ class TaskViewSet(viewsets.ModelViewSet):
     
 
 
-    @transaction.atomic
     def create_task(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
@@ -196,12 +212,12 @@ class TaskViewSet(viewsets.ModelViewSet):
                 "message": "Validation failed",
                 "errors": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         department_id = serializer.validated_data.get('department_id')
         assigned_to_id = serializer.validated_data.get('assigned_to')
         ticket_id = serializer.validated_data.get('ticket_id')
         label_ids = serializer.validated_data.get('label_ids', [])
-        
+
         # Department is required - validate it exists
         try:
             department = Department.objects.get(
@@ -212,7 +228,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             return Response({
                 "message": f"No department found with id {department_id}"
             }, status=status.HTTP_404_NOT_FOUND)
-        
+
         # Assigned agent optional - validate only if provided
         agent = None
         if assigned_to_id not in [None, '']:
@@ -237,116 +253,129 @@ class TaskViewSet(viewsets.ModelViewSet):
                 return Response({
                     "message": f"No ticket found with id {ticket_id}"
                 }, status=status.HTTP_404_NOT_FOUND)
-        
+
         # Priority: use provided value or fallback
         priority = serializer.validated_data.get('priority') or 'medium'
-        
-        # Create task with config-based ID
-        task = Task.objects.create(
-            title=serializer.validated_data.get('title'),
-            description=serializer.validated_data.get('description', ''),
-            due_date=serializer.validated_data.get('due_date'),
-            assigned_to=agent,
-            task_trackid=Helper().generate_task_code(business=request.user.business),
-            department=department,
-            priority=priority,
-            linked_ticket=ticket,
-        )
-        if label_ids:
-            try:
-                _assign_task_labels_by_ids(task, request, label_ids)
-            except ValueError as exc:
-                task.delete()
-                return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
-        if request.FILES:
-            uploaded_files = request.FILES
-            
-            for uploaded_file_name, uploaded_file in uploaded_files.items():
-                try:
-                    file_extension = os.path.splitext(uploaded_file.name)[1].lower()
-                    
-                    # Validate file extension (add your allowed extensions)
-                    allowed_extensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.txt']
-                    if file_extension not in allowed_extensions:
-                        return Response({
-                            "error": f"File type {file_extension} not allowed"
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    # Generate unique filename
-                    unique_filename = f"{uuid.uuid4()}{file_extension}"
-                    
-                    properties_dir, url_base = _build_storage_paths(task.business or request.user.business, subfolder='files')
 
-                    # Full file path
-                    file_path = os.path.join(properties_dir, unique_filename)
-                    
-                    # Save file
-                    with open(file_path, 'wb+') as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
-                    
-                    # Generate URL
-                    file_url = f"{url_base}/{unique_filename}" if url_base else unique_filename
-                    
-                    # Create attachment
-                    TaskAttachment.objects.create(
+        # Everything below actually writes to the DB. Wrapped in its own
+        # atomic block (rather than decorating the whole method) so a
+        # mid-sequence failure (bad label id, file save error) rolls back
+        # the task row too, instead of raising a 400/500 while leaving the
+        # just-created task committed. See TaskActionError.
+        try:
+            with transaction.atomic():
+                task = Task.objects.create(
+                    title=serializer.validated_data.get('title'),
+                    description=serializer.validated_data.get('description', ''),
+                    due_date=serializer.validated_data.get('due_date'),
+                    assigned_to=agent,
+                    task_trackid=Helper().generate_task_code(business=request.user.business),
+                    department=department,
+                    priority=priority,
+                    linked_ticket=ticket,
+                )
+                if label_ids:
+                    try:
+                        _assign_task_labels_by_ids(task, request, label_ids)
+                    except ValueError as exc:
+                        raise TaskActionError({"message": str(exc)}, status.HTTP_400_BAD_REQUEST)
+                if request.FILES:
+                    uploaded_files = request.FILES
+
+                    for uploaded_file_name, uploaded_file in uploaded_files.items():
+                        try:
+                            file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+
+                            # Validate file extension (add your allowed extensions)
+                            allowed_extensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.txt']
+                            if file_extension not in allowed_extensions:
+                                raise TaskActionError(
+                                    {"error": f"File type {file_extension} not allowed"},
+                                    status.HTTP_400_BAD_REQUEST,
+                                )
+
+                            # Generate unique filename
+                            unique_filename = f"{uuid.uuid4()}{file_extension}"
+
+                            properties_dir, url_base = _build_storage_paths(task.business or request.user.business, subfolder='files')
+
+                            # Full file path
+                            file_path = os.path.join(properties_dir, unique_filename)
+
+                            # Save file
+                            with open(file_path, 'wb+') as destination:
+                                for chunk in uploaded_file.chunks():
+                                    destination.write(chunk)
+
+                            # Generate URL
+                            file_url = f"{url_base}/{unique_filename}" if url_base else unique_filename
+
+                            # Create attachment
+                            TaskAttachment.objects.create(
+                                task=task,
+                                file_url=file_url,
+                                filename=uploaded_file.name,  # Save original filename
+                                description=f"File uploaded for task {task.task_trackid}"
+                            )
+
+                        except TaskActionError:
+                            raise
+                        except Exception as file_error:
+                            raise TaskActionError(
+                                {
+                                    "error": f"Failed to save file {uploaded_file_name}",
+                                    "details": str(file_error),
+                                },
+                                status.HTTP_400_BAD_REQUEST,
+                            )
+
+                # Log task creation activity
+                TaskActivity.objects.create(
+                    task=task,
+                    user=request.user,
+                    activity_type='created',
+                    description=f'{request.user.first_name} {request.user.last_name} created the task',
+                    old_value='',
+                    new_value=task.task_status
+                )
+
+                log_audit_event(
+                    request,
+                    event_type="TASK_CREATED",
+                    entity_type="task",
+                    entity=task,
+                    activity=f"{actor_name(request.user)} created Task #{task.task_trackid} - '{task.title}'",
+                    metadata={
+                        "entity_identifier": task.task_trackid,
+                        "status": task.task_status,
+                        "priority": task.priority,
+                        "department": department.name if department else None,
+                        "assignee": agent.get_full_name() if agent else None,
+                        "ticket_id": ticket.ticket_id if ticket else None,
+                    },
+                )
+
+                # If linked to a ticket, log linkage on both task and ticket
+                if ticket:
+                    TaskActivity.objects.create(
                         task=task,
-                        file_url=file_url,
-                        filename=uploaded_file.name,  # Save original filename
-                        description=f"File uploaded for task {task.task_trackid}"
+                        user=request.user,
+                        activity_type='attached_to_ticket',
+                        description=f'{request.user.first_name} {request.user.last_name} attached task to ticket #{ticket.ticket_id}',
+                        old_value='None',
+                        new_value=ticket.ticket_id
                     )
-                    
-                except Exception as file_error:
-                    return Response({
-                        "error": f"Failed to save file {uploaded_file_name}",
-                        "details": str(file_error)
-                    }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Log task creation activity
-        TaskActivity.objects.create(
-            task=task,
-            user=request.user,
-            activity_type='created',
-            description=f'{request.user.first_name} {request.user.last_name} created the task',
-            old_value='',
-            new_value=task.task_status
-        )
-
-        log_audit_event(
-            request,
-            event_type="TASK_CREATED",
-            entity_type="task",
-            entity=task,
-            activity=f"{actor_name(request.user)} created Task #{task.task_trackid} - '{task.title}'",
-            metadata={
-                "entity_identifier": task.task_trackid,
-                "status": task.task_status,
-                "priority": task.priority,
-                "department": department.name if department else None,
-                "assignee": agent.get_full_name() if agent else None,
-                "ticket_id": ticket.ticket_id if ticket else None,
-            },
-        )
-
-        # If linked to a ticket, log linkage on both task and ticket
-        if ticket:
-            TaskActivity.objects.create(
-                task=task,
-                user=request.user,
-                activity_type='attached_to_ticket',
-                description=f'{request.user.first_name} {request.user.last_name} attached task to ticket #{ticket.ticket_id}',
-                old_value='None',
-                new_value=ticket.ticket_id
-            )
-
-            TicketActivity.objects.create(
-                ticket=ticket,
-                user=request.user,
-                activity_type='task_linked',
-                description=f'Task "{task.title}" was linked to this ticket',
-                old_value='',
-                new_value=task.task_trackid
-            )
+                    TicketActivity.objects.create(
+                        ticket=ticket,
+                        user=request.user,
+                        activity_type='task_linked',
+                        description=f'Task "{task.title}" was linked to this ticket',
+                        old_value='',
+                        new_value=task.task_trackid
+                    )
+        except TaskActionError as exc:
+            return Response(exc.payload, status=exc.status_code)
 
         # Create in-app notifications for new task
         try:
@@ -948,7 +977,6 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         return Response({'message': 'Task attached to ticket successfully.'})
     
-    @transaction.atomic    
     def add_comment(self, request, *args, **kwargs):
         task_id = kwargs.get('id')
 
@@ -956,7 +984,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         #     return Response({
         #         "message": "Task ID is required"
         #     }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         try:
             task = get_object_or_404(Task, id=task_id, business=request.user.business)
             comment = request.data.get('comment', '')
@@ -964,59 +992,69 @@ class TaskViewSet(viewsets.ModelViewSet):
             # Task discussion is staff-only. Ignore client-provided public/private flags.
             is_internal = True
 
-            # Add the comment to the ticket
-            com = task.comments.create(
-                task=task,
-                author=request.user,
-                content=comment,
-                updated_by=request.user,
-                is_internal=is_internal
-            )
+            # The comment + its attachments must commit together — wrapped in
+            # its own atomic block (rather than decorating the whole method)
+            # so a file-save failure rolls back the comment too, instead of
+            # returning a 400 while leaving the comment live (see
+            # TaskActionError).
+            try:
+                with transaction.atomic():
+                    # Add the comment to the ticket
+                    com = task.comments.create(
+                        task=task,
+                        author=request.user,
+                        content=comment,
+                        updated_by=request.user,
+                        is_internal=is_internal
+                    )
 
-            if request.FILES:
-                uploaded_files = request.FILES
+                    if request.FILES:
+                        uploaded_files = request.FILES
 
-                for uploaded_file_name, uploaded_file in uploaded_files.items():
-                    try:
-                        file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+                        for uploaded_file_name, uploaded_file in uploaded_files.items():
+                            try:
+                                file_extension = os.path.splitext(uploaded_file.name)[1].lower()
 
-                        # Generate unique filename
-                        unique_filename = f"{uuid.uuid4()}{file_extension}"
+                                # Generate unique filename
+                                unique_filename = f"{uuid.uuid4()}{file_extension}"
 
-                        properties_dir, url_base = _build_storage_paths(task.business or request.user.business, subfolder='files')
+                                properties_dir, url_base = _build_storage_paths(task.business or request.user.business, subfolder='files')
 
-                        # Full file path
-                        file_path = os.path.join(properties_dir, unique_filename)
+                                # Full file path
+                                file_path = os.path.join(properties_dir, unique_filename)
 
-                        # Save file
-                        with open(file_path, 'wb+') as destination:
-                            for chunk in uploaded_file.chunks():
-                                destination.write(chunk)
+                                # Save file
+                                with open(file_path, 'wb+') as destination:
+                                    for chunk in uploaded_file.chunks():
+                                        destination.write(chunk)
 
-                        # Generate URL (defensive: ensure FILE_URL exists)
-                        file_url_base = url_base or FILE_URL or getattr(settings, 'FILE_BASE_URL', '')
-                        if file_url_base:
-                            file_url = f"{file_url_base.rstrip('/')}/{unique_filename}"
-                        else:
-                            file_url = unique_filename
+                                # Generate URL (defensive: ensure FILE_URL exists)
+                                file_url_base = url_base or FILE_URL or getattr(settings, 'FILE_BASE_URL', '')
+                                if file_url_base:
+                                    file_url = f"{file_url_base.rstrip('/')}/{unique_filename}"
+                                else:
+                                    file_url = unique_filename
 
-                        # Create attachment
-                        TaskReplayAttachment.objects.create(
-                            comment=com,
-                            file_url=file_url,
-                            filename=uploaded_file.name  # Save original filename
-                        )
+                                # Create attachment
+                                TaskReplayAttachment.objects.create(
+                                    comment=com,
+                                    file_url=file_url,
+                                    filename=uploaded_file.name  # Save original filename
+                                )
 
-
-                    except Exception as file_error:
-                        # Log and return a clear error so production won't 500 silently
-                        import logging as _logging
-                        _logging.getLogger(__name__).exception("Error saving file %s", uploaded_file_name)
-                        return Response({
-                            "error": f"Failed to save file {uploaded_file_name}",
-                            "details": str(file_error)
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
+                            except Exception as file_error:
+                                # Log and return a clear error so production won't 500 silently
+                                import logging as _logging
+                                _logging.getLogger(__name__).exception("Error saving file %s", uploaded_file_name)
+                                raise TaskActionError(
+                                    {
+                                        "error": f"Failed to save file {uploaded_file_name}",
+                                        "details": str(file_error),
+                                    },
+                                    status.HTTP_400_BAD_REQUEST,
+                                )
+            except TaskActionError as exc:
+                return Response(exc.payload, status=exc.status_code)
 
             # if ticket.assigned_to != request.user:
             #     send_comment_notification.delay(

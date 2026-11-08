@@ -29,6 +29,7 @@ from tenant.models.SlaXModel import SLA, SLATarget
 from tenant.models.TicketModel import TicketReopen
 from tenant.serializers.MailValidationSerializer import MailCredentialValidationSerializer
 from tenant.views.TicketView import TicketView, _parse_ai_email_draft
+from tenant.views.TaskView import TaskViewSet
 from tenant.views.MailIntegrationView import MailIntegrationViewSet
 from tenant.services.contact_linker import link_or_create_contact
 from tenant.views.AgentView import AgentView
@@ -3711,3 +3712,80 @@ class TicketActionTransactionRollbackTests(TestCase):
         src3.refresh_from_db()
         self.assertFalse(src1.is_merged)
         self.assertFalse(src3.is_merged)
+
+
+class TaskActionTransactionRollbackTests(TestCase):
+    """
+    TaskViewSet.create_task/add_comment had the same bug as the TicketView
+    class above: @transaction.atomic decorated the whole method, but a
+    mid-sequence failure (bad label id, file save error) was handled with a
+    `return Response(...)` from inside the atomic block instead of an
+    exception propagating out of it - so the task/comment row already
+    written committed anyway despite the client getting a 400. Fixed by
+    moving `transaction.atomic()` to a `with` block around just the writes,
+    raising TaskActionError on failure and catching it outside the block.
+    These tests fail on the pre-fix code and pass now that the rollback
+    actually happens before the error Response is built.
+    """
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.business = Business.objects.create(name="Task Rollback Biz", domain="task-rollback-biz")
+        self.role = Group.objects.create(name="task-rollback-admin")
+        self.admin = Users.objects.create(
+            username="task-rollback-admin@example.com",
+            email="task-rollback-admin@example.com",
+            role=self.role,
+            business=self.business,
+            first_name="Task",
+            last_name="Admin",
+            is_active=True,
+        )
+        self.department = Department.objects.create(name="Support", business=self.business)
+
+    def test_create_task_rolls_back_when_attachment_save_fails(self):
+        request = self.factory.post(
+            "/api/v1/task/create/",
+            {
+                "title": "Rollback task",
+                "due_date": "2026-12-01T00:00:00Z",
+                "department_id": self.department.id,
+                "file": SimpleUploadedFile("note.txt", b"hello"),
+            },
+        )
+        request.user = self.admin
+
+        with mock.patch(
+            "tenant.views.TaskView._build_storage_paths",
+            side_effect=OSError("disk full"),
+        ):
+            response = TaskViewSet.as_view({"post": "create_task"})(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Task.objects.count(), 0)
+
+    def test_add_comment_rolls_back_when_attachment_save_fails(self):
+        task = Task.objects.create(
+            business=self.business,
+            title="Existing task",
+            due_date="2026-12-01T00:00:00Z",
+            department=self.department,
+            task_trackid="TASK-9101",
+        )
+        request = self.factory.post(
+            "/api/v1/task/comment/add/",
+            {
+                "comment": "Here is a file",
+                "file": SimpleUploadedFile("note.txt", b"hello"),
+            },
+        )
+        request.user = self.admin
+
+        with mock.patch(
+            "tenant.views.TaskView._build_storage_paths",
+            side_effect=OSError("disk full"),
+        ):
+            response = TaskViewSet.as_view({"post": "add_comment"})(request, id=task.id)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(task.comments.count(), 0)
