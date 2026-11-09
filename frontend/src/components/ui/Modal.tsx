@@ -87,9 +87,18 @@ export const Modal: React.FC<ModalProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
+  // Track whatever has focus in the page while the modal is closed, so the
+  // instant it opens we already know what to restore focus to on close.
+  // Reading document.activeElement from inside the open effect instead would
+  // be too late — it runs after any child's autoFocus has already moved
+  // focus into the dialog, capturing the wrong element.
+  if (!isOpen) {
+    previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
+  }
+
   const getFocusableElements = (): HTMLElement[] => {
     const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
     );
     return nodes ? Array.from(nodes) : [];
   };
@@ -116,9 +125,12 @@ export const Modal: React.FC<ModalProps> = ({
   // Initial focus on open, and restore focus to the trigger element on close.
   useEffect(() => {
     if (isOpen) {
-      previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
-      const [firstFocusable] = getFocusableElements();
-      (firstFocusable ?? dialogRef.current)?.focus();
+      // Respect a child's own autoFocus (e.g. a modal's first form field)
+      // instead of always yanking focus to the first focusable element.
+      if (!dialogRef.current?.contains(document.activeElement)) {
+        const [firstFocusable] = getFocusableElements();
+        (firstFocusable ?? dialogRef.current)?.focus();
+      }
 
       return () => {
         previouslyFocusedElement.current?.focus?.();
