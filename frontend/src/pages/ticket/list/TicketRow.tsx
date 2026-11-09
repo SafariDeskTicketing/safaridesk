@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Ticket } from '../../../types';
 import { formatUserDisplayName } from '../../../utils/displayHelpers';
 import { NewBadge } from '../../../components/ui/NewBadge';
@@ -27,7 +28,7 @@ interface TicketRowProps {
 const formatUserName = (user?: { firstName?: string; lastName?: string; email?: string; isActive?: boolean }) =>
   formatUserDisplayName(user, 'Unassigned');
 
-export const TicketRow = ({
+export const TicketRow = memo(({
   ticket,
   isSelected,
   onRowClick,
@@ -155,4 +156,6 @@ export const TicketRow = ({
       </div>
     </div>
   );
-};
+});
+
+TicketRow.displayName = 'TicketRow';

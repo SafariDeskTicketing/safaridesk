@@ -36,7 +36,7 @@ import { errorNotification, successNotification } from '../../components/ui/Toas
 import type { Agent, LabelItem, TaskObj} from '../../types';
 import { TaskActivityStream } from './mini/TaskActivityStream';
 import { formatRelativeTime } from '../../utils/helper';
-import { getStatusColor, getPriorityColor, formatDate, formatDueDateWithTime, formatDateWithTime, formatUserDisplayName } from '../../utils/displayHelpers';
+import { formatDate, formatDueDateWithTime, formatUserDisplayName } from '../../utils/displayHelpers';
 import Select from '../../components/ui/Select';
 import { Tooltip } from '../../components/ui/Tool';
 import { useFetchAgents } from '../../services/agents';
@@ -49,6 +49,7 @@ import { Modal } from '../../components/ui/Modal';
 import CreateTaskModal from '../../components/tasks/CreateTaskModal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import TaskCard from './mini/TaskCard';
+import { TaskRow } from './list/TaskRow';
 import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
 import UpdatePriorityModal from '../../components/tickets/UpdatePriorityModal';
 import { ViewModeDropdown } from '../../components/tickets/ViewModeDropdown';
@@ -273,21 +274,24 @@ export default function TaskManagementSystem() {
   const taskPreviewHideTimeoutRef = useRef<number | null>(null);
   const { ensureLatestComment, getLatestCommentPreview, isLoading: isLatestCommentLoading } = useHoverPreviewActivity();
 
-  const clearTaskPreviewOpenTimeout = () => {
+  const clearTaskPreviewOpenTimeout = useCallback(() => {
     if (taskPreviewOpenTimeoutRef.current) {
       window.clearTimeout(taskPreviewOpenTimeoutRef.current);
       taskPreviewOpenTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const clearTaskPreviewHideTimeout = () => {
+  const clearTaskPreviewHideTimeout = useCallback(() => {
     if (taskPreviewHideTimeoutRef.current) {
       window.clearTimeout(taskPreviewHideTimeoutRef.current);
       taskPreviewHideTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const showTaskPreview = (task: TaskObj, element: HTMLElement) => {
+  // Stable identity (useCallback) so TaskRow can be React.memo'd — otherwise
+  // every row gets new onPreviewEnter/onPreviewLeave props (and re-renders)
+  // on every parent render, not just on hover.
+  const showTaskPreview = useCallback((task: TaskObj, element: HTMLElement) => {
     clearTaskPreviewOpenTimeout();
     clearTaskPreviewHideTimeout();
     const anchorRect = element.getBoundingClientRect();
@@ -297,22 +301,22 @@ export default function TaskManagementSystem() {
       setTaskPreview({ task, anchorRect, placement });
       void ensureLatestComment('task', task.id);
     }, PREVIEW_OPEN_DELAY_MS);
-  };
+  }, [clearTaskPreviewOpenTimeout, clearTaskPreviewHideTimeout, ensureLatestComment]);
 
-  const scheduleHideTaskPreview = () => {
+  const scheduleHideTaskPreview = useCallback(() => {
     clearTaskPreviewOpenTimeout();
     clearTaskPreviewHideTimeout();
     taskPreviewHideTimeoutRef.current = window.setTimeout(() => {
       setTaskPreview(null);
     }, PREVIEW_CLOSE_DELAY_MS);
-  };
+  }, [clearTaskPreviewOpenTimeout, clearTaskPreviewHideTimeout]);
 
   useEffect(() => {
     return () => {
       clearTaskPreviewOpenTimeout();
       clearTaskPreviewHideTimeout();
     };
-  }, []);
+  }, [clearTaskPreviewOpenTimeout, clearTaskPreviewHideTimeout]);
 
   // Handlers for create task modal close confirmation
   const handleCloseCreateTaskModal = () => {
@@ -431,7 +435,7 @@ export default function TaskManagementSystem() {
   }, [selectedTasks.size]);
 
   // Selection handlers
-  const handleTaskSelection = (taskId: number, selected: boolean) => {
+  const handleTaskSelection = useCallback((taskId: number, selected: boolean) => {
     setSelectedTasks(prev => {
       const newSet = new Set(prev);
       if (selected) {
@@ -441,7 +445,7 @@ export default function TaskManagementSystem() {
       }
       return newSet;
     });
-  };
+  }, []);
 
   const handleSelectAll = () => {
     if (selectedTasks.size === filteredTasks.length) {
@@ -568,7 +572,7 @@ export default function TaskManagementSystem() {
     }
   };
 
-  const getStatusVariant = (status: string): "default" | "primary" | "danger" | "success" | "warning" | "info" => {
+  const getStatusVariant = useCallback((status: string): "default" | "primary" | "danger" | "success" | "warning" | "info" => {
     switch (status) {
       case 'completed':
         return 'success';
@@ -579,7 +583,11 @@ export default function TaskManagementSystem() {
       default:
         return 'default';
     }
-  };
+  }, []);
+
+  // TaskCard's getDueDateStatus always returns 'normal' today (see call site
+  // below); kept as a stable no-op so the prop doesn't break memo.
+  const getTaskCardDueDateStatus = useCallback((_dueDate: string): 'normal' => 'normal', []);
 
   // Modal states for task actions
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -633,7 +641,7 @@ export default function TaskManagementSystem() {
   }, [attachTicketModalOpen]);
 
   // Action handlers for task cards
-  const handleTaskAction = async (action: string, task: TaskObj) => {
+  const handleTaskAction = useCallback(async (action: string, task: TaskObj) => {
     setSelectedTask(task);
     switch (action) {
       case 'assign':
@@ -672,7 +680,40 @@ export default function TaskManagementSystem() {
       default:
         console.log('Unknown action:', action);
     }
-  };
+  }, [queryClient]);
+
+  // Stable identities (useCallback) so TaskRow can be React.memo'd — these
+  // were previously created inline per-row on every render, which would
+  // defeat the memoization below regardless.
+  const handleTaskRowClick = useCallback((task: TaskObj) => {
+    const route = getTaskRoute(task);
+    if (route) navigate(route);
+  }, [navigate]);
+
+  const handleTaskStatusClick = useCallback((task: TaskObj) => {
+    setSelectedTask(task);
+    setSelectedStatus(task.task_status);
+    setUpdateStatusModalOpen(true);
+  }, []);
+
+  const handleTaskPriorityClick = useCallback((task: TaskObj) => {
+    setSelectedTask(task);
+    setSelectedPriority(task.priority);
+    setPriorityModalOpen(true);
+  }, []);
+
+  const handleTaskAssigneeClick = useCallback((task: TaskObj) => {
+    setSelectedTask(task);
+    setAssignModalOpen(true);
+  }, []);
+
+  const handleTaskGridDropdownToggle = useCallback((taskId: number) => {
+    setOpenDropdownId(prev => (prev === taskId ? null : taskId));
+  }, []);
+
+  const handleTaskGridDropdownClose = useCallback(() => {
+    setOpenDropdownId(null);
+  }, []);
 
   const sidebarItems = viewItems
     .map((item) => {
@@ -2068,94 +2109,21 @@ export default function TaskManagementSystem() {
                             )}
                           </div>
                         ) : (
-                          sortedTasks.map(task => {
-                            const isSelected = selectedTasks.has(task.id);
-                            const due = formatDateWithTime(task.due_date);
-                            return (
-                              <div
-                                key={task.id}
-                                onClick={() => {
-                                  const route = getTaskRoute(task);
-                                  if (route) navigate(route);
-                                }}
-                                className={`${taskListGridCols} items-center text-[14px] bg-gray-50 dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-hover cursor-pointer transition-colors`}
-                              >
-                                <label className="flex items-center justify-center py-3 px-3 cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={(e) => handleTaskSelection(task.id, e.target.checked)}
-                                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                  />
-                                </label>
-                                <div className="py-3 px-3 text-left whitespace-nowrap text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300">
-                                  #{task.task_trackid}
-                                </div>
-                                <div className="py-3 px-3 text-left text-gray-900 dark:text-[var(--text-primary)]">
-                                  <div className="relative group min-w-0">
-                                    <span
-                                      className="block truncate text-[14px] font-medium leading-5"
-                                      onMouseEnter={(e) => showTaskPreview(task, e.currentTarget)}
-                                      onMouseLeave={scheduleHideTaskPreview}
-                                    >
-                                      {task.title}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="py-3 px-3 text-left text-[14px] text-gray-900 dark:text-[var(--text-primary)]">
-                                  <LabelGroup labels={task.labels || []} size="table" maxVisible={3} emptyText="—" />
-                                </div>
-                                <div className="py-3 px-3 flex justify-center">
-                                  <button
-                                    className="focus:outline-none"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedTask(task);
-                                      setSelectedStatus(task.task_status);
-                                      setUpdateStatusModalOpen(true);
-                                    }}
-                                  >
-                                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-semibold border ${getStatusColor(task.task_status)}`}>
-                                      {task.task_status.replace('_', ' ')}
-                                    </span>
-                                  </button>
-                                </div>
-                                <div className="py-3 px-3 flex justify-center">
-                                  <button
-                                    className="focus:outline-none"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedTask(task);
-                                      setSelectedPriority(task.priority);
-                                      setPriorityModalOpen(true);
-                                    }}
-                                  >
-                                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-semibold border ${getPriorityColor(task.priority)}`}>
-                                      {task.priority}
-                                    </span>
-                                  </button>
-                                </div>
-                                <div className="py-3 px-3 text-left text-[14px] text-gray-700 dark:text-[var(--text-primary)]">
-                                  <span className="block truncate font-medium">{task.department?.name || '—'}</span>
-                                </div>
-                                <div className="py-3 px-3 text-left text-[14px] text-gray-700 dark:text-[var(--text-primary)]">
-                                  <button
-                                    className="w-full truncate text-left font-medium"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedTask(task);
-                                      setAssignModalOpen(true);
-                                    }}
-                                  >
-                                    {formatUserDisplayName(task.assigned_to as any, 'Unassigned')}
-                                  </button>
-                                </div>
-                                <div className="py-3 px-3 text-center text-[14px] text-gray-700 dark:text-[var(--text-primary)] truncate">
-                                  {due}
-                                </div>
-                              </div>
-                            );
-                          })
+                          sortedTasks.map(task => (
+                            <TaskRow
+                              key={task.id}
+                              task={task}
+                              isSelected={selectedTasks.has(task.id)}
+                              gridColsClassName={taskListGridCols}
+                              onRowClick={handleTaskRowClick}
+                              onSelectionChange={handleTaskSelection}
+                              onStatusClick={handleTaskStatusClick}
+                              onPriorityClick={handleTaskPriorityClick}
+                              onAssigneeClick={handleTaskAssigneeClick}
+                              onPreviewEnter={showTaskPreview}
+                              onPreviewLeave={scheduleHideTaskPreview}
+                            />
+                          ))
                         )}
                       </div>
                     </div>
@@ -2171,14 +2139,12 @@ export default function TaskManagementSystem() {
                       task={task}
                       isTrashView={isTrashView}
                       openDropdownId={openDropdownId}
-                      onDropdownToggle={(taskId) =>
-                        setOpenDropdownId(openDropdownId === Number(taskId) ? null : Number(taskId))
-                      }
-                      onDropdownClose={() => setOpenDropdownId(null)}
+                      onDropdownToggle={handleTaskGridDropdownToggle}
+                      onDropdownClose={handleTaskGridDropdownClose}
                       onAction={handleTaskAction}
                       formatDate={formatDate}
                       getStatusVariant={getStatusVariant}
-                      getDueDateStatus={(dueDate) => 'normal'}
+                      getDueDateStatus={getTaskCardDueDateStatus}
                       isSelected={selectedTasks.has(task.id)}
                       onSelectionChange={handleTaskSelection}
                     />

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHoverPreviewActivity } from '../../../hooks/useHoverPreviewActivity';
 import type { Ticket } from '../../../types';
 
@@ -26,21 +26,24 @@ export const useTicketHoverPreview = () => {
   const hideTimeoutRef = useRef<number | null>(null);
   const { ensureLatestComment, getLatestCommentPreview, isLoading: isLatestCommentLoading } = useHoverPreviewActivity();
 
-  const clearOpenTimeout = () => {
+  const clearOpenTimeout = useCallback(() => {
     if (openTimeoutRef.current) {
       window.clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const clearHideTimeout = () => {
+  const clearHideTimeout = useCallback(() => {
     if (hideTimeoutRef.current) {
       window.clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const showTicketPreview = (ticket: Ticket, element: HTMLElement) => {
+  // Stable identity (useCallback) so rows that take these as props can be
+  // React.memo'd — otherwise every row gets new onPreviewEnter/onPreviewLeave
+  // props (and re-renders) on every parent render, not just on hover.
+  const showTicketPreview = useCallback((ticket: Ticket, element: HTMLElement) => {
     clearOpenTimeout();
     clearHideTimeout();
     const anchorRect = element.getBoundingClientRect();
@@ -50,24 +53,24 @@ export const useTicketHoverPreview = () => {
       setTicketPreview({ ticket, anchorRect, placement });
       void ensureLatestComment('ticket', ticket.id);
     }, PREVIEW_OPEN_DELAY_MS);
-  };
+  }, [clearOpenTimeout, clearHideTimeout, ensureLatestComment]);
 
-  const scheduleHideTicketPreview = () => {
+  const scheduleHideTicketPreview = useCallback(() => {
     clearOpenTimeout();
     clearHideTimeout();
     hideTimeoutRef.current = window.setTimeout(() => {
       setTicketPreview(null);
     }, PREVIEW_CLOSE_DELAY_MS);
-  };
+  }, [clearOpenTimeout, clearHideTimeout]);
 
-  const closeTicketPreview = () => setTicketPreview(null);
+  const closeTicketPreview = useCallback(() => setTicketPreview(null), []);
 
   useEffect(() => {
     return () => {
       clearOpenTimeout();
       clearHideTimeout();
     };
-  }, []);
+  }, [clearOpenTimeout, clearHideTimeout]);
 
   const ticketPreviewPosition = useMemo(() => {
     if (!ticketPreview) return null;

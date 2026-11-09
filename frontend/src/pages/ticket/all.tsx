@@ -395,11 +395,11 @@ export default function TicketManagementSystem() {
     }
   };
 
-  const handleListRowClick = (ticket: Ticket) => {
+  const handleListRowClick = useCallback((ticket: Ticket) => {
     navigate(`/ticket/${ticket.ticket_id}`);
-  };
+  }, [navigate]);
 
-  const handleAction = (action: string, ticket: Ticket) => {
+  const handleAction = useCallback((action: string, ticket: Ticket) => {
     if (action === 'delete') {
       setSelectedTicket(ticket);
       setShowDeleteModal(true);
@@ -407,7 +407,45 @@ export default function TicketManagementSystem() {
       navigate(`/ticket/${ticket.ticket_id}`);
     }
     setOpenDropdownId(null);
-  };
+  }, [navigate]);
+
+  // Stable identities (useCallback) so TicketRow can be React.memo'd — these
+  // were previously created inline per-row on every render, which would
+  // defeat the memoization below regardless.
+  const handleTicketStatusClick = useCallback((ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setShowStatusModal(true);
+  }, []);
+
+  const handleTicketPriorityClick = useCallback((ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setShowPriorityModal(true);
+  }, []);
+
+  const handleTicketDepartmentClick = useCallback((ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setSelectedDepartmentId(ticket.department?.id?.toString() || '');
+    setShowDepartmentModal(true);
+  }, []);
+
+  const handleTicketAssigneeClick = useCallback((ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setShowAssignModal(true);
+  }, []);
+
+  const handleTicketTaskDialogOpen = useCallback((ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setTaskDialogTicketId(ticket.id.toString());
+    setTaskDialogOpen(true);
+  }, []);
+
+  const handleGridDropdownToggle = useCallback((ticketId: string) => {
+    setOpenDropdownId(prev => (prev === ticketId ? null : ticketId));
+  }, []);
+
+  const handleGridDropdownClose = useCallback(() => {
+    setOpenDropdownId(null);
+  }, []);
 
   const sidebarItems = viewItems
     .map((item) => {
@@ -1389,28 +1427,11 @@ export default function TicketManagementSystem() {
                                 isSelected={selectedTickets.has(ticket.id)}
                                 onRowClick={handleListRowClick}
                                 onSelectionChange={handleTicketSelection}
-                                onStatusClick={(t) => {
-                                  setSelectedTicket(t);
-                                  setShowStatusModal(true);
-                                }}
-                                onPriorityClick={(t) => {
-                                  setSelectedTicket(t);
-                                  setShowPriorityModal(true);
-                                }}
-                                onDepartmentClick={(t) => {
-                                  setSelectedTicket(t);
-                                  setSelectedDepartmentId(t.department?.id?.toString() || '');
-                                  setShowDepartmentModal(true);
-                                }}
-                                onAssigneeClick={(t) => {
-                                  setSelectedTicket(t);
-                                  setShowAssignModal(true);
-                                }}
-                                onTaskDialogOpen={(t) => {
-                                  setSelectedTicket(t);
-                                  setTaskDialogTicketId(t.id.toString());
-                                  setTaskDialogOpen(true);
-                                }}
+                                onStatusClick={handleTicketStatusClick}
+                                onPriorityClick={handleTicketPriorityClick}
+                                onDepartmentClick={handleTicketDepartmentClick}
+                                onAssigneeClick={handleTicketAssigneeClick}
+                                onTaskDialogOpen={handleTicketTaskDialogOpen}
                                 onPreviewEnter={showTicketPreview}
                                 onPreviewLeave={scheduleHideTicketPreview}
                               />
@@ -1429,12 +1450,12 @@ export default function TicketManagementSystem() {
                         key={ticket.id}
                         ticket={ticket}
                         openDropdownId={openDropdownId}
-                        onDropdownToggle={(ticketid) => setOpenDropdownId(openDropdownId === ticketid ? null : ticketid)}
-                        onDropdownClose={() => setOpenDropdownId(null)}
-                        onAction={(action, ticket) => handleAction(action, ticket)}
+                        onDropdownToggle={handleGridDropdownToggle}
+                        onDropdownClose={handleGridDropdownClose}
+                        onAction={handleAction}
                         isActive={selectedTicket?.id === ticket.id}
                         isSelected={selectedTickets.has(ticket.id)}
-                        onSelectionChange={(ticketId, selected) => handleTicketSelection(ticketId, selected)}
+                        onSelectionChange={handleTicketSelection}
                       />
                     ))}
                   </div>

@@ -40,7 +40,7 @@ interface GridTicketCardProps {
   onSelectionChange?: (ticketId: string, selected: boolean) => void;
 }
 
-export const GridTicketCard: React.FC<GridTicketCardProps> = ({
+const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
   ticket,
   openDropdownId,
   onDropdownToggle,
@@ -404,3 +404,6 @@ export const GridTicketCard: React.FC<GridTicketCardProps> = ({
     </div>
   );
 };
+
+export const GridTicketCard = React.memo(GridTicketCardComponent);
+GridTicketCard.displayName = 'GridTicketCard';

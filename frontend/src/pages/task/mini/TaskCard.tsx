@@ -24,7 +24,7 @@ interface TaskCardProps {
   onSelectionChange?: (taskId: number, selected: boolean) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({
+const TaskCardComponent: React.FC<TaskCardProps> = ({
   task,
   isTrashView = false,
   openDropdownId,
@@ -211,5 +211,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
     </div>
   );
 };
+
+const TaskCard = React.memo(TaskCardComponent);
+TaskCard.displayName = 'TaskCard';
 
 export default TaskCard;
