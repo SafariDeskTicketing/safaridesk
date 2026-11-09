@@ -97,7 +97,7 @@ export const TaskRow = memo(({
             onAssigneeClick(task);
           }}
         >
-          {formatUserDisplayName(task.assigned_to as any, 'Unassigned')}
+          {formatUserDisplayName(task.assigned_to, 'Unassigned')}
         </button>
       </div>
       <div className="py-3 px-3 text-center text-[14px] text-gray-700 dark:text-[var(--text-primary)] truncate">

@@ -86,27 +86,36 @@ export const Modal: React.FC<ModalProps> = ({
   const [currentZIndex, setCurrentZIndex] = useState(baseZIndex); // Initialize with baseZIndex
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
 
   // Track whatever has focus in the page while the modal is closed, so the
   // instant it opens we already know what to restore focus to on close.
   // Reading document.activeElement from inside the open effect instead would
   // be too late — it runs after any child's autoFocus has already moved
   // focus into the dialog, capturing the wrong element.
-  // Guarded on dialogRef not containing the active element: on the render
-  // that flips isOpen true -> false (e.g. clicking a Cancel/Submit button
-  // inside the dialog), dialogRef still points at the about-to-be-removed
-  // dialog node and that button is still focused — without the guard this
-  // would overwrite the real trigger with the button that's seconds from
-  // being detached, so the close effect's focus() below becomes a no-op.
-  if (!isOpen && !dialogRef.current?.contains(document.activeElement)) {
+  // Skip the single render where isOpen flips true -> false: by that point
+  // focus has already moved away from the real trigger as a side effect of
+  // closing itself — either still on a Cancel/Submit button inside the
+  // about-to-be-removed dialog (dialogRef still contains it), or already on
+  // document.body (a backdrop click blurs the non-focusable backdrop before
+  // onClose runs). Capturing either would overwrite the real trigger with a
+  // throwaway value, making the close effect's focus() below a no-op or a
+  // focus-to-body. Only treat document.activeElement as a legitimate next
+  // trigger once we're on a render that was *already* closed.
+  if (!isOpen && !wasOpenRef.current && !dialogRef.current?.contains(document.activeElement)) {
     previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
   }
+  wasOpenRef.current = isOpen;
 
   const getFocusableElements = (): HTMLElement[] => {
     const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(
       'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
     );
-    return nodes ? Array.from(nodes) : [];
+    // offsetParent is null for display:none elements (and their descendants),
+    // so a hidden tab panel's controls don't count as part of the Tab-trap's
+    // first/last element — without this, Tab could land on a node the user
+    // can't see or interact with, or wrap to one, breaking the trap.
+    return nodes ? Array.from(nodes).filter((el) => el.offsetParent !== null) : [];
   };
 
   useEffect(() => {
