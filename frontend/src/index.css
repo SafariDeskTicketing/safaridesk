@@ -1361,3 +1361,22 @@
     scrollbar-width: none;
   }
 }
+
+/*
+ * Respect the OS-level reduced-motion preference everywhere at once —
+ * every Tailwind keyframe (tailwind.config.js), the sd-shimmer loading
+ * loop above, and the global hover/theme transition rule all ride on
+ * animation-duration/transition-duration, so one unlayered override (it
+ * must win over every @layer base/components/utilities rule, including
+ * Tailwind's own) covers all of them instead of patching each one.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

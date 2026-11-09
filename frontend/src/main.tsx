@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { MotionConfig } from 'framer-motion';
 import App from './App.tsx';
 import './index.css';
 // Axios interceptors live on the `http` instance in src/services/http.ts.
@@ -48,7 +49,9 @@ createRoot(document.getElementById('root')!).render(
         },
       }}
     >
-      <App />
+      <MotionConfig reducedMotion="user">
+        <App />
+      </MotionConfig>
     </PersistQueryClientProvider>
   </StrictMode>
 );
