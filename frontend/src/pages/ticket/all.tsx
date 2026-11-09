@@ -16,6 +16,7 @@ import { Input } from '../../components/ui/Input';
 import EmptyState from '../../components/ui/EmptyState';
 import TicketDetailSkeleton from '../../components/ui/TicketDetailSkeleton';
 import { TableSkeleton } from '../../components/ui/TableSkeleton';
+import { CardSkeleton } from '../../components/ui/CardSkeleton';
 import { GridTicketCard } from '../../components/tickets/GridCard';
 import AssignTicketModal from '../../components/tickets/AssignTicketModal';
 import UpdateCategoryModal from '../../components/tickets/UpdateCategoryModal';
@@ -62,6 +63,7 @@ import { useTicketHoverPreview } from './list/useTicketHoverPreview';
 import { TicketHoverPreview } from './list/TicketHoverPreview';
 import { useCopilotActiveTicketSync } from './list/useCopilotActiveTicketSync';
 import { useTicketFiltersFromUrl } from './list/useTicketFiltersFromUrl';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 const BULK_EXPORT_FORMAT_OPTIONS = [
   { value: 'xlsx', label: 'Excel' },
@@ -155,6 +157,10 @@ export default function TicketManagementSystem() {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
   const [viewMode, setViewMode] = useState<TicketViewMode>(getStoredTicketViewMode());
+  // Below this width the list-view table can't fit its columns without horizontal
+  // scroll, so card view is forced regardless of the stored preference.
+  const isCompactViewport = useMediaQuery('(max-width: 1023px)');
+  const effectiveViewMode: TicketViewMode = isCompactViewport ? 'card' : viewMode;
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showSearchFilterDropdown, setShowSearchFilterDropdown] = useState(false);
   const [showSearchValueDropdown, setShowSearchValueDropdown] = useState(false);
@@ -915,7 +921,7 @@ export default function TicketManagementSystem() {
                     <span>Create</span>
                   </button>
                   <div className="lg:hidden">
-                    <ViewModeDropdown viewMode={viewMode === 'card' ? 'card' : 'list'} onViewChange={(mode) => setViewMode(mode)} />
+                    <ViewModeDropdown viewMode={effectiveViewMode} onViewChange={(mode) => setViewMode(mode)} />
                   </div>
                 </div>
               </div>
@@ -1279,7 +1285,7 @@ export default function TicketManagementSystem() {
                     <span>Settings</span>
                   </button>
                   <div className="hidden lg:flex">
-                    <ViewModeDropdown viewMode={viewMode === 'card' ? 'card' : 'list'} onViewChange={(mode) => setViewMode(mode)} />
+                    <ViewModeDropdown viewMode={effectiveViewMode} onViewChange={(mode) => setViewMode(mode)} />
                   </div>
                 </div>
               </div>
@@ -1326,8 +1332,8 @@ export default function TicketManagementSystem() {
               {/* Tickets */}
               <div className="flex-1 overflow-y-auto">
                 {isLoading ? (
-                  <TableSkeleton rows={7} columns={10} minWidth={1140} />
-                ) : viewMode === 'list' ? (
+                  isCompactViewport ? <CardSkeleton /> : <TableSkeleton rows={7} columns={10} minWidth={1140} />
+                ) : effectiveViewMode === 'list' ? (
                   <div className="p-4">
                     <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-subtle bg-white dark:bg-surface-elevated shadow-sm">
                       <div className="min-w-[1140px] w-full">
@@ -1443,7 +1449,7 @@ export default function TicketManagementSystem() {
                   </div>
                 ) : filteredTickets.length === 0 ? (
                   <EmptyState />
-                ) : viewMode === 'card' ? (
+                ) : effectiveViewMode === 'card' ? (
                   <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
                     {filteredTickets.map(ticket => (
                       <GridTicketCard

@@ -45,6 +45,7 @@ import UpdateTaskStatus from './mini/updateStatus';
 import EmptyState from '../../components/ui/EmptyState';
 import TicketDetailSkeleton from '../../components/ui/TicketDetailSkeleton';
 import { TableSkeleton } from '../../components/ui/TableSkeleton';
+import { CardSkeleton } from '../../components/ui/CardSkeleton';
 import { Modal } from '../../components/ui/Modal';
 import CreateTaskModal from '../../components/tasks/CreateTaskModal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -61,6 +62,7 @@ import LabelGroup from '../../components/ui/LabelGroup';
 import ManageLabelsModal from '../../components/labels/ManageLabelsModal';
 import { getLabelNamesByIds, resolveLabelTokenIds } from '../../utils/labels';
 import { useHoverPreviewActivity } from '../../hooks/useHoverPreviewActivity';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 type BulkExportFormat = Exclude<ExportFormat, 'pdf'>;
 
@@ -251,6 +253,10 @@ export default function TaskManagementSystem() {
   // `isFetching`, which is false for a disabled query.
   const isLoading = tasksQuery.isPending;
   const [viewMode, setViewMode] = useState<TaskViewMode>(getStoredTaskViewMode());
+  // Below this width the list-view table can't fit its columns without horizontal
+  // scroll, so card view is forced regardless of the stored preference.
+  const isCompactViewport = useMediaQuery('(max-width: 1023px)');
+  const effectiveViewMode: TaskViewMode = isCompactViewport ? 'card' : viewMode;
   const [isCreateTaskModalDirty, setIsCreateTaskModalDirty] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showSearchFilterDropdown, setShowSearchFilterDropdown] = useState(false);
@@ -1619,7 +1625,7 @@ export default function TaskManagementSystem() {
                   <span>Create Task</span>
                 </button>
                 <div className="lg:hidden">
-                  <ViewModeDropdown viewMode={viewMode === 'card' ? 'card' : 'list'} onViewChange={(mode) => setViewMode(mode)} />
+                  <ViewModeDropdown viewMode={effectiveViewMode} onViewChange={(mode) => setViewMode(mode)} />
                 </div>
               </div>
             </div>
@@ -1956,7 +1962,7 @@ export default function TaskManagementSystem() {
                   <span>Settings</span>
                 </button>
                 <div className="hidden lg:flex">
-                  <ViewModeDropdown viewMode={viewMode === 'card' ? 'card' : 'list'} onViewChange={(mode) => setViewMode(mode)} />
+                  <ViewModeDropdown viewMode={effectiveViewMode} onViewChange={(mode) => setViewMode(mode)} />
                 </div>
               </div>
             </div>
@@ -2003,8 +2009,8 @@ export default function TaskManagementSystem() {
             {/* Tasks */}
             <div className="flex-1 overflow-y-auto">
               {isLoading ? (
-                <TableSkeleton rows={7} columns={9} minWidth={1140} />
-              ) : viewMode === 'list' ? (
+                isCompactViewport ? <CardSkeleton /> : <TableSkeleton rows={7} columns={9} minWidth={1140} />
+              ) : effectiveViewMode === 'list' ? (
                 <div className="p-4">
                   <div className="overflow-x-auto rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] shadow-sm">
                     <div className="min-w-[1140px] w-full">
@@ -2131,7 +2137,7 @@ export default function TaskManagementSystem() {
                 </div>
               ) : filteredTasks.length === 0 ? (
                 <EmptyState />
-              ) : viewMode === 'card' ? (
+              ) : effectiveViewMode === 'card' ? (
                 <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredTasks.map((task) => (
                     <TaskCard
