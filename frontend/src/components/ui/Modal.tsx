@@ -80,15 +80,25 @@ export const Modal: React.FC<ModalProps> = ({
   verticalAlign = 'center',
 }) => {
   const modalId = useRef<string>(Math.random().toString(36).substr(2, 9));
+  const titleId = `modal-title-${modalId.current}`;
   const stackManager = ModalStackManager.getInstance();
   const baseZIndex = 1000;
   const [currentZIndex, setCurrentZIndex] = useState(baseZIndex); // Initialize with baseZIndex
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+
+  const getFocusableElements = (): HTMLElement[] => {
+    const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    return nodes ? Array.from(nodes) : [];
+  };
 
   useEffect(() => {
     if (isOpen) {
       const stackSize = stackManager.addModal(modalId.current);
       setCurrentZIndex(baseZIndex + (stackSize * 10)); // Update zIndex based on new stack size
-      
+
       // Only disable body scroll for the first modal
       if (stackSize === 1) {
         document.body.style.overflow = 'hidden';
@@ -103,21 +113,54 @@ export const Modal: React.FC<ModalProps> = ({
     }
   }, [isOpen, stackManager]);
 
+  // Initial focus on open, and restore focus to the trigger element on close.
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && closeOnEscape && isOpen) {
-        if (stackManager.isTopModal(modalId.current)) {
-          onClose();
+    if (isOpen) {
+      previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
+      const [firstFocusable] = getFocusableElements();
+      (firstFocusable ?? dialogRef.current)?.focus();
+
+      return () => {
+        previouslyFocusedElement.current?.focus?.();
+      };
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!stackManager.isTopModal(modalId.current)) return;
+
+      if (e.key === 'Escape' && closeOnEscape) {
+        onClose();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const first = focusableElements[0];
+        const last = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
         }
       }
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
+      document.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose, closeOnEscape, stackManager]);
 
@@ -163,7 +206,12 @@ export const Modal: React.FC<ModalProps> = ({
         />
         
         {/* Modal */}
-        <div 
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? titleId : undefined}
+          tabIndex={-1}
           className={clsx(
             'relative w-full transform rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] shadow-[var(--shell-shadow-lg)] transition-all',
             sizeClasses[size],
@@ -178,7 +226,7 @@ export const Modal: React.FC<ModalProps> = ({
           {(title || showCloseButton) && (
             <div className="flex items-center justify-between border-b border-[var(--border-color)] px-6 py-4">
               {title && (
-                <h3 className="text-[18px] font-semibold text-[var(--text-primary)]">
+                <h3 id={titleId} className="text-[18px] font-semibold text-[var(--text-primary)]">
                   {title}
                 </h3>
               )}
