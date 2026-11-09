@@ -835,9 +835,9 @@ export const Header: React.FC = () => {
 						)}
 						{!sidebarCollapsed && (
 							<div className="text-left flex-1 min-w-0">
-								<h1 className="truncate text-[length:var(--font-workspace-title)] font-medium leading-4 text-[var(--text-primary)]">
+								<p className="truncate text-[length:var(--font-workspace-title)] font-medium leading-4 text-[var(--text-primary)]">
 									{resolvedBusinessName}
-								</h1>
+								</p>
 								<p className="text-[length:var(--font-workspace-subtitle)] leading-4 text-[var(--text-muted)]">
 									Workspace
 								</p>
