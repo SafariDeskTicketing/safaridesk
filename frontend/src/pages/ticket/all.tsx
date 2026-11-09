@@ -117,12 +117,18 @@ export default function TicketManagementSystem() {
 
   // Refs to avoid triggering fetchTickets recreation when lookup data changes —
   // the token-search resolvers need synchronous, non-reactive access to the
-  // latest values, so these stay in sync with the query results via effects
-  // below rather than being read directly in render.
+  // latest values. Assigned directly during render (not in a useEffect): an
+  // effect only updates the ref *after* this render has committed, so the one
+  // render where agents/departments/categories/labels first populate would
+  // otherwise resolve tokens against stale (empty) data.
   const agentsRef = useRef<Agent[] | null>(null);
+  agentsRef.current = agents;
   const departmentsRef = useRef<Array<{ id: number; name: string }>>([]);
+  departmentsRef.current = departments;
   const categoriesRef = useRef<Array<{ id: number; name: string; department?: number | null }>>([]);
+  categoriesRef.current = categories;
   const labelsRef = useRef<LabelItem[]>([]);
+  labelsRef.current = labels;
   const [comment, setComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [showLabelsModal, setShowLabelsModal] = useState(false);
@@ -714,14 +720,6 @@ export default function TicketManagementSystem() {
       errorNotification(errorMsg);
     }
   };
-
-  // Keep the refs in sync with the query-backed values above — the token-search
-  // resolvers (ticketSearch.ts) need synchronous access outside React's render
-  // cycle, so they read these refs rather than the reactive values directly.
-  useEffect(() => { agentsRef.current = agents; }, [agents]);
-  useEffect(() => { departmentsRef.current = departments; }, [departments]);
-  useEffect(() => { categoriesRef.current = categories; }, [categories]);
-  useEffect(() => { labelsRef.current = labels; }, [labels]);
 
   const assignAgentOptions = React.useMemo(() => {
     const base = [{ value: "", label: "Choose agent...", disabled: true }];

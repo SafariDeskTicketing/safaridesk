@@ -169,12 +169,17 @@ export default function TaskManagementSystem() {
   const [isAssigning, setIsAssigning] = useState(false);
   const [updateStatus, setUpdateStatus] = useState(false);
   const { agents, departments, labels } = useTaskFilterOptions();
+  // Assigned directly during render (not in a useEffect) so the token-search
+  // resolvers always read the current value, not the previous render's —
+  // a useEffect only syncs the ref *after* this render has already committed,
+  // so the one render where agents/departments/labels first populate would
+  // otherwise resolve tokens against stale (empty) data.
   const agentsRef = useRef<Agent[] | null>(null);
+  agentsRef.current = agents;
   const departmentsRef = useRef<Array<{ id: number; name: string }>>([]);
+  departmentsRef.current = departments;
   const labelsRef = useRef<LabelItem[]>([]);
-  useEffect(() => { agentsRef.current = agents; }, [agents]);
-  useEffect(() => { departmentsRef.current = departments; }, [departments]);
-  useEffect(() => { labelsRef.current = labels; }, [labels]);
+  labelsRef.current = labels;
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [statusDescription, setStatusDescription] = useState("");
