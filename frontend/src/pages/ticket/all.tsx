@@ -1333,7 +1333,7 @@ export default function TicketManagementSystem() {
                         )}
                         </div>
                         <div className={`${listGridCols} text-[14px] tracking-wide bg-white dark:bg-surface-hover text-gray-800 dark:text-[var(--text-primary)] rounded-t-lg border-b border-gray-200 dark:border-subtle`}>
-                          <div className="flex items-center justify-center py-3 px-3">
+                          <label className="flex items-center justify-center py-3 px-3 cursor-pointer">
                             <input
                               ref={headerCheckboxRef}
                               type="checkbox"
@@ -1341,7 +1341,7 @@ export default function TicketManagementSystem() {
                               onChange={(e) => handleSelectAllVisible(e.target.checked)}
                               className="h-4 w-4 rounded border-gray-300 text-primary-400 focus:ring-primary-500"
                             />
-                          </div>
+                          </label>
                           {renderSortableHeader('Ticket ID', 'ticket_id')}
                           {renderSortableHeader('Subject', 'title')}
                           {renderSortableHeader('Status', 'status', {

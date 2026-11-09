@@ -49,15 +49,14 @@ export const TicketRow = ({
       className={`${LIST_GRID_COLS} items-center text-[14px] bg-gray-50 dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-hover cursor-pointer transition-colors ${isSelected ? 'ring-1 ring-primary-400 bg-primary-50/70 dark:bg-primary-900/20' : ''
         }`}
     >
-      <div className="flex items-center justify-center py-3 px-3">
+      <label className="flex items-center justify-center py-3 px-3 cursor-pointer" onClick={(e) => e.stopPropagation()}>
         <input
           type="checkbox"
           checked={isSelected}
-          onClick={(e) => e.stopPropagation()}
           onChange={(e) => onSelectionChange(ticket.id, e.target.checked)}
           className="h-4 w-4 rounded border-gray-300 text-primary-400 focus:ring-primary-500"
         />
-      </div>
+      </label>
       <div
         className="py-3 px-3 text-left truncate text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300"
         title={`#${ticket.ticket_id}`}

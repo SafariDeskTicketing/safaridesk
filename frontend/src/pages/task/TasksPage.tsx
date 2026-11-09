@@ -2007,7 +2007,7 @@ export default function TaskManagementSystem() {
                         )}
                       </div>
                       <div className={`${taskListGridCols} text-[14px] font-semibold tracking-wide bg-white dark:bg-surface-hover text-gray-800 dark:text-[var(--text-primary)] rounded-t-lg border-b border-gray-200 dark:border-subtle`}>
-                        <div className="flex items-center justify-center py-3 px-3">
+                        <label className="flex items-center justify-center py-3 px-3 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={selectedTasks.size === filteredTasks.length && filteredTasks.length > 0}
@@ -2017,7 +2017,7 @@ export default function TaskManagementSystem() {
                             }}
                             className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                           />
-                        </div>
+                        </label>
                         <div className="py-3 px-3 text-left whitespace-nowrap">Task ID</div>
                         <div className="py-3 px-3 text-left">Subject</div>
                         <button
@@ -2080,15 +2080,14 @@ export default function TaskManagementSystem() {
                                 }}
                                 className={`${taskListGridCols} items-center text-[14px] bg-gray-50 dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-hover cursor-pointer transition-colors`}
                               >
-                                <div className="flex items-center justify-center py-3 px-3">
+                                <label className="flex items-center justify-center py-3 px-3 cursor-pointer" onClick={(e) => e.stopPropagation()}>
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
-                                    onClick={(e) => e.stopPropagation()}
                                     onChange={(e) => handleTaskSelection(task.id, e.target.checked)}
                                     className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                                   />
-                                </div>
+                                </label>
                                 <div className="py-3 px-3 text-left whitespace-nowrap text-[length:var(--font-meta)] font-semibold tracking-wide text-primary-700 dark:text-primary-300">
                                   #{task.task_trackid}
                                 </div>

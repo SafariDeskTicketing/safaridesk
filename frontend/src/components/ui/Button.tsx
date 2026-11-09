@@ -36,9 +36,9 @@ const Button: React.FC<ButtonProps> = ({
   };
   
   const sizeClasses = {
-    sm: 'h-[34px] gap-1.5 px-3',
-    md: 'h-[38px] gap-2 px-3.5',
-    lg: 'h-[42px] gap-2 px-4 text-[14px]',
+    sm: 'h-[34px] gap-1.5 px-3 [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]',
+    md: 'h-[38px] gap-2 px-3.5 [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]',
+    lg: 'h-[42px] gap-2 px-4 text-[14px] [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]',
   };
   
   const iconSize = {
