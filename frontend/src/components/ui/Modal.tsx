@@ -144,8 +144,15 @@ export const Modal: React.FC<ModalProps> = ({
 
         const first = focusableElements[0];
         const last = focusableElements[focusableElements.length - 1];
+        const activeIndex = focusableElements.indexOf(document.activeElement as HTMLElement);
 
-        if (e.shiftKey && document.activeElement === first) {
+        if (activeIndex === -1) {
+          // Focus is outside the dialog's focusable set entirely (the backdrop was
+          // clicked with closeOnBackdropClick off, or focus sits on the dialog
+          // container itself) — pull it back in instead of letting Tab escape.
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+        } else if (e.shiftKey && document.activeElement === first) {
           e.preventDefault();
           last.focus();
         } else if (!e.shiftKey && document.activeElement === last) {
