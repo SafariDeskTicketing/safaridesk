@@ -42,7 +42,7 @@ import {
   parseSearchQuery,
   resolveCreatedDateToken,
 } from './list/ticketSearch';
-import { buildTicketQueryParams } from './list/ticketListParams';
+import { buildTicketQueryParams, isTicketQueryBlockedByPendingLookups } from './list/ticketListParams';
 import { useTicketFilterOptions } from './list/useTicketFilterOptions';
 import { resolveViewFromUrlParams } from './list/ticketViewResolution';
 import { TicketRow } from './list/TicketRow';
@@ -536,6 +536,13 @@ export default function TicketManagementSystem() {
 
 
   const fetchTicketCounts = async () => {
+    // Same race as the list query (see ticketListData.ts): skip the fetch
+    // rather than compute counts against a token whose lookup hasn't loaded
+    // yet. Unlike the list query this isn't cached, so it isn't "wrong
+    // forever" on its own, but the effect below only reruns on a fixed set
+    // of filter deps (not every render), so without this it could still
+    // compute once, wrongly, and sit there until some other filter changes.
+    if (isTicketQueryBlockedByPendingLookups(debouncedSearchQuery, lookupsLoading)) return;
     try {
       const params = buildTicketQueryParams(
         {
@@ -675,7 +682,10 @@ export default function TicketManagementSystem() {
   // Query yet, so they still need an explicit fetch on the same dependencies.
   React.useEffect(() => {
     fetchTicketCounts();
-  }, [currentPage, activeView, limit, statusFilter, priorityFilter, assigneeFilter, departmentFilter, categoryFilter, labelFilterIds, dateFromFilter, dateToFilter]);
+    // lookupsLoading.* re-runs this once a pending lookup a token needs
+    // finishes loading, instead of leaving counts computed-without-that-
+    // filter sitting there until some unrelated filter change.
+  }, [currentPage, activeView, limit, statusFilter, priorityFilter, assigneeFilter, departmentFilter, categoryFilter, labelFilterIds, dateFromFilter, dateToFilter, lookupsLoading.agents, lookupsLoading.departments, lookupsLoading.categories, lookupsLoading.labels]);
 
   useEffect(() => {
     const handler = () => {

@@ -4,7 +4,7 @@ import {
   useTasksListQuery,
   transformApiTask,
 } from './list/taskListData';
-import { buildTaskQueryParams } from './list/taskListParams';
+import { buildTaskQueryParams, isTaskQueryBlockedByPendingLookups } from './list/taskListParams';
 import { useTaskFilterOptions } from './list/useTaskFilterOptions';
 import { resolveViewFromUrlParams } from './list/taskViewResolution';
 import {
@@ -972,6 +972,9 @@ export default function TaskManagementSystem() {
   }, [showSearchFilterDropdown, showSearchValueDropdown]);
 
   const fetchTaskCounts = async () => {
+    // Same race as the list query (see taskListData.ts): skip rather than
+    // compute counts against a token whose lookup hasn't loaded yet.
+    if (isTaskQueryBlockedByPendingLookups(debouncedSearchQuery, lookupsLoading)) return;
     try {
       const views = ['all_tasks', 'my_tasks', 'open_tasks', 'in_progress_tasks', 'completed_tasks', 'overdue_tasks', 'archived_tasks', 'trash_tasks'];
       const counts: Record<string, number> = {};
@@ -1021,7 +1024,7 @@ export default function TaskManagementSystem() {
   // fetches the current view), so they still need their own effect.
   React.useEffect(() => {
     fetchTaskCounts();
-  }, [statusFilter, priorityFilter, assigneeFilter, departmentFilter, labelFilterIds, dateFromFilter, dateToFilter, debouncedSearchQuery]);
+  }, [statusFilter, priorityFilter, assigneeFilter, departmentFilter, labelFilterIds, dateFromFilter, dateToFilter, debouncedSearchQuery, lookupsLoading.agents, lookupsLoading.departments, lookupsLoading.labels]);
 
   // Real-time: refresh tasks list on WebSocket task_event (task created/updated by anyone)
   React.useEffect(() => {

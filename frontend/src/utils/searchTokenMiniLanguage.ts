@@ -54,3 +54,22 @@ export const resolveFilterValue = <T>(tokenValue: T | null | undefined, dropdown
   if (tokenValue !== null && tokenValue !== undefined) return tokenValue;
   return dropdownValue !== 'all' ? dropdownValue : null;
 };
+
+/**
+ * True when `searchQuery` has a token whose resolver needs a lookup
+ * (agents/departments/etc.) that's still loading — shared by the ticket and
+ * task list query hooks instead of each repeating the same
+ * parse-then-check-each-key shape (which had already drifted once: the
+ * ticket version checks `category`, the task version has no such token).
+ * `tokenLookupLoading` is keyed by the same token key `parseQuery` produces
+ * (e.g. `assignee`), not by the lookup's own field name (e.g. `agents`) —
+ * the caller maps between the two since only it knows that mapping.
+ */
+export const isQueryBlockedByPendingLookups = <K extends string>(
+  searchQuery: string,
+  parseQuery: (query: string) => ParsedSearchQuery<K>,
+  tokenLookupLoading: Partial<Record<K, boolean>>,
+): boolean => {
+  const { tokens } = parseQuery(searchQuery);
+  return (Object.keys(tokens) as K[]).some((key) => Boolean(tokens[key]) && Boolean(tokenLookupLoading[key]));
+};

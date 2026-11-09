@@ -1,6 +1,6 @@
 import type { Agent, LabelItem } from '../../../types';
 import { resolveLabelTokenIds } from '../../../utils/labels';
-import { resolveFilterValue } from '../../../utils/searchTokenMiniLanguage';
+import { resolveFilterValue, isQueryBlockedByPendingLookups } from '../../../utils/searchTokenMiniLanguage';
 import {
   parseSearchQuery,
   resolveStatusToken,
@@ -40,22 +40,28 @@ export interface TicketListLookupsLoading {
 /**
  * True when the free-text search currently contains a token (e.g.
  * `assignee:jane`) whose matching lookup hasn't loaded yet. Used to hold off
- * fetching the ticket list until that lookup is in, instead of fetching
- * immediately, silently resolving the token to nothing, and caching that
- * wrong result forever under `staleTime: Infinity` (the lookup finishing
- * later doesn't change the query key, so it would never self-correct).
+ * fetching the ticket list (and its counts) until that lookup is in, instead
+ * of fetching immediately, silently resolving the token to nothing, and
+ * caching that wrong result forever under `staleTime: Infinity` (the lookup
+ * finishing later doesn't change the query key, so it would never
+ * self-correct). If a lookup fetch fails outright rather than still being in
+ * flight, this deliberately does NOT keep blocking forever — `isLoading`
+ * (unlike a hypothetical "never settled") is also false once a query gives
+ * up after its retries, so the affected token just resolves to no match, the
+ * same degraded-but-visible-eventually behavior an unmatched token already
+ * gets. Blocking indefinitely on a dead lookup endpoint would be worse: every
+ * list view with that token would simply never load.
  */
 export const isTicketQueryBlockedByPendingLookups = (
   searchQuery: string,
   lookupsLoading: TicketListLookupsLoading,
-): boolean => {
-  const { tokens } = parseSearchQuery(searchQuery);
-  if (tokens.assignee && lookupsLoading.agents) return true;
-  if (tokens.department && lookupsLoading.departments) return true;
-  if (tokens.category && lookupsLoading.categories) return true;
-  if (tokens.labels && lookupsLoading.labels) return true;
-  return false;
-};
+): boolean =>
+  isQueryBlockedByPendingLookups(searchQuery, parseSearchQuery, {
+    assignee: lookupsLoading.agents,
+    department: lookupsLoading.departments,
+    category: lookupsLoading.categories,
+    labels: lookupsLoading.labels,
+  });
 
 /**
  * Merges the token mini-language (parsed out of free-text search) with the

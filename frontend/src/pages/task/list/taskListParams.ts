@@ -1,6 +1,6 @@
 import type { Agent, LabelItem } from '../../../types';
 import { resolveLabelTokenIds } from '../../../utils/labels';
-import { resolveFilterValue } from '../../../utils/searchTokenMiniLanguage';
+import { resolveFilterValue, isQueryBlockedByPendingLookups } from '../../../utils/searchTokenMiniLanguage';
 import {
   parseSearchQuery,
   resolveStatusToken,
@@ -38,18 +38,19 @@ export interface TaskListLookupsLoading {
  * `assignee:jane`) whose matching lookup hasn't loaded yet. See the
  * ticket-list equivalent (`isTicketQueryBlockedByPendingLookups`) for why
  * this has to hold off the fetch rather than let it resolve the token to
- * nothing under `staleTime: Infinity`.
+ * nothing under `staleTime: Infinity`, and why it deliberately doesn't keep
+ * blocking forever if the lookup fetch fails outright instead of still
+ * being in flight.
  */
 export const isTaskQueryBlockedByPendingLookups = (
   searchQuery: string,
   lookupsLoading: TaskListLookupsLoading,
-): boolean => {
-  const { tokens } = parseSearchQuery(searchQuery);
-  if (tokens.assignee && lookupsLoading.agents) return true;
-  if (tokens.department && lookupsLoading.departments) return true;
-  if (tokens.labels && lookupsLoading.labels) return true;
-  return false;
-};
+): boolean =>
+  isQueryBlockedByPendingLookups(searchQuery, parseSearchQuery, {
+    assignee: lookupsLoading.agents,
+    department: lookupsLoading.departments,
+    labels: lookupsLoading.labels,
+  });
 
 /**
  * Merges the token mini-language (parsed out of free-text search) with the
