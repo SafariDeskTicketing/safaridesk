@@ -33,6 +33,14 @@ export const TaskRow = memo(({
   return (
     <div
       onClick={() => onRowClick(task)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onRowClick(task);
+        }
+      }}
       className={`${gridColsClassName} items-center text-[14px] bg-gray-50 dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-hover cursor-pointer transition-colors`}
     >
       <label className="flex items-center justify-center py-3 px-3 cursor-pointer" onClick={(e) => e.stopPropagation()}>

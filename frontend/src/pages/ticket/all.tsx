@@ -920,9 +920,6 @@ export default function TicketManagementSystem() {
                     <Plus size={14} />
                     <span>Create</span>
                   </button>
-                  <div className="lg:hidden">
-                    <ViewModeDropdown viewMode={effectiveViewMode} onViewChange={(mode) => setViewMode(mode)} />
-                  </div>
                 </div>
               </div>
 

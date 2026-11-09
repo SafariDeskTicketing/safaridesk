@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
@@ -102,10 +102,19 @@ export const Modal: React.FC<ModalProps> = ({
   // throwaway value, making the close effect's focus() below a no-op or a
   // focus-to-body. Only treat document.activeElement as a legitimate next
   // trigger once we're on a render that was *already* closed.
-  if (!isOpen && !wasOpenRef.current && !dialogRef.current?.contains(document.activeElement)) {
-    previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
-  }
-  wasOpenRef.current = isOpen;
+  // Done in a layout effect, not render-phase: mutating wasOpenRef directly
+  // in the render body broke under StrictMode, which calls the render
+  // function twice per commit in development — the second call would see
+  // wasOpenRef already flipped by the first and wrongly treat the closing
+  // render as "already closed," capturing document.body instead of skipping.
+  // Effects (layout or passive) don't get that double-invoke on updates, only
+  // on initial mount, where this logic is idempotent anyway.
+  useLayoutEffect(() => {
+    if (!isOpen && !wasOpenRef.current && !dialogRef.current?.contains(document.activeElement)) {
+      previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
+    }
+    wasOpenRef.current = isOpen;
+  });
 
   const getFocusableElements = (): HTMLElement[] => {
     const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(

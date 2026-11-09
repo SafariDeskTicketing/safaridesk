@@ -1624,9 +1624,6 @@ export default function TaskManagementSystem() {
                   <Plus size={14} />
                   <span>Create Task</span>
                 </button>
-                <div className="lg:hidden">
-                  <ViewModeDropdown viewMode={effectiveViewMode} onViewChange={(mode) => setViewMode(mode)} />
-                </div>
               </div>
             </div>
 

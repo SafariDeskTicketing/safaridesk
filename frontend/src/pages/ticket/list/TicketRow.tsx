@@ -47,6 +47,14 @@ export const TicketRow = memo(({
   return (
     <div
       onClick={() => onRowClick(ticket)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onRowClick(ticket);
+        }
+      }}
       className={`${LIST_GRID_COLS} items-center text-[14px] bg-gray-50 dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-hover cursor-pointer transition-colors ${isSelected ? 'ring-1 ring-primary-400 bg-primary-50/70 dark:bg-primary-900/20' : ''
         }`}
     >
