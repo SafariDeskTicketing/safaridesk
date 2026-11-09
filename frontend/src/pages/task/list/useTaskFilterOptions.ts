@@ -39,5 +39,10 @@ export const useTaskFilterOptions = () => {
     departments: departmentsQuery.data ?? [],
     labels: labelsQuery.data ?? [],
     refetchLabels: labelsQuery.refetch,
+    lookupsLoading: {
+      agents: agentsQuery.isLoading,
+      departments: departmentsQuery.isLoading,
+      labels: labelsQuery.isLoading,
+    },
   };
 };

@@ -65,5 +65,11 @@ export const useTicketFilterOptions = () => {
     categories: categoriesQuery.data ?? [],
     labels: labelsQuery.data ?? [],
     refetchLabels: labelsQuery.refetch,
+    lookupsLoading: {
+      agents: agentsQuery.isLoading,
+      departments: departmentsQuery.isLoading,
+      categories: categoriesQuery.isLoading,
+      labels: labelsQuery.isLoading,
+    },
   };
 };

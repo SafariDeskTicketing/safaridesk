@@ -3,7 +3,13 @@ import http from '../../../services/http';
 import { APIS } from '../../../services/apis';
 import type { Ticket, LabelItem } from '../../../types';
 import { resolveStatusToken } from './ticketSearch';
-import { buildTicketQueryParams, type TicketListFilters, type TicketListLookups } from './ticketListParams';
+import {
+  buildTicketQueryParams,
+  isTicketQueryBlockedByPendingLookups,
+  type TicketListFilters,
+  type TicketListLookups,
+  type TicketListLookupsLoading,
+} from './ticketListParams';
 
 export interface ApiTicket {
   id: number;
@@ -170,11 +176,23 @@ const fetchTicketsPage = async (
  * token mini-language (e.g. `assignee:john`) into an id at fetch time, and
  * shouldn't itself trigger a refetch when the agents/departments/etc. list
  * reloads.
+ *
+ * That tradeoff only holds once the lookup a token needs has actually
+ * loaded: `staleTime: Infinity` means the key this fetch commits under never
+ * gets a second chance to resolve a token correctly once the lookup arrives
+ * later. So `enabled` holds off fetching for this key at all while a present
+ * token's lookup is still loading, instead of fetching now and resolving
+ * that token to nothing forever.
  */
-export const useTicketsListQuery = (input: TicketListQueryInput, lookups: TicketListLookups) =>
+export const useTicketsListQuery = (
+  input: TicketListQueryInput,
+  lookups: TicketListLookups,
+  lookupsLoading: TicketListLookupsLoading,
+) =>
   useQuery<ApiResponse>({
     queryKey: ['tickets', input],
     queryFn: ({ signal }) => fetchTicketsPage(input, lookups, signal),
     placeholderData: (prev) => prev,
     staleTime: Infinity, // ticket_event (WebSocket-driven) handles invalidation, not a timer
+    enabled: !isTicketQueryBlockedByPendingLookups(input.searchQuery, lookupsLoading),
   });

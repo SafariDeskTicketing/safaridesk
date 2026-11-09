@@ -168,7 +168,7 @@ export default function TaskManagementSystem() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const [updateStatus, setUpdateStatus] = useState(false);
-  const { agents, departments, labels } = useTaskFilterOptions();
+  const { agents, departments, labels, lookupsLoading } = useTaskFilterOptions();
   // Assigned directly during render (not in a useEffect) so the token-search
   // resolvers always read the current value, not the previous render's —
   // a useEffect only syncs the ref *after* this render has already committed,
@@ -229,6 +229,7 @@ export default function TaskManagementSystem() {
       departments: departmentsRef.current,
       labels: labelsRef.current,
     },
+    lookupsLoading,
   );
 
   useEffect(() => {
@@ -243,7 +244,11 @@ export default function TaskManagementSystem() {
     [tasksQuery.data],
   );
   const totalCount = tasksQuery.data?.count ?? 0;
-  const isLoading = tasksQuery.isLoading;
+  // `isPending` (not `isLoading`) so the skeleton still shows instead of a
+  // flash of "no tasks found" while the query is held `enabled: false`
+  // waiting on a lookup a search token needs — `isLoading` requires
+  // `isFetching`, which is false for a disabled query.
+  const isLoading = tasksQuery.isPending;
   const [viewMode, setViewMode] = useState<TaskViewMode>(getStoredTaskViewMode());
   const [isCreateTaskModalDirty, setIsCreateTaskModalDirty] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);

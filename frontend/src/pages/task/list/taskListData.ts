@@ -2,7 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import http from '../../../services/http';
 import { APIS } from '../../../services/apis';
 import type { TaskObj, LabelItem } from '../../../types';
-import { buildTaskQueryParams, type TaskListFilters, type TaskListLookups } from './taskListParams';
+import {
+  buildTaskQueryParams,
+  isTaskQueryBlockedByPendingLookups,
+  type TaskListFilters,
+  type TaskListLookups,
+  type TaskListLookupsLoading,
+} from './taskListParams';
 
 export interface ApiTask {
   id: number;
@@ -121,11 +127,22 @@ const fetchTasksPage = async (
  * is simply never rendered for the current query key. `lookups` is
  * intentionally NOT part of the query key — see the ticket-list rewrite's
  * equivalent for why.
+ *
+ * `staleTime: Infinity` means the key this fetch commits under never gets a
+ * second chance to resolve a token correctly once its lookup arrives later,
+ * so `enabled` holds off fetching for this key while a present token's
+ * lookup is still loading, instead of resolving that token to nothing and
+ * caching the wrong result forever.
  */
-export const useTasksListQuery = (input: TaskListQueryInput, lookups: TaskListLookups) =>
+export const useTasksListQuery = (
+  input: TaskListQueryInput,
+  lookups: TaskListLookups,
+  lookupsLoading: TaskListLookupsLoading,
+) =>
   useQuery<ApiResponse>({
     queryKey: ['tasks', input],
     queryFn: ({ signal }) => fetchTasksPage(input, lookups, signal),
     placeholderData: (prev) => prev,
     staleTime: Infinity, // task_event (WebSocket-driven) handles invalidation, not a timer
+    enabled: !isTaskQueryBlockedByPendingLookups(input.searchQuery, lookupsLoading),
   });

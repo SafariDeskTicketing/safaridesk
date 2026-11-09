@@ -113,7 +113,7 @@ export default function TicketManagementSystem() {
   // State from ViewTicket
   const [reloader, setReloader] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { agents, departments, categories, labels, refetchLabels } = useTicketFilterOptions();
+  const { agents, departments, categories, labels, refetchLabels, lookupsLoading } = useTicketFilterOptions();
 
   // Refs to avoid triggering fetchTickets recreation when lookup data changes —
   // the token-search resolvers need synchronous, non-reactive access to the
@@ -236,6 +236,7 @@ export default function TicketManagementSystem() {
       categories: categoriesRef.current,
       labels: labelsRef.current,
     },
+    lookupsLoading,
   );
 
   useEffect(() => {
@@ -250,7 +251,11 @@ export default function TicketManagementSystem() {
     [ticketsQuery.data],
   );
   const totalCount = ticketsQuery.data?.count ?? 0;
-  const isLoading = ticketsQuery.isLoading;
+  // `isPending` (not `isLoading`) so the skeleton still shows instead of a
+  // flash of "no tickets found" while the query is held `enabled: false`
+  // waiting on a lookup a search token needs — `isLoading` requires
+  // `isFetching`, which is false for a disabled query.
+  const isLoading = ticketsQuery.isPending;
   const isFetchingTickets = ticketsQuery.isFetching;
 
   const listGridCols = LIST_GRID_COLS;

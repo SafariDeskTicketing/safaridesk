@@ -27,6 +27,30 @@ export interface TaskListLookups {
   labels: LabelItem[];
 }
 
+export interface TaskListLookupsLoading {
+  agents: boolean;
+  departments: boolean;
+  labels: boolean;
+}
+
+/**
+ * True when the free-text search currently contains a token (e.g.
+ * `assignee:jane`) whose matching lookup hasn't loaded yet. See the
+ * ticket-list equivalent (`isTicketQueryBlockedByPendingLookups`) for why
+ * this has to hold off the fetch rather than let it resolve the token to
+ * nothing under `staleTime: Infinity`.
+ */
+export const isTaskQueryBlockedByPendingLookups = (
+  searchQuery: string,
+  lookupsLoading: TaskListLookupsLoading,
+): boolean => {
+  const { tokens } = parseSearchQuery(searchQuery);
+  if (tokens.assignee && lookupsLoading.agents) return true;
+  if (tokens.department && lookupsLoading.departments) return true;
+  if (tokens.labels && lookupsLoading.labels) return true;
+  return false;
+};
+
 /**
  * Merges the token mini-language (parsed out of free-text search) with the
  * dropdown filter state into the final query params sent to the task-list

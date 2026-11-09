@@ -30,6 +30,33 @@ export interface TicketListLookups {
   labels: LabelItem[];
 }
 
+export interface TicketListLookupsLoading {
+  agents: boolean;
+  departments: boolean;
+  categories: boolean;
+  labels: boolean;
+}
+
+/**
+ * True when the free-text search currently contains a token (e.g.
+ * `assignee:jane`) whose matching lookup hasn't loaded yet. Used to hold off
+ * fetching the ticket list until that lookup is in, instead of fetching
+ * immediately, silently resolving the token to nothing, and caching that
+ * wrong result forever under `staleTime: Infinity` (the lookup finishing
+ * later doesn't change the query key, so it would never self-correct).
+ */
+export const isTicketQueryBlockedByPendingLookups = (
+  searchQuery: string,
+  lookupsLoading: TicketListLookupsLoading,
+): boolean => {
+  const { tokens } = parseSearchQuery(searchQuery);
+  if (tokens.assignee && lookupsLoading.agents) return true;
+  if (tokens.department && lookupsLoading.departments) return true;
+  if (tokens.category && lookupsLoading.categories) return true;
+  if (tokens.labels && lookupsLoading.labels) return true;
+  return false;
+};
+
 /**
  * Merges the token mini-language (parsed out of free-text search) with the
  * dropdown filter state into the final query params sent to the ticket-list
