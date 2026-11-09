@@ -92,7 +92,13 @@ export const Modal: React.FC<ModalProps> = ({
   // Reading document.activeElement from inside the open effect instead would
   // be too late — it runs after any child's autoFocus has already moved
   // focus into the dialog, capturing the wrong element.
-  if (!isOpen) {
+  // Guarded on dialogRef not containing the active element: on the render
+  // that flips isOpen true -> false (e.g. clicking a Cancel/Submit button
+  // inside the dialog), dialogRef still points at the about-to-be-removed
+  // dialog node and that button is still focused — without the guard this
+  // would overwrite the real trigger with the button that's seconds from
+  // being detached, so the close effect's focus() below becomes a no-op.
+  if (!isOpen && !dialogRef.current?.contains(document.activeElement)) {
     previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
   }
 
