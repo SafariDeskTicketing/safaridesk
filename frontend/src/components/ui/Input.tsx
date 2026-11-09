@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import { clsx } from 'clsx';
 import type { AppIcon } from '../icons/AppIcons';
 
@@ -13,7 +13,9 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, icon: Icon, iconPosition = 'left', fullWidth = false, rightElement, className, ...props }, ref) => {
+  ({ label, error, helperText, icon: Icon, iconPosition = 'left', fullWidth = false, rightElement, className, id, ...props }, ref) => {
+    const fallbackId = useId();
+    const inputId = id ?? fallbackId;
     const baseClasses = 'block h-[44px] w-full rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--shell-field-bg)] px-3.5 text-[14px] text-[var(--text-primary)] shadow-[var(--shell-shadow-sm)] transition-colors duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--shell-search-border)] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:text-[var(--text-disabled)] disabled:bg-[var(--surface-muted)] dark:bg-[var(--shell-field-bg)]';
 
     const errorClasses = 'border-[var(--status-danger-text)] text-[var(--status-danger-text)] focus:border-[var(--status-danger-text)] focus:ring-[rgba(224,82,69,0.14)]';
@@ -23,7 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={clsx('relative space-y-1.5', fullWidth && 'w-full')}>
         {label && (
-          <label className="block text-[14px] font-medium text-[var(--text-secondary)]">
+          <label htmlFor={inputId} className="block text-[14px] font-medium text-[var(--text-secondary)]">
             {label}
           </label>
         )}
@@ -40,6 +42,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           
           <input
             ref={ref}
+            id={inputId}
             className={clsx(
               baseClasses,
               iconClasses,

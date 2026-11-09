@@ -190,6 +190,7 @@ export const Modal: React.FC<ModalProps> = ({
                   onClick={onClose}
                   icon={X}
                   className="ml-auto"
+                  aria-label="Close modal"
                 />
               )}
             </div>

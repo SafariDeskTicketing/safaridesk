@@ -2,6 +2,7 @@ import React, { ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { FloatingPortal } from '@floating-ui/react';
 import { useAnchoredFloating } from './useAnchoredFloating';
+import Button from './Button';
 
 type DropdownMenuProps = {
   isOpen: boolean;
@@ -102,14 +103,40 @@ interface DropdownProps {
   compact?: boolean;
 }
 
+/**
+ * `trigger` is usually already a real `<button>` (or our `Button`), which handles
+ * its own keyboard activation natively. Only make the wrapper itself keyboard-operable
+ * when the trigger isn't already focusable, otherwise it creates a nested interactive
+ * element (two tab stops, duplicate accessible name) for the common case.
+ */
+function isNativelyInteractive(node: ReactNode): boolean {
+  if (!React.isValidElement(node)) return false;
+  if (typeof node.type === 'string') return node.type === 'button' || node.type === 'a';
+  return node.type === Button;
+}
+
 export const Dropdown: React.FC<DropdownProps> = ({ trigger, options, compact = false }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleClose = () => setIsOpen(false);
+  const toggle = () => setIsOpen((open) => !open);
+  const triggerIsInteractive = isNativelyInteractive(trigger);
 
   return (
     <div className="relative">
-      <div onClick={() => setIsOpen(!isOpen)}>
+      <div
+        onClick={toggle}
+        {...(!triggerIsInteractive && {
+          role: 'button',
+          tabIndex: 0,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggle();
+            }
+          },
+        })}
+      >
         {trigger}
       </div>
       <DropdownMenu isOpen={isOpen} onClose={handleClose} compact={compact}>
