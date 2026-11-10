@@ -1,7 +1,6 @@
 import logging
 from urllib.parse import urlparse
 
-from django.core.cache import cache
 from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -11,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from RNSafarideskBack.settings import DOMAIN_NAME
+from shared.utils.rate_limit import get_client_ip, is_rate_limited
 from tenant.services.audit import actor_name, log_audit_event
 from users.models import Business, Customer, CustomerMagicLinkToken, CustomDomains
 from users.serializers.CustomerAuthSerializer import (
@@ -24,26 +24,6 @@ logger = logging.getLogger(__name__)
 LOGIN_LINK_EXPIRY_MINUTES = 15
 RATE_LIMIT_WINDOW_SECONDS = LOGIN_LINK_EXPIRY_MINUTES * 60
 RATE_LIMIT_MAX_ATTEMPTS = 5
-
-
-def _get_client_ip(request):
-    xff = request.META.get('HTTP_X_FORWARDED_FOR')
-    if xff:
-        return xff.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR')
-
-
-def _rate_limit_key(scope: str, value: str | None, ip_address: str | None):
-    return f'helpcenter_magic_login:{scope}:{value or "unknown"}:{ip_address or "unknown"}'
-
-
-def _increment_rate_limit(scope: str, value: str | None, ip_address: str | None):
-    key = _rate_limit_key(scope, value, ip_address)
-    current = cache.get(key, 0)
-    if current >= RATE_LIMIT_MAX_ATTEMPTS:
-        return False
-    cache.set(key, current + 1, RATE_LIMIT_WINDOW_SECONDS)
-    return True
 
 
 def _generic_success_message():
@@ -154,15 +134,15 @@ class CustomerLoginView(APIView):
 
         email = serializer.validated_data['email'].strip().lower()
         business_id = serializer.validated_data.get('business_id')
-        ip_address = _get_client_ip(request)
+        ip_address = get_client_ip(request)
 
-        if not _increment_rate_limit('email', email, ip_address):
+        if is_rate_limited('customer_magic_login:email', email, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS):
             return Response(
                 {'message': 'Too many login attempts. Please try again later.'},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
-        if not _increment_rate_limit('ip', ip_address, email):
+        if is_rate_limited('customer_magic_login:ip', ip_address, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS):
             return Response(
                 {'message': 'Too many login attempts. Please try again later.'},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,

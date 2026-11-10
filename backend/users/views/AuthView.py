@@ -14,6 +14,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from RNSafarideskBack.settings import DOMAIN_NAME
 from shared.tasks import send_otp
+from shared.utils.rate_limit import get_client_ip, is_rate_limited
 from tenant.services.audit import actor_name, log_audit_event
 from users.models import Users, Business
 from users.serializers.AuthSerializer import LoginInitiateSerializer, OTPVerifySerializer, ResendOTPSerializer, \
@@ -30,6 +31,19 @@ from django.contrib.auth.password_validation import validate_password
 
 from users.serializers.MyTokenObtainSerializer import MyTokenObtainPairSerializer
 from util.Mailer import Mailer
+
+# Same window/threshold already established for customer magic-link login
+# (CustomerAuthView.py) - kept identical so there's one rate-limit policy
+# across both auth surfaces, not a second set of tuned numbers to justify.
+AUTH_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
+AUTH_RATE_LIMIT_MAX_ATTEMPTS = 5
+
+
+def _too_many_attempts_response():
+    return Response(
+        {"message": "Too many attempts. Please try again later."},
+        status=status.HTTP_429_TOO_MANY_REQUESTS,
+    )
 
 
 def _issue_login_tokens(user, request=None):
@@ -59,6 +73,13 @@ class LoginInitiateView(APIView):
 
     @swagger_auto_schema(request_body=LoginInitiateSerializer)
     def post(self, request):
+        username = (request.data.get('username') or '').strip().lower()
+        ip_address = get_client_ip(request)
+        if is_rate_limited('staff_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+        if is_rate_limited('staff_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+
         serializer = LoginInitiateSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.context['user']
@@ -136,6 +157,13 @@ class OTPVerifyView(APIView):
     permission_classes = [AllowAny]
     @swagger_auto_schema(request_body=OTPVerifySerializer)
     def post(self, request):
+        session_key = request.data.get('session_key') or ''
+        ip_address = get_client_ip(request)
+        if is_rate_limited('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+        if is_rate_limited('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+
         serializer = OTPVerifySerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.context['user']
@@ -180,6 +208,12 @@ class ResendOTPView(APIView):
         session_key = request.data.get('session_key')
         if not session_key:
             return Response({"detail": "Session key is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ip_address = get_client_ip(request)
+        if is_rate_limited('staff_resend_otp:session', session_key, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+        if is_rate_limited('staff_resend_otp:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
         try:
             session = Session.objects.get(session_key=session_key)
             user_id = session.get_decoded().get('_auth_user_id')
@@ -224,6 +258,13 @@ class SendPasswordResetLinkView(APIView):
 
     @swagger_auto_schema(request_body=SendPasswordResetLinkSerializer)
     def post(self, request):
+        identifier = (request.data.get('identifier') or '').strip().lower()
+        ip_address = get_client_ip(request)
+        if is_rate_limited('staff_password_reset_request:identifier', identifier, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+        if is_rate_limited('staff_password_reset_request:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+
         serializer = SendPasswordResetLinkSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -289,6 +330,15 @@ class LoginView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
     authentication_classes = []
 
+    def post(self, request, *args, **kwargs):
+        username = (request.data.get('username') or '').strip().lower()
+        ip_address = get_client_ip(request)
+        if is_rate_limited('staff_express_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+        if is_rate_limited('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+        return super().post(request, *args, **kwargs)
+
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -334,6 +384,12 @@ class PasswordResetView(APIView):
                 {"message": "Token, UID, and new password are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        ip_address = get_client_ip(request)
+        if is_rate_limited('staff_password_reset_confirm:uid', uid, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
+        if is_rate_limited('staff_password_reset_confirm:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+            return _too_many_attempts_response()
 
         try:
             # Decode UID
