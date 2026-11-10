@@ -14,7 +14,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from RNSafarideskBack.settings import DOMAIN_NAME
 from shared.tasks import send_otp
-from shared.utils.rate_limit import get_client_ip, is_rate_limited
+from shared.utils.rate_limit import get_client_ip, is_blocked, is_rate_limited, record_failure
 from tenant.services.audit import actor_name, log_audit_event
 from users.models import Users, Business
 from users.serializers.AuthSerializer import LoginInitiateSerializer, OTPVerifySerializer, ResendOTPSerializer, \
@@ -73,11 +73,10 @@ class LoginInitiateView(APIView):
 
     @swagger_auto_schema(request_body=LoginInitiateSerializer)
     def post(self, request):
-        username = (request.data.get('username') or '').strip().lower()
+        username = str(request.data.get('username') or '').strip().lower()
         ip_address = get_client_ip(request)
-        if is_rate_limited('staff_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
-            return _too_many_attempts_response()
-        if is_rate_limited('staff_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+        if is_blocked('staff_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS) or \
+                is_blocked('staff_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS):
             return _too_many_attempts_response()
 
         serializer = LoginInitiateSerializer(data=request.data)
@@ -141,6 +140,12 @@ class LoginInitiateView(APIView):
                 "detail": "OTP sent to your email.",
             }, status=status.HTTP_200_OK)
         
+        # Wrong credentials - record against the failure budget (a
+        # successful attempt above never reaches this point, so correct
+        # logins never erode it).
+        record_failure('staff_login:username', username, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+        record_failure('staff_login:ip', ip_address, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+
         # Extract error message and error_code from validation errors
         errors = serializer.errors
         if 'non_field_errors' in errors and len(errors['non_field_errors']) > 0:
@@ -159,9 +164,8 @@ class OTPVerifyView(APIView):
     def post(self, request):
         session_key = request.data.get('session_key') or ''
         ip_address = get_client_ip(request)
-        if is_rate_limited('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
-            return _too_many_attempts_response()
-        if is_rate_limited('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+        if is_blocked('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_MAX_ATTEMPTS) or \
+                is_blocked('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS):
             return _too_many_attempts_response()
 
         serializer = OTPVerifySerializer(data=request.data)
@@ -197,6 +201,9 @@ class OTPVerifyView(APIView):
                 business=user.business,
             )
             return Response(data)
+
+        record_failure('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+        record_failure('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_WINDOW_SECONDS)
         return Response({"message": "Invalid or expired OTP!"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -258,7 +265,7 @@ class SendPasswordResetLinkView(APIView):
 
     @swagger_auto_schema(request_body=SendPasswordResetLinkSerializer)
     def post(self, request):
-        identifier = (request.data.get('identifier') or '').strip().lower()
+        identifier = str(request.data.get('identifier') or '').strip().lower()
         ip_address = get_client_ip(request)
         if is_rate_limited('staff_password_reset_request:identifier', identifier, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
             return _too_many_attempts_response()
@@ -331,13 +338,17 @@ class LoginView(TokenObtainPairView):
     authentication_classes = []
 
     def post(self, request, *args, **kwargs):
-        username = (request.data.get('username') or '').strip().lower()
+        username = str(request.data.get('username') or '').strip().lower()
         ip_address = get_client_ip(request)
-        if is_rate_limited('staff_express_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+        if is_blocked('staff_express_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS) or \
+                is_blocked('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS):
             return _too_many_attempts_response()
-        if is_rate_limited('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
-            return _too_many_attempts_response()
-        return super().post(request, *args, **kwargs)
+
+        response = super().post(request, *args, **kwargs)
+        if response.status_code >= 400:
+            record_failure('staff_express_login:username', username, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+            record_failure('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+        return response
 
 
 class LogoutView(APIView):
