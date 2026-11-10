@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/src/components/editor/safaridesk-editor.css"
+        ],
+        "createdAt": "2026-11-10T15:23:53.782Z",
+        "reason": "Agent: blockquote border-left accent is a universal editorial/markdown convention (GitHub, Medium, Tailwind Typography all use it), not a random card-edge AI tell. Already thinned 4px->3px this session."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/src/index.css"
+        ],
+        "createdAt": "2026-11-10T15:23:54.823Z",
+        "reason": "Agent: same kb-content blockquote border-left convention as safaridesk-editor.css, thinned 4px->3px this session."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/src/components/ui/Tip.tsx"
+        ],
+        "createdAt": "2026-11-10T15:23:55.825Z",
+        "reason": "Agent: border-l/r/t/b-6 with transparent sides form a CSS-triangle tooltip arrow, not a card accent border; standard technique, not AI slop."
+      }
+    ]
+  }
+}
