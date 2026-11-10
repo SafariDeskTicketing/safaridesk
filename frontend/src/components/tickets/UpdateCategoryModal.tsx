@@ -31,7 +31,7 @@ const UpdateCategoryModal: React.FC<UpdateCategoryModalProps> = ({
     const fetchCategories = async () => {
       try {
         const response = await http.get(APIS.LIST_TICKET_CATEGORIES + '?pagination=no');
-        const cats = response.data || response.data.results || [];
+        const cats = response.data.results || response.data || [];
         setCategories(cats);
         
         // Set current category as selected

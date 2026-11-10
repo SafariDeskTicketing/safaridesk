@@ -18,7 +18,7 @@ const fetchDepartments = async (): Promise<Array<{ id: number; name: string }>> 
 
 const fetchCategories = async (): Promise<Array<{ id: number; name: string; department?: number | null }>> => {
   const response = await http.get(APIS.LIST_TICKET_CATEGORIES + '?pagination=no');
-  return response.data || response.data.results || [];
+  return response.data.results || response.data || [];
 };
 
 const fetchLabels = async (): Promise<LabelItem[]> => {

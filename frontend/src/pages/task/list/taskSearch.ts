@@ -1,7 +1,11 @@
 import { Search, CheckCircle, AlertTriangle, User, Building, Tag, Calendar } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { Agent } from '../../../types';
-import { parseSearchQueryTokens, type ParsedSearchQuery } from '../../../utils/searchTokenMiniLanguage';
+import {
+  parseSearchQueryTokens,
+  resolveDateRangeToken,
+  type ParsedSearchQuery,
+} from '../../../utils/searchTokenMiniLanguage';
+export { resolveAssigneeToken, resolveDepartmentToken } from '../../../utils/searchTokenMiniLanguage';
 
 export type ColumnFilterKey = 'status' | 'priority' | 'assignee' | 'department' | 'labels' | 'due_date';
 
@@ -59,46 +63,9 @@ export const resolvePriorityToken = (value?: string) => {
   return allowed.has(normalized) ? normalized : null;
 };
 
-// Takes the agents list directly (callers pass a ref's .current to avoid
-// stale closures — see the all.tsx rewrite's equivalent for why this
-// matters when the resolver is used inside a memoized fetcher).
-export const resolveAssigneeToken = (value: string | undefined, agents: Agent[] | null) => {
-  if (!value) return null;
-  const normalized = value.toLowerCase();
-  if (['unassigned', 'none', 'noone', 'no-one'].includes(normalized)) {
-    return 'unassigned';
-  }
-  const match = agents?.find(agent => {
-    const name = agent.name?.toLowerCase() || '';
-    const email = agent.email?.toLowerCase() || '';
-    return name.includes(normalized) || email.includes(normalized);
-  });
-  return match ? match.id.toString() : null;
-};
-
-export const resolveDepartmentToken = (value: string | undefined, departments: Array<{ id: number; name: string }>) => {
-  if (!value) return null;
-  const normalized = value.toLowerCase();
-  const match = departments.find(dept => dept.name?.toLowerCase().includes(normalized));
-  return match ? match.id.toString() : null;
-};
-
-export const resolveDueDateToken = (value?: string) => {
-  if (!value) return null;
-  const normalized = value.trim();
-  if (!normalized) return null;
-  if (normalized.includes('..')) {
-    const [fromRaw, toRaw] = normalized.split('..');
-    const from = fromRaw?.trim() || undefined;
-    const to = toRaw?.trim() || undefined;
-    return { from, to };
-  }
-  if (normalized.startsWith('>=')) return { from: normalized.slice(2).trim() || undefined };
-  if (normalized.startsWith('>')) return { from: normalized.slice(1).trim() || undefined };
-  if (normalized.startsWith('<=')) return { to: normalized.slice(2).trim() || undefined };
-  if (normalized.startsWith('<')) return { to: normalized.slice(1).trim() || undefined };
-  return { from: normalized };
-};
+// Thin named alias: the parsing logic is shared (see resolveDateRangeToken),
+// only the field it's applied to (due date vs. created date) is task-specific.
+export const resolveDueDateToken = resolveDateRangeToken;
 
 export const statusLabel = (value: string) => {
   const map: Record<string, string> = {

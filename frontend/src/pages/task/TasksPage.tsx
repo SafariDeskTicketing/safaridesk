@@ -611,7 +611,7 @@ export default function TaskManagementSystem() {
   const fetchTickets = async () => {
     try {
       const response = await http.get(APIS.LIST_TICKETS + '?pagination=no');
-      setTickets(response.data.results || response.data);
+      setTickets(response.data.results || response.data || []);
     } catch (error: any) {
       console.error("Failed to fetch tickets:", error);
     }

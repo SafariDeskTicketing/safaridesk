@@ -279,7 +279,7 @@ const TicketInfo: React.FC = () => {
 			const response = await http.get(
 				APIS.LIST_TICKET_CATEGORIES + "?pagination=no",
 			);
-			setCategories(response.data || response.data.results || []);
+			setCategories(response.data.results || response.data || []);
 		} catch (error: unknown) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Failed to fetch categories";
@@ -1381,14 +1381,15 @@ const TicketInfo: React.FC = () => {
 									<UserCheck className="w-4 h-4 mr-2 text-gray-500" />
 									{user?.role.toUpperCase() === "ADMIN" ||
 									user?.role.toUpperCase() === "AGENT" ? (
-										<span
-											className="font-medium cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+										<button
+											type="button"
+											className="bg-transparent border-0 p-0 font-medium cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
 											title="Click to change assignee"
 											onClick={() => setShowAssignModal(true)}
 										>
 											{formatUserDisplayName(ticket.assigned_to, "Unassigned")}
 											<Edit3 size={12} className="inline ml-1 opacity-50" />
-										</span>
+										</button>
 									) : (
 										<span className="font-medium">
 											{formatUserDisplayName(ticket.assigned_to, "Unassigned")}
@@ -1412,14 +1413,15 @@ const TicketInfo: React.FC = () => {
 									<Building className="w-4 h-4 mr-2 text-gray-500" />
 									{user?.role.toUpperCase() === "ADMIN" ||
 									user?.role.toUpperCase() === "AGENT" ? (
-										<span
-											className="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+										<button
+											type="button"
+											className="bg-transparent border-0 p-0 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
 											title="Click to change department"
 											onClick={() => setShowDepartmentModal(true)}
 										>
 											{ticket.department?.name ?? "No department assigned"}
 											<Edit3 size={12} className="inline ml-1 opacity-50" />
-										</span>
+										</button>
 									) : (
 										<span>
 											{ticket.department?.name ?? "No department assigned"}
@@ -1432,14 +1434,15 @@ const TicketInfo: React.FC = () => {
 									<Tag className="w-4 h-4 mr-2 text-gray-500" />
 									{user?.role.toUpperCase() === "ADMIN" ||
 									user?.role.toUpperCase() === "AGENT" ? (
-										<span
-											className="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+										<button
+											type="button"
+											className="bg-transparent border-0 p-0 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
 											title="Click to change category"
 											onClick={() => setShowCategoryModal(true)}
 										>
 											{ticket.category?.name ?? "No category"}
 											<Edit3 size={12} className="inline ml-1 opacity-50" />
-										</span>
+										</button>
 									) : (
 										<span>{ticket.category?.name ?? "No category"}</span>
 									)}

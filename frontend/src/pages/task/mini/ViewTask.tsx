@@ -310,14 +310,15 @@ const TaskInfo: React.FC<Props> = () => {
               <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
                 <User className="w-4 h-4 mr-2" />
                 {user?.role?.toUpperCase() === "ADMIN" ? (
-                  <span 
-                    onClick={() => setShowAssignModal(true)} 
-                    className="cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => setShowAssignModal(true)}
+                    className="bg-transparent border-0 p-0 cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                     title={task.assigned_to ? 'Click to reassign' : 'Click to assign'}
                   >
                     {formatUserDisplayName(task.assigned_to, 'Unassigned')}
                     <Edit3 size={12} className="inline ml-1 opacity-50" />
-                  </span>
+                  </button>
                 ) : (
                   <span>{formatUserDisplayName(task.assigned_to, 'Unassigned')}</span>
                 )}
@@ -330,14 +331,15 @@ const TaskInfo: React.FC<Props> = () => {
               <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 {user?.role?.toUpperCase() === "ADMIN" ? (
-                  <span 
+                  <button
+                    type="button"
                     onClick={() => setShowPriorityModal(true)}
-                    className={`px-2 py-0.5 rounded text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getPriorityColor(task.priority)}`}
+                    className={`bg-transparent border-0 px-2 py-0.5 rounded text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getPriorityColor(task.priority)}`}
                     title="Click to change priority"
                   >
                     {(task.priority || 'unknown').toUpperCase()}
                     <Edit3 size={10} className="inline ml-1 opacity-50" />
-                  </span>
+                  </button>
                 ) : (
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}>
                     {(task.priority || 'unknown').toUpperCase()}
@@ -347,14 +349,15 @@ const TaskInfo: React.FC<Props> = () => {
               {/* Status with inline edit */}
               <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                <span 
+                <button
+                  type="button"
                   onClick={() => setShowStatusModal(true)}
-                  className={`px-2 py-0.5 rounded text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(task.task_status)}`}
+                  className={`bg-transparent border-0 px-2 py-0.5 rounded text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(task.task_status)}`}
                   title="Click to change status"
                 >
                   {(task.task_status || 'unknown').replace('_', ' ').toUpperCase()}
                   <Edit3 size={10} className="inline ml-1 opacity-50" />
-                </span>
+                </button>
               </div>
               {task.linked_ticket && (
                 <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
