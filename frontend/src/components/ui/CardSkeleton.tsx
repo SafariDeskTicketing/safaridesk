@@ -1,4 +1,5 @@
 import React from 'react';
+import { Card } from './Card';
 
 interface CardSkeletonProps {
   count?: number;
@@ -8,10 +9,7 @@ export const CardSkeleton: React.FC<CardSkeletonProps> = ({ count = 6 }) => {
   return (
     <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: count }).map((_, cardIndex) => (
-        <div
-          key={cardIndex}
-          className="rounded-[14px] border border-[var(--border-color)] bg-[var(--card-bg)] p-3.5 shadow-[var(--shell-shadow-sm)]"
-        >
+        <Card key={cardIndex} className="rounded-[14px] p-3.5">
           <div className="flex items-center justify-between gap-2">
             <div className="sd-shimmer h-4 w-16 rounded" />
             <div className="sd-shimmer h-5 w-14 rounded-full" />
@@ -25,7 +23,7 @@ export const CardSkeleton: React.FC<CardSkeletonProps> = ({ count = 6 }) => {
             <div className="sd-shimmer h-6 w-6 rounded-full" />
             <div className="sd-shimmer h-3.5 w-20 rounded" />
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
