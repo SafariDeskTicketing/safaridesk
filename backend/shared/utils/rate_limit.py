@@ -2,7 +2,7 @@
 (login, OTP verification, password-reset requests, etc).
 
 Backed by Django's configured cache (Redis in every real deployment - see
-RNSafarideskBack/settings/base.py's CACHES), so the counter is correctly
+RNSafarideskBack/settings/dev.py and prod.py's CACHES), so the counter is correctly
 shared across every app-server worker process, not just the one that
 happened to handle a given request.
 """
