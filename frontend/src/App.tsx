@@ -207,8 +207,6 @@
 //         <Suspense fallback={<Loader />}>
 //           <Routes>
 //             {/* Public Knowledge Base Routes */}
-//             {/* <Route path="/knowledge-base" element={<PublicKBInterface />} /> */}
-//             {/* <Route path="/knowledge-base/categories/:slug" element={<PublicKBInterface />} /> */}
 //             {/* <Route path="/knowledge-base/articles/:slug" element={<ArticleDetail />} />  */}
 //             {/* <Route path="/knowledge-base/articles/:slug" element={<ArticleView />} /> */}
 
