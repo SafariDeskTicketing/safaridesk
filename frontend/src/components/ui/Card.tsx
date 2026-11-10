@@ -1,20 +1,28 @@
 import React from 'react';
 import { clsx } from 'clsx';
 
-interface CardProps extends React.HTMLAttributes<HTMLElement> {
+type CardProps<T extends React.ElementType> = {
   muted?: boolean;
-  as?: React.ElementType;
-}
+  as?: T;
+} & Omit<React.ComponentPropsWithoutRef<T>, 'as' | 'muted'>;
 
-export const Card: React.FC<CardProps> = ({ className, muted = false, as: Component = 'div', ...props }) => (
-  <Component
-    className={clsx(
-      muted ? 'sd-surface-muted' : 'sd-surface',
-      className
-    )}
-    {...props}
-  />
-);
+export const Card = <T extends React.ElementType = 'div'>({
+  className,
+  muted = false,
+  as,
+  ...props
+}: CardProps<T>) => {
+  const Component = as || 'div';
+  return (
+    <Component
+      className={clsx(
+        muted ? 'sd-surface-muted' : 'sd-surface',
+        className
+      )}
+      {...props}
+    />
+  );
+};
 
 export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => (
   <div className={clsx('flex flex-col gap-1 px-5 py-4 sm:px-6', className)} {...props} />

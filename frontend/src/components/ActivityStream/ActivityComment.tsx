@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sanitizeHTML } from '../../utils/sanitize';
-import { Edit, MoreHorizontal, FileText, File, FileCode, FileArchive, FileSpreadsheet, ChevronRight, Lock, Globe } from 'lucide-react';
+import { Edit, MoreHorizontal, FileText, File, FileCode, FileArchive, FileSpreadsheet, ChevronRight, Lock, Globe, Info } from 'lucide-react';
 import { ActivityCommentData, ActivityAuthor, ActivityEmailAddress } from './ActivityStream';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';

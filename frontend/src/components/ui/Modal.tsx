@@ -98,14 +98,23 @@ export const Modal: React.FC<ModalProps> = ({
   // whatever was captured is stale, not the button that was just focused.
   // A focusin listener fires on the real DOM event regardless of React's
   // render timing, so it can't miss a focus change the way a render-driven
-  // sample can. The dialogRef.contains guard is still required: once the
-  // dialog opens, a child's own autoFocus (several modals in this app use
-  // one) fires a focusin for an element *inside* the dialog, which must not
-  // overwrite the real trigger captured just before it opened.
+  // sample can. The guard excludes focus landing in *any* open dialog, not
+  // just this instance's own: every Modal renders via createPortal into
+  // document.body as a sibling, so a nested modal's dialog is never inside
+  // this one's dialogRef even though it's logically "inside" it. Checking
+  // only our own dialogRef let an outer modal's listener mistake focus
+  // moving into an inner modal (its own autoFocus, or its initial-focus
+  // effect) for "focus left the dialog," overwriting previouslyFocusedElement
+  // with an element that unmounts with the inner modal — so when the inner
+  // modal closed and restored focus to the outer modal's own trigger
+  // (correctly skipped, since that's inside the outer dialog too), the outer
+  // modal was left pointing at a dead node and silently dropped focus to
+  // document.body on its own close instead of returning it to the real
+  // trigger.
   useEffect(() => {
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target && !dialogRef.current?.contains(target)) {
+      if (target && !target.closest('[role="dialog"]')) {
         previouslyFocusedElement.current = target;
       }
     };
