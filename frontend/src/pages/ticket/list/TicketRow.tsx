@@ -45,6 +45,11 @@ export const TicketRow = memo(({
   const tasks = ticket.linked_tasks_count ?? 0;
 
   return (
+    // No role attribute by design: this row contains real interactive
+    // descendants (checkbox, status/priority/assignee controls), and ARIA
+    // forbids an interactive widget role (button/link) on an element with
+    // focusable children - that's the exact bug this fixed. tabIndex +
+    // onKeyDown keep it keyboard-activatable without a misleading role.
     <div
       onClick={() => onRowClick(ticket)}
       tabIndex={0}

@@ -31,6 +31,11 @@ export const TaskRow = memo(({
   const due = formatDateWithTime(task.due_date);
 
   return (
+    // No role attribute by design: this row contains real interactive
+    // descendants (checkbox, status/priority/assignee controls), and ARIA
+    // forbids an interactive widget role (button/link) on an element with
+    // focusable children - that's the exact bug this fixed. tabIndex +
+    // onKeyDown keep it keyboard-activatable without a misleading role.
     <div
       onClick={() => onRowClick(task)}
       tabIndex={0}
