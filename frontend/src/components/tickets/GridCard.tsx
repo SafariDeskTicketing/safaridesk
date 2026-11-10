@@ -186,7 +186,7 @@ const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
                     </span>
                   )}
                 </h3>
-                <p className={`mt-1 truncate text-[15px] leading-5 text-gray-800 dark:text-[var(--text-primary)] flex items-center gap-2 ${!ticket.is_opened ? 'font-semibold' : 'font-medium'}`}>
+                <p className={`mt-1 truncate text-[15px] leading-5 text-[var(--text-primary)] flex items-center gap-2 ${!ticket.is_opened ? 'font-semibold' : 'font-medium'}`}>
                   {ticket.title}
                   {(!ticket.is_opened || ticket.has_new_reply) && <NewBadge />}
                 </p>
@@ -222,7 +222,7 @@ const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
               {isDropdownOpen && (
                 <DropdownMenu isOpen={isDropdownOpen} onClose={onDropdownClose}>
                   <div data-dropdown className="dropdown-menu">
-                    <div className="border-t border-gray-100 dark:border-subtle my-1"></div>
+                    <div className="border-t border-[var(--border-color)] my-1"></div>
                     <DropdownItem icon={UserPlus} onClick={() => handleAction('assign')}>
                       Assign/Reassign
                     </DropdownItem>
@@ -244,7 +244,7 @@ const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
 
         {/* Description */}
         <div
-          className="mb-3 line-clamp-2 text-[13px] leading-5 text-gray-600 dark:text-[var(--text-muted)]"
+          className="mb-3 line-clamp-2 text-[13px] leading-5 text-[var(--text-secondary)]"
           dangerouslySetInnerHTML={{
             __html: sanitizePreviewHTML(
               ticket.description && ticket.description.length > 150
@@ -263,7 +263,7 @@ const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
 
             <div className="flex items-center gap-2">
               <span
-                className="bg-gray-100 dark:bg-surface-hover text-gray-700 dark:text-[var(--text-primary)] px-2.5 py-1 rounded-md text-[14px] font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-surface-hover transition-colors"
+                className="bg-[var(--hover-bg)] text-[var(--text-primary)] px-2.5 py-1 rounded-md text-[14px] font-medium cursor-pointer hover:bg-[var(--border-color)] transition-colors"
                 onClick={(e) => { e.stopPropagation(); setIsUpdateCategoryModalOpen(true); }}
                 title="Click to edit category"
               >
@@ -273,7 +273,7 @@ const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
           </div>
 
           {/* Attachments, Comments, Tasks and Activities indicators */}
-          <div className="flex items-center space-x-3 text-gray-500 dark:text-[var(--text-muted)]">
+          <div className="flex items-center space-x-3 text-[var(--text-muted)]">
             {((ticket.attachments_count ?? ticket.attachments.length) > 0) && (
               <div className="flex items-center space-x-1">
                 <Paperclip size={12} />
@@ -310,7 +310,7 @@ const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-[13px] text-gray-500 dark:text-[var(--text-muted)]">
+        <div className="flex items-center justify-between text-[13px] text-[var(--text-muted)]">
           <div className="flex items-center space-x-4">
             {ticket.assignee && (
               <div className="flex items-center space-x-1.5">
@@ -322,7 +322,7 @@ const GridTicketCardComponent: React.FC<GridTicketCardProps> = ({
 
                   )}
                 </div>
-                <span className="font-medium text-gray-600 dark:text-[var(--text-muted)]">
+                <span className="font-medium text-[var(--text-secondary)]">
                   {formatUserDisplayName(ticket.assignee, 'Unassigned')}
                 </span>
               </div>

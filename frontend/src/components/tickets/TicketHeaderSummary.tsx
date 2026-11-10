@@ -68,7 +68,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
   shareLink,
 }) => {
   return (
-    <div className="bg-white dark:bg-surface-elevated rounded-lg border border-gray-200 dark:border-subtle p-6">
+    <div className="bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)] p-6">
       {ticket.is_merged && ticket.merged_into && (
         <div className="mb-4 px-4 py-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -117,10 +117,10 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
         <div className="flex-1" style={{ flexBasis: '70%' }}>
           <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
-              <h1 className="text-1xl font-bold text-gray-600 dark:text-[var(--text-muted)] mb-2">
+              <h1 className="text-1xl font-bold text-[var(--text-secondary)] mb-2">
                 {`${ticket.title}`}
               </h1>
-              <p className="text-sm text-gray-500 dark:text-[var(--text-muted)] mb-3">
+              <p className="text-sm text-[var(--text-muted)] mb-3">
                 {ticket.ticket_id} • Created {formatRelativeTime(ticket.created_at)}
               </p>
               <div className="flex items-center space-x-3">
@@ -162,7 +162,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                   }
                 >
                   <button
-                    className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                    className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                     title="Update Status"
                   >
                     <Edit3 size={16} />
@@ -192,7 +192,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                         required={true}
                         allowSearch={true}
                       />
-                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-[var(--border-color)]">
                         <button
                             onClick={handleAssign}
                             disabled={isSubmitting}
@@ -205,7 +205,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                   }
                 >
                   <button
-                    className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                    className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                     title={ticket.assigned_to ? "Reassign Ticket" : "Assign Ticket"}
                   >
                     <UserCheck size={16} />
@@ -235,7 +235,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                         required={true}
                         allowSearch={true}
                       />
-                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-[var(--border-color)]">
                         <button
                             onClick={() => { /* Add watcher logic here */ }}
                             disabled={isSubmitting}
@@ -248,7 +248,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                   }
                 >
                   <button
-                    className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                    className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                     title="Add Watchers"
                   >
                     <Eye size={16} />
@@ -273,7 +273,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                         size="md"
                         required={true}
                       />
-                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-[var(--border-color)]">
                         <button
                             onClick={() => { /* Change priority logic here */ }}
                             disabled={isSubmitting}
@@ -286,7 +286,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                   }
                 >
                   <button
-                    className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                    className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                     title="Change Priority"
                   >
                     <AlertTriangle size={16} />
@@ -304,7 +304,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                         placeholder="tag1, tag2, tag3"
                         size="md"
                       />
-                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-[var(--border-color)]">
                         <button
                             onClick={() => { /* Manage tags logic here */ }}
                             disabled={isSubmitting}
@@ -317,7 +317,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                   }
                 >
                   <button
-                    className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                    className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                     title="Manage Tags"
                   >
                     <Tag size={16} />
@@ -325,11 +325,11 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                 </Tooltip>
 
 
-                <div className="w-px h-6 bg-gray-300 dark:bg-surface-hover mx-1"></div>
+                <div className="w-px h-6 bg-[var(--border-color)] mx-1"></div>
 
                 <button
                   // onClick={() => setShowHistory(true)}
-                  className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                  className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                   title="View History"
                 >
                   <ChevronLeft size={16} />
@@ -349,7 +349,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                         />
                         <button
                           onClick={() => { navigator.clipboard.writeText(shareLink); /* successNotification("Link copied!"); */ }}
-                          className="p-2 bg-gray-200 dark:bg-surface-hover rounded-md hover:bg-gray-300 dark:hover:bg-surface-hover transition-colors"
+                          className="p-2 bg-[var(--hover-bg)] rounded-md hover:bg-[var(--border-color)] transition-colors"
                           title="Copy Link"
                         >
                           <Copy size={16} />
@@ -359,7 +359,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                   }
                 >
                   <button
-                    className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                    className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                     title="Share Ticket"
                   >
                     <Share2 size={16} />
@@ -369,7 +369,7 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
                 <div className="relative">
                   <button
                     // onClick={() => setShowMoreActions(!showMoreActions)}
-                    className="inline-flex items-center justify-center w-9 h-9 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-md transition-colors"
+                    className="inline-flex items-center justify-center w-9 h-9 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
                     title="More Actions"
                   >
                     <ChevronRight size={16} />
@@ -386,17 +386,17 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Creator Info */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)]">Creator</h3>
+              <h3 className="text-sm font-medium text-[var(--text-primary)]">Creator</h3>
               <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                <div className="flex items-center text-sm text-[var(--text-secondary)]">
                   <User className="w-4 h-4 mr-2" />
                   {ticket.creator_name}
                 </div>
-                <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                <div className="flex items-center text-sm text-[var(--text-secondary)]">
                   <Mail className="w-4 h-4 mr-2" />
                   {ticket.creator_email}
                 </div>
-                <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                <div className="flex items-center text-sm text-[var(--text-secondary)]">
                   <Phone className="w-4 h-4 mr-2" />
                   {ticket.creator_phone}
                 </div>
@@ -405,17 +405,17 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
 
             {/* Assignment Info */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)]">Assignment</h3>
+              <h3 className="text-sm font-medium text-[var(--text-primary)]">Assignment</h3>
               <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                <div className="flex items-center text-sm text-[var(--text-secondary)]">
                   <User className="w-4 h-4 mr-2" />
                   {formatUserDisplayName(ticket.assigned_to, 'Unassigned')}
                 </div>
-                <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                <div className="flex items-center text-sm text-[var(--text-secondary)]">
                   <Tag className="w-4 h-4 mr-2" />
                   {ticket.department?.name || 'Unassigned'}
                 </div>
-                <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                <div className="flex items-center text-sm text-[var(--text-secondary)]">
                   <FileText className="w-4 h-4 mr-2" />
                   {ticket.category?.name || 'Uncategorized'}
                 </div>
@@ -424,14 +424,14 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
 
             {/* Timeline Info */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)]">Timeline</h3>
+              <h3 className="text-sm font-medium text-[var(--text-primary)]">Timeline</h3>
               <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                <div className="flex items-center text-sm text-[var(--text-secondary)]">
                   <Calendar className="w-4 h-4 mr-2" />
                   Created: {formatDate(ticket.created_at)}
                 </div>
                 {ticket.resolved_at && (
-                  <div className="flex items-center text-sm text-gray-600 dark:text-[var(--text-muted)]">
+                  <div className="flex items-center text-sm text-[var(--text-secondary)]">
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Resolved: {formatDate(ticket.resolved_at)}
                   </div>
@@ -442,9 +442,9 @@ const TicketHeaderSummary: React.FC<TicketHeaderSummaryProps> = ({
 
           {/* Description */}
           <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)] mb-3">Description</h3>
-            <div className="bg-gray-50 dark:bg-surface rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-[var(--text-primary)] whitespace-pre-wrap">
+            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">Description</h3>
+            <div className="bg-[var(--surface-muted)] rounded-lg p-4">
+              <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap">
                 {ticket.description}
               </p>
             </div>

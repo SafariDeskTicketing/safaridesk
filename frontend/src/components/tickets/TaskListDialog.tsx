@@ -82,14 +82,14 @@ export const TaskListDialog: React.FC<TaskListDialogProps> = ({ ticketId, isOpen
           </div>
         ) : tasks.length === 0 ? (
           <div className="text-center py-12">
-            <CheckSquare className="mx-auto h-12 w-12 text-gray-400 dark:text-[var(--text-muted)] mb-4" />
-            <p className="text-gray-500 dark:text-[var(--text-muted)]">No tasks found for this ticket</p>
+            <CheckSquare className="mx-auto h-12 w-12 text-[var(--text-muted)] mb-4" />
+            <p className="text-[var(--text-muted)]">No tasks found for this ticket</p>
           </div>
         ) : (
           <div className="space-y-3">
             {tasks.map((task) => {
               const statusColor = getStatusColor(task.status);
-              const priorityColor = task.priority ? getPriorityColor(task.priority) : 'text-gray-500';
+              const priorityColor = task.priority ? getPriorityColor(task.priority) : 'text-[var(--text-muted)]';
               const StatusIcon = task.status === 'completed' ? CheckSquare : Square;
               const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
 
@@ -97,7 +97,7 @@ export const TaskListDialog: React.FC<TaskListDialogProps> = ({ ticketId, isOpen
                 <div
                   key={task.id}
                   onClick={() => handleTaskClick(task)}
-                  className="p-4 rounded-lg border border-gray-200 dark:border-subtle bg-white dark:bg-surface-elevated hover:bg-gray-50 dark:hover:bg-surface-elevated-50 cursor-pointer transition-all duration-200 group"
+                  className="p-4 rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] hover:bg-[var(--hover-bg)] cursor-pointer transition-all duration-200 group"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3 flex-1">
@@ -106,18 +106,18 @@ export const TaskListDialog: React.FC<TaskListDialogProps> = ({ ticketId, isOpen
                         className={`mt-0.5 flex-shrink-0 ${
                           task.status === 'completed'
                             ? 'text-primary-600 dark:text-primary-400'
-                            : 'text-gray-400 dark:text-[var(--text-muted)]'
+                            : 'text-[var(--text-muted)]'
                         }`}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)] truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                          <h3 className="text-sm font-medium text-[var(--text-primary)] truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                             {task.title}
                           </h3>
-                          <ExternalLink size={14} className="text-gray-400 dark:text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                          <ExternalLink size={14} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                         </div>
                         
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 dark:text-[var(--text-muted)]">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
                           {/* Status Badge */}
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${statusColor}`}>
                             {task.status.replace('_', ' ')}
@@ -144,7 +144,7 @@ export const TaskListDialog: React.FC<TaskListDialogProps> = ({ ticketId, isOpen
                               className={`inline-flex items-center ${
                                 isOverdue
                                   ? 'text-red-600 dark:text-red-400 font-medium'
-                                  : 'text-gray-600 dark:text-[var(--text-muted)]'
+                                  : 'text-[var(--text-secondary)]'
                               }`}
                             >
                               <Calendar size={12} className="mr-1" />

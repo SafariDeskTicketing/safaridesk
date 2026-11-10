@@ -41,7 +41,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ ticketId, isOpen, onClose, 
       onClose={onClose}
       title="Add Note"
     >
-      <p className="text-sm text-gray-500 dark:text-[var(--text-muted)] mb-4">Add an internal note to this ticket.</p>
+      <p className="text-sm text-[var(--text-muted)] mb-4">Add an internal note to this ticket.</p>
       <div className="space-y-4">
         <Textarea
           id="note"

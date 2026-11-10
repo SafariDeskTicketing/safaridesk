@@ -44,7 +44,7 @@ export const ViewModeDropdown: React.FC<ViewModeDropdownProps> = ({
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex h-[36px] w-[164px] items-center justify-between rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white px-3 text-[14px] font-medium text-[var(--text-primary)] shadow-[var(--shell-shadow-sm)] transition-colors hover:bg-[var(--shell-nav-hover-bg)] hover:text-[var(--shell-nav-hover-text)] dark:bg-[var(--card-bg)]"
+                className="flex h-[36px] w-[164px] items-center justify-between rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] px-3 text-[14px] font-medium text-[var(--text-primary)] shadow-[var(--shell-shadow-sm)] transition-colors hover:bg-[var(--shell-nav-hover-bg)] hover:text-[var(--shell-nav-hover-text)]"
             >
                 <span className="flex min-w-0 items-center gap-2">
                     <CurrentIcon className="h-4 w-4 shrink-0" />
@@ -54,7 +54,7 @@ export const ViewModeDropdown: React.FC<ViewModeDropdownProps> = ({
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-[164px] overflow-hidden rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white shadow-[var(--shell-shadow-md)] z-50 dark:bg-[var(--card-bg)]">
+                <div className="absolute right-0 mt-2 w-[164px] overflow-hidden rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] shadow-[var(--shell-shadow-md)] z-50">
                     {(Object.keys(viewModeConfig) as Array<keyof typeof viewModeConfig>).map((mode) => {
                         const config = viewModeConfig[mode];
                         if (!config) return null; // Safety check for undefined config

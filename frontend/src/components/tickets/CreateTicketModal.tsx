@@ -427,12 +427,12 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
             />
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)]">Description</label>
+              <label className="mb-1 block text-sm font-semibold text-[var(--text-primary)]">Description</label>
               <Controller
                 name="description"
                 control={control}
                 render={({ field }) => (
-                  <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-subtle">
+                  <div className="overflow-hidden rounded-lg border border-[var(--border-color)]">
                     <SafariDeskEditor
                       content={field.value}
                       onChange={(content) => field.onChange(content)}
@@ -447,7 +447,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
             </div>
 
             {/* Minimal attachments row */}
-            <div className="flex flex-wrap items-center justify-between rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-subtle dark:bg-surface-elevated dark:text-[var(--text-primary)]">
+            <div className="flex flex-wrap items-center justify-between rounded-lg border border-dashed border-[var(--border-color)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)]">
               <div className="flex flex-wrap items-center gap-2">
                 <AttachmentTrigger>
                   <input
@@ -458,7 +458,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                     accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
                   />
                 </AttachmentTrigger>
-                <span className="text-[14px] text-gray-500 dark:text-[var(--text-muted)]">
+                <span className="text-[14px] text-[var(--text-muted)]">
                   {attachments.length}/{MAX_FILE_COUNT} · {(MAX_FILE_SIZE / (1024 * 1024)).toFixed(0)}MB each
                 </span>
               </div>
@@ -469,26 +469,26 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
 
             {attachments.length > 0 && (
               <div className="space-y-2">
-                <div className="flex items-center space-x-2 text-[14px] text-gray-500 dark:text-[var(--text-muted)]">
+                <div className="flex items-center space-x-2 text-[14px] text-[var(--text-muted)]">
                   <span>Files</span>
                 </div>
                 <div className="space-y-2">
                   {attachments.map((file, index) => (
                     <div
                       key={`${file.name}-${index}`}
-                      className="flex items-center justify-between rounded-lg bg-gray-50 p-2 dark:bg-surface-elevated"
+                      className="flex items-center justify-between rounded-lg bg-[var(--surface-muted)] p-2"
                     >
                       <div className="flex items-center space-x-2">
-                        <FileIcon className="h-4 w-4 text-gray-400" />
+                        <FileIcon className="h-4 w-4 text-[var(--text-muted)]" />
                         <div>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)]">{file.name}</p>
-                          <p className="text-[14px] text-gray-500 dark:text-[var(--text-muted)]">{formatFileSize(file.size)}</p>
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">{file.name}</p>
+                          <p className="text-[14px] text-[var(--text-muted)]">{formatFileSize(file.size)}</p>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeAttachment(index)}
-                        className="p-1 text-gray-400 transition-colors duration-150 hover:text-red-500"
+                        className="p-1 text-[var(--text-muted)] transition-colors duration-150 hover:text-red-500"
                         aria-label={`Remove ${file.name}`}
                       >
                         <X className="h-4 w-4" />
@@ -564,7 +564,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
               {/* Visibility - only show for internal agents, not on helpcenter */}
               {!window.location.pathname.startsWith('/helpcenter') && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Visibility</label>
+                  <label className="block text-sm font-medium text-[var(--text-primary)]">Visibility</label>
                   <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
@@ -572,7 +572,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                       {...register('is_public')}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <label htmlFor="is_public" className="text-sm text-gray-700 dark:text-[var(--text-primary)]">
+                    <label htmlFor="is_public" className="text-sm text-[var(--text-primary)]">
                       Make this ticket public
                     </label>
                   </div>
@@ -583,8 +583,8 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                 <>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Assignee</label>
-                      {loadingAgents && <span className="text-[14px] text-gray-500 dark:text-[var(--text-muted)]">Loading...</span>}
+                      <label className="block text-sm font-medium text-[var(--text-primary)]">Assignee</label>
+                      {loadingAgents && <span className="text-[14px] text-[var(--text-muted)]">Loading...</span>}
                     </div>
                     <Select
                       value={watchedAssignee ? String(watchedAssignee) : ''}
@@ -606,14 +606,14 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                       placeholder="Select an assignee"
                       allowSearch
                       size="md"
-                      className="w-full text-sm placeholder:text-gray-400"
+                      className="w-full text-sm placeholder:text-[var(--text-muted)]"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Labels</label>
-                      {loadingLabels && <span className="text-[14px] text-gray-500 dark:text-[var(--text-muted)]">Loading...</span>}
+                      <label className="block text-sm font-medium text-[var(--text-primary)]">Labels</label>
+                      {loadingLabels && <span className="text-[14px] text-[var(--text-muted)]">Loading...</span>}
                     </div>
                     <LabelPicker
                       availableLabels={labels}
@@ -628,7 +628,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
               )}
             </div>
             
-            <div className="mt-auto mx-4 pt-4 flex items-center justify-between gap-2.5 border-t border-gray-200 dark:border-subtle">
+            <div className="mt-auto mx-4 pt-4 flex items-center justify-between gap-2.5 border-t border-[var(--border-color)]">
               <Button type="button" variant="outline" onClick={resetFormState}>
                 Cancel
               </Button>

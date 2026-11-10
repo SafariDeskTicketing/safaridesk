@@ -59,7 +59,7 @@ const UpdatePriorityModal: React.FC<UpdatePriorityModalProps> = ({
       onClose={onClose}
       title="Update Priority"
     >
-      <p className="text-sm text-gray-500 dark:text-[var(--text-muted)] mb-4">Change the priority of this ticket.</p>
+      <p className="text-sm text-[var(--text-muted)] mb-4">Change the priority of this ticket.</p>
       <div className="space-y-4">
         <Select
           id="priority"

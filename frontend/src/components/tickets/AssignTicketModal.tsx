@@ -84,7 +84,7 @@ const AssignTicketModal: React.FC<AssignTicketModalProps> = ({ ticketId, isOpen,
       onClose={onClose}
       title="Assign Ticket"
     >
-      <p className="text-sm text-gray-500 dark:text-[var(--text-muted)] mb-4">Assign this ticket to an agent.</p>
+      <p className="text-sm text-[var(--text-muted)] mb-4">Assign this ticket to an agent.</p>
       <div className="space-y-4">
         <Select
           id="agent"

@@ -16,10 +16,11 @@ export const ViewSelectorButtons: React.FC<ViewSelectorButtonsProps> = ({
 }) => {
     const baseClasses = "p-2 rounded-lg transition-all duration-200";
     const activeClasses = "bg-primary-600 text-white shadow-md";
-    const inactiveClasses = "bg-gray-100 dark:bg-surface-hover text-gray-600 dark:text-[var(--text-muted)] hover:bg-gray-200 dark:hover:bg-surface-hover";
+    // Inactive hover uses --border-color (not --hover-bg, which is the inactive base) so hover is visible in both modes
+    const inactiveClasses = "bg-[var(--hover-bg)] text-[var(--text-secondary)] hover:bg-[var(--border-color)]";
 
     return (
-        <div className="flex items-center space-x-1 border border-gray-300 dark:border-subtle rounded-lg p-1">
+        <div className="flex items-center space-x-1 border border-[var(--border-color)] rounded-lg p-1">
             {/* Detailed View (List Icon) */}
             <button
                 onClick={() => onViewChange('detailed')}

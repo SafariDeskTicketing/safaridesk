@@ -180,7 +180,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                   e.stopPropagation();
                 }
               }}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 dark:bg-surface-hover dark:border-subtle rounded focus:ring-blue-500 focus:ring-2"
+              className="w-4 h-4 text-blue-600 bg-[var(--hover-bg)] border-[var(--border-color)] rounded focus:ring-blue-500 focus:ring-2"
               aria-label={`Select ticket ${ticket.ticket_id}`}
             />
           </div>
@@ -224,7 +224,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                   </span>
                 )}
               </div>
-              <div className={`text-gray-900 dark:text-[var(--text-primary)] text-sm truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors mt-0.5 flex items-center gap-2 ${!ticket.is_opened ? 'font-bold' : 'font-medium'}`}>
+              <div className={`text-[var(--text-primary)] text-sm truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors mt-0.5 flex items-center gap-2 ${!ticket.is_opened ? 'font-bold' : 'font-medium'}`}>
                 {ticket.title}
                 {ticket.has_new_reply && <NewBadge />}
               </div>
@@ -238,10 +238,10 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           <div className="relative flex-shrink-0">
             <button
               onClick={handleDropdownToggle}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-surface-hover rounded opacity-0 group-hover:opacity-100 transition-all duration-200"
+              className="p-1.5 hover:bg-[var(--hover-bg)] rounded opacity-0 group-hover:opacity-100 transition-all duration-200"
               aria-label="Ticket actions"
             >
-              <MoreVertical size={14} className="text-gray-400 dark:text-[var(--text-muted)]" />
+              <MoreVertical size={14} className="text-[var(--text-muted)]" />
             </button>
 
             {isDropdownOpen && (
@@ -259,7 +259,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                   <DropdownItem icon={MessageSquare} onClick={() => handleAction('add-note')}>
                     Add Note
                   </DropdownItem>
-                  <div className="border-t border-gray-100 my-1"></div>
+                  <div className="border-t border-[var(--border-color)] my-1"></div>
                   <DropdownItem icon={Trash2} onClick={() => handleAction('delete')} variant="danger">
                     Delete Ticket
                   </DropdownItem>
@@ -273,7 +273,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
       {/* Description (optional) */}
       {ticket.description && (
         <div
-          className="text-gray-600 dark:text-[var(--text-muted)] text-[14px] mb-3"
+          className="text-[var(--text-secondary)] text-[14px] mb-3"
           dangerouslySetInnerHTML={{ __html: sanitizePreviewHTML(ticket.description || '') }}
         />
       )}
@@ -293,19 +293,19 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         </div>
 
         {/* Requester */}
-        <div className="flex items-center text-gray-600 dark:text-[var(--text-muted)]">
-          <User size={14} className="mr-2 text-gray-500 dark:text-[var(--text-muted)]" />
+        <div className="flex items-center text-[var(--text-secondary)]">
+          <User size={14} className="mr-2 text-[var(--text-muted)]" />
           <span className="truncate">
             <span className="font-semibold">Created By:</span> {ticket.requester ? `${ticket.requester.firstName} ${ticket.requester.lastName}` : 'No Requester'}
           </span>
         </div>
 
         {/* Assignee */}
-        <div className="flex items-center text-gray-600 dark:text-[var(--text-muted)]">
+        <div className="flex items-center text-[var(--text-secondary)]">
           {ticket.assignee?.avatar_url ? (
             <img src={ticket.assignee.avatar_url} alt={ticket.assignee.firstName} className="w-4 h-4 rounded-full mr-1" />
           ) : (
-            <UserPlus size={14} className="mr-2 text-gray-500 dark:text-[var(--text-muted)]" />
+            <UserPlus size={14} className="mr-2 text-[var(--text-muted)]" />
           )}
           <span className="truncate">
             <span className="font-semibold">Assigned To:</span> {getAssigneeDisplay()}
@@ -313,14 +313,14 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         </div>
 
         {/* Created Date */}
-        <div className="flex items-center text-gray-600 dark:text-[var(--text-muted)]">
-          <Calendar size={14} className="mr-2 text-gray-500 dark:text-[var(--text-muted)]" />
+        <div className="flex items-center text-[var(--text-secondary)]">
+          <Calendar size={14} className="mr-2 text-[var(--text-muted)]" />
           <span>{formatDate(ticket.createdAt)}</span>
         </div>
 
         {/* Category */}
-        <div className="flex items-center text-gray-600 dark:text-[var(--text-muted)]">
-          <Tag size={14} className="mr-2 text-gray-500 dark:text-[var(--text-muted)]" />
+        <div className="flex items-center text-[var(--text-secondary)]">
+          <Tag size={14} className="mr-2 text-[var(--text-muted)]" />
           <span
             className="truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             onClick={(e) => { e.stopPropagation(); setIsUpdateCategoryModalOpen(true); }}
