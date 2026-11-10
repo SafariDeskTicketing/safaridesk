@@ -86,35 +86,45 @@ export const Modal: React.FC<ModalProps> = ({
   const [currentZIndex, setCurrentZIndex] = useState(baseZIndex); // Initialize with baseZIndex
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+  // Kept in sync with `isOpen` on every render (not just via an effect) so
+  // the mount-once focusin listener below always reads the current value
+  // instead of whatever `isOpen` was when the listener closure was created.
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
 
-  // Track whatever has focus outside the dialog, so the instant it closes we
-  // already know what to restore focus to. Driven by a real `focusin`
-  // listener rather than sampling document.activeElement from a render/effect:
-  // React only re-renders this component when its own props/state change, so
-  // a render-cadence-based capture (e.g. "record activeElement on every render
-  // where the modal is closed") silently misses the common keyboard case —
-  // Tab-ing to a trigger button doesn't itself cause a re-render, so if the
-  // user then presses Enter with no *other* re-render happening in between,
-  // whatever was captured is stale, not the button that was just focused.
-  // A focusin listener fires on the real DOM event regardless of React's
-  // render timing, so it can't miss a focus change the way a render-driven
-  // sample can. The guard excludes focus landing in *any* open dialog, not
-  // just this instance's own: every Modal renders via createPortal into
-  // document.body as a sibling, so a nested modal's dialog is never inside
-  // this one's dialogRef even though it's logically "inside" it. Checking
-  // only our own dialogRef let an outer modal's listener mistake focus
-  // moving into an inner modal (its own autoFocus, or its initial-focus
-  // effect) for "focus left the dialog," overwriting previouslyFocusedElement
-  // with an element that unmounts with the inner modal — so when the inner
-  // modal closed and restored focus to the outer modal's own trigger
-  // (correctly skipped, since that's inside the outer dialog too), the outer
-  // modal was left pointing at a dead node and silently dropped focus to
-  // document.body on its own close instead of returning it to the real
-  // trigger.
+  // Track whatever has focus while this modal is closed, so the instant it
+  // opens we already know what to restore focus to when it later closes.
+  // Driven by a real `focusin` listener rather than sampling
+  // document.activeElement from a render/effect: React only re-renders this
+  // component when its own props/state change, so a render-cadence-based
+  // capture (e.g. "record activeElement on every render where the modal is
+  // closed") silently misses the common keyboard case — Tab-ing to a trigger
+  // button doesn't itself cause a re-render, so if the user then presses
+  // Enter with no *other* re-render happening in between, whatever was
+  // captured is stale, not the button that was just focused. A focusin
+  // listener fires on the real DOM event regardless of React's render
+  // timing, so it can't miss a focus change the way a render-driven sample
+  // can. Gating on `isOpenRef.current` (not "is the target inside my own
+  // dialog") is what makes this correct for nested modals too: the instant
+  // this modal's own `isOpen` flips true, this listener freezes — it no
+  // longer updates previouslyFocusedElement no matter where focus goes next,
+  // including a child modal rendered from inside this one's content, so the
+  // trigger captured right before *this* modal opened survives untouched
+  // for as long as it stays open. A dialogRef-based ("ignore focus inside my
+  // own dialog") or role-based ("ignore focus inside any dialog") guard both
+  // get this wrong in one direction each: the former lets an inner modal's
+  // own autoFocus corrupt an outer modal's stored trigger (every Modal
+  // portals to document.body as a sibling, so an inner dialog is never
+  // inside an outer one's dialogRef to be excluded by it); the latter fixes
+  // that but then also excludes a modal's *own* real trigger whenever that
+  // trigger happens to live inside another, already-open ancestor modal —
+  // exactly the nested case this whole mechanism needs to support. Gating on
+  // this instance's own open/closed state sidesteps both failure modes
+  // because it never looks at *where* the focus landed, only *when*.
   useEffect(() => {
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target && !target.closest('[role="dialog"]')) {
+      if (target && !isOpenRef.current) {
         previouslyFocusedElement.current = target;
       }
     };
