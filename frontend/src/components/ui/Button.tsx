@@ -30,7 +30,7 @@ const Button: React.FC<ButtonProps> = ({
   const variantClasses = {
     primary: 'border-primary-600 bg-primary-600 text-white shadow-[var(--shell-shadow-sm)] hover:border-primary-700 hover:bg-primary-700',
     secondary: 'border-[var(--text-secondary)] bg-[var(--text-secondary)] text-white shadow-[var(--shell-shadow-sm)] hover:opacity-95',
-    outline: 'border-[var(--border-color)] bg-white text-[var(--text-secondary)] shadow-[var(--shell-shadow-sm)] hover:bg-[var(--shell-nav-hover-bg)] hover:text-[var(--shell-nav-hover-text)] dark:bg-[var(--card-bg)]',
+    outline: 'border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-secondary)] shadow-[var(--shell-shadow-sm)] hover:bg-[var(--shell-nav-hover-bg)] hover:text-[var(--shell-nav-hover-text)]',
     ghost: 'border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--shell-nav-hover-bg)] hover:text-[var(--shell-nav-hover-text)]',
     danger: 'border-[var(--status-danger-text)] bg-[var(--status-danger-text)] text-white shadow-[var(--shell-shadow-sm)] hover:opacity-92',
   };

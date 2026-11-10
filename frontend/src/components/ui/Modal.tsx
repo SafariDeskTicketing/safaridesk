@@ -257,7 +257,7 @@ export const Modal: React.FC<ModalProps> = ({
       style={{ marginTop }}>
         {/* Backdrop */}
         <div 
-          className="fixed inset-0 bg-black/30 dark:bg-[var(--overlay-soft-bg)] backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-[var(--overlay-soft-bg)] backdrop-blur-sm transition-opacity"
           onClick={handleBackdropClick}
           style={{ 
             opacity: Math.min(1, 0.85 + (stackManager.getModalIndex(modalId.current) - 1) * 0.05),

@@ -5,7 +5,7 @@ type ProfileSkeletonTab = 'profile' | 'security' | 'notifications';
 const shimmer = 'sd-shimmer rounded-[var(--shell-radius)]';
 
 const TabsSkeleton = () => (
-  <div className="overflow-x-auto rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white px-3 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)]">
+  <div className="overflow-x-auto rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] px-3 shadow-[var(--shell-shadow-sm)]">
     <div className="flex min-w-max items-center gap-4 py-2.5">
       {Array.from({ length: 3 }).map((_, index) => (
         <div key={index} className="flex items-center gap-1.5 py-2">
@@ -19,7 +19,7 @@ const TabsSkeleton = () => (
 
 const ProfileTabSkeleton = () => (
   <div className="space-y-5">
-    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-5 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)]">
+    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-5 shadow-[var(--shell-shadow-sm)]">
       <div className="flex items-center justify-between">
         <div className={`h-4.5 w-28 ${shimmer}`} />
       </div>
@@ -29,7 +29,7 @@ const ProfileTabSkeleton = () => (
             <div className={`h-3.5 w-14 ${shimmer}`} />
             <div className="mt-3 grid grid-cols-2 gap-4">
               {Array.from({ length: 2 }).map((__, cardIndex) => (
-                <div key={cardIndex} className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-4 dark:bg-[var(--card-bg)]">
+                <div key={cardIndex} className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-4">
                   <div className={`h-7 w-7 ${shimmer}`} />
                   <div className={`mt-3 h-5 w-10 ${shimmer}`} />
                   <div className={`mt-2 h-3.5 w-20 ${shimmer}`} />
@@ -41,7 +41,7 @@ const ProfileTabSkeleton = () => (
       </div>
     </div>
 
-    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-5 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)]">
+    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-5 shadow-[var(--shell-shadow-sm)]">
       <div className="flex items-center justify-between gap-3">
         <div className={`h-4.5 w-32 ${shimmer}`} />
         <div className={`h-[30px] w-24 ${shimmer}`} />
@@ -84,7 +84,7 @@ const SecurityTabSkeleton = () => (
       <div className={`mt-2 h-3.5 w-72 max-w-full ${shimmer}`} />
     </div>
 
-    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-5 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)]">
+    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-5 shadow-[var(--shell-shadow-sm)]">
       <div className={`mb-5 h-4.5 w-32 ${shimmer}`} />
       <div className="max-w-md space-y-4">
         {Array.from({ length: 3 }).map((_, index) => (
@@ -97,7 +97,7 @@ const SecurityTabSkeleton = () => (
       </div>
     </div>
 
-    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-5 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)]">
+    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-5 shadow-[var(--shell-shadow-sm)]">
       <div className={`mb-2 h-4.5 w-40 ${shimmer}`} />
       <div className={`mb-6 h-3.5 w-56 ${shimmer}`} />
       <div className="space-y-3">
@@ -119,7 +119,7 @@ const SecurityTabSkeleton = () => (
 
 const NotificationsTabSkeleton = () => (
   <div className="py-2">
-    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-5 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)] sm:p-6">
+    <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-5 shadow-[var(--shell-shadow-sm)] sm:p-6">
       <div className={`mb-6 h-4.5 w-36 ${shimmer}`} />
       <div className="grid gap-6 md:grid-cols-2">
         {Array.from({ length: 2 }).map((_, index) => (

@@ -18,7 +18,7 @@ const MetricRowSkeleton = () => (
 );
 
 const ChartSkeleton = () => (
-  <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-4 dark:bg-[var(--card-bg)]">
+  <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-4">
     <div className="mb-3 flex items-center gap-2">
       <div className={`h-[30px] w-[30px] ${shimmer}`} />
       <div className={`h-[30px] w-[140px] ${shimmer}`} />
@@ -38,7 +38,7 @@ const ChartSkeleton = () => (
 );
 
 const RailItemSkeleton = () => (
-  <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-3 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)]">
+  <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-3 shadow-[var(--shell-shadow-sm)]">
     <div className="flex items-start justify-between gap-3">
       <div className={`h-5 w-12 rounded-full ${shimmer}`} />
       <div className={`h-3 w-14 ${shimmer}`} />
@@ -55,7 +55,7 @@ const RailItemSkeleton = () => (
 );
 
 const AnalyticsRowSkeleton = () => (
-  <div className="overflow-hidden rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-4 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)] sm:p-5">
+  <div className="overflow-hidden rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-4 shadow-[var(--shell-shadow-sm)] sm:p-5">
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_276px] xl:gap-4">
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3 border-b border-[var(--border-color)] pb-3">
@@ -94,7 +94,7 @@ const HomeLoadingSkeleton = () => {
           <div className={`h-4 w-72 max-w-full ${shimmer}`} />
         </section>
 
-        <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-white p-4 shadow-[var(--shell-shadow-sm)] dark:bg-[var(--card-bg)] sm:p-5">
+        <div className="rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] p-4 shadow-[var(--shell-shadow-sm)] sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className={`h-4 w-20 ${shimmer}`} />
             <div className="flex flex-wrap items-center gap-2">

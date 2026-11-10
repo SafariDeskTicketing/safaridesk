@@ -63,23 +63,23 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
     <div className="space-y-3">
       {label && (
         <div>
-          <p className="text-[14px] font-medium text-gray-700 dark:text-[var(--text-primary)]">{label}</p>
+          <p className="text-[14px] font-medium text-[var(--text-primary)]">{label}</p>
           {helperText && (
-            <p className="mt-1 text-[14px] text-gray-500 dark:text-[var(--text-muted)]">{helperText}</p>
+            <p className="mt-1 text-[14px] text-[var(--text-muted)]">{helperText}</p>
           )}
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-subtle dark:bg-surface-elevated">
+      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] p-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-[var(--text-muted)]" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search labels"
             disabled={disabled}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-[14px] text-gray-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500 dark:border-subtle dark:bg-surface-hover dark:text-[var(--text-primary)]"
+            className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-muted)] py-2.5 pl-9 pr-3 text-[14px] text-[var(--text-primary)] outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
           />
         </div>
 
@@ -89,7 +89,7 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
 
         <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
           {filteredLabels.length === 0 ? (
-            <p className="text-[14px] text-gray-500 dark:text-[var(--text-muted)]">{emptyText}</p>
+            <p className="text-[14px] text-[var(--text-muted)]">{emptyText}</p>
           ) : (
             filteredLabels.map((labelItem) => {
               const isSelected = selectedLabelIds.includes(labelItem.id);
@@ -98,8 +98,8 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
                   key={labelItem.id}
                   className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 transition-colors ${
                     isSelected
-                      ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-900/20'
-                      : 'border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-subtle dark:bg-surface-hover dark:hover:bg-surface'
+                      ? 'border-primary-300 bg-[var(--surface-subtle)] dark:border-primary-700'
+                      : 'border-[var(--border-color)] bg-[var(--surface-muted)] hover:bg-[var(--hover-bg)]'
                   } ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
                 >
                   <input
@@ -107,12 +107,12 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
                     checked={isSelected}
                     disabled={disabled}
                     onChange={() => toggleLabel(labelItem.id)}
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="mt-1 h-4 w-4 rounded border-[var(--border-color)] text-primary-600 focus:ring-primary-500"
                   />
                   <div className="min-w-0 flex-1">
                     <LabelGroup labels={[labelItem]} size="sm" />
                     {labelItem.description && (
-                      <p className="mt-1 text-[14px] text-gray-500 dark:text-[var(--text-muted)]">
+                      <p className="mt-1 text-[14px] text-[var(--text-muted)]">
                         {labelItem.description}
                       </p>
                     )}

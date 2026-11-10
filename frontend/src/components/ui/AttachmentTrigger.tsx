@@ -11,9 +11,9 @@ interface AttachmentTriggerProps {
 }
 
 const baseClassName =
-  'inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-[var(--text-secondary)] dark:hover:bg-surface-hover dark:hover:text-[var(--text-primary)]';
+  'inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--text-primary)]';
 
-const disabledClassName = 'cursor-not-allowed opacity-50 hover:bg-transparent dark:hover:bg-transparent';
+const disabledClassName = 'cursor-not-allowed opacity-50 hover:bg-transparent';
 
 const content = (label: string) => (
   <>

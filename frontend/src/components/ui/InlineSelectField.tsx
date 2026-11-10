@@ -173,13 +173,13 @@ export const InlineSelectField: React.FC<InlineSelectFieldProps> = ({
             // For status/priority - keep colored badge styling
             return 'font-semibold border-2';
         }
-        return 'bg-white dark:bg-surface-elevated border border-[var(--border-color)] dark:border-subtle shadow-[0_1px_2px_rgba(16,24,40,0.04)]';
+        return 'bg-[var(--card-bg)] border border-[var(--border-color)] shadow-[0_1px_2px_rgba(16,24,40,0.04)]';
     };
 
     return (
         <div className={`space-y-2 ${className}`}>
             {/* Label */}
-            <label className="flex items-center gap-2 text-[14px] font-medium text-[var(--text-secondary)] dark:text-[var(--text-primary)]">
+            <label className="flex items-center gap-2 text-[14px] font-medium text-[var(--text-secondary)]">
                 {icon}
                 {label}
             </label>
@@ -200,12 +200,12 @@ export const InlineSelectField: React.FC<InlineSelectFieldProps> = ({
                             : 'hover:border-[#D7E0D7] cursor-pointer'
                         }
                         ${isOpen ? 'ring-2 ring-primary-500/10 border-primary-500' : ''}
-                        ${error ? 'border-red-500 dark:border-red-500' : ''}
+                        ${error ? 'border-red-500' : ''}
                         flex items-center justify-between
                         text-[var(--text-primary)]
                     `}
                 >
-                    <span className={!hasValue ? 'text-gray-500 dark:text-[var(--text-primary)]' : ''}>
+                    <span className={!hasValue ? 'text-[var(--text-muted)]' : ''}>
                         {displayValue}
                     </span>
 
@@ -225,11 +225,11 @@ export const InlineSelectField: React.FC<InlineSelectFieldProps> = ({
                 {isOpen && (
                     <div
                         ref={dropdownRef}
-                        className="absolute z-50 mt-2 w-full max-h-64 overflow-hidden rounded-[8px] border border-[var(--border-color)] bg-white shadow-[0_12px_24px_rgba(16,24,40,0.08)] dark:border-subtle dark:bg-surface-elevated dark:shadow-xl"
+                        className="absolute z-50 mt-2 w-full max-h-64 overflow-hidden rounded-[8px] border border-[var(--border-color)] bg-[var(--card-bg)] shadow-[0_12px_24px_rgba(16,24,40,0.08)] dark:shadow-xl"
                     >
                         {/* Search Input */}
                         {allowSearch && (
-                            <div className="p-2 border-b border-[var(--border-color)] dark:border-subtle">
+                            <div className="p-2 border-b border-[var(--border-color)]">
                                 <input
                                     ref={searchInputRef}
                                     type="text"
@@ -239,7 +239,7 @@ export const InlineSelectField: React.FC<InlineSelectFieldProps> = ({
                                         setHighlightedIndex(0);
                                     }}
                                     placeholder="Search..."
-                                    className="h-[32px] w-full rounded-[8px] border border-[var(--border-color)] bg-white px-3 text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500/10 dark:border-subtle dark:bg-surface-elevated dark:text-[var(--text-primary)]"
+                                    className="h-[32px] w-full rounded-[8px] border border-[var(--border-color)] bg-[var(--card-bg)] px-3 text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500/10"
                                 />
                             </div>
                         )}
@@ -267,8 +267,8 @@ export const InlineSelectField: React.FC<InlineSelectFieldProps> = ({
                                                 ${isSelected
                                                     ? 'bg-[var(--shell-nav-active-bg)] text-[var(--shell-nav-active-text)] font-medium'
                                                     : isHighlighted
-                                                        ? 'bg-[var(--shell-nav-hover-bg)] text-[var(--text-primary)] dark:bg-surface-hover dark:text-[var(--text-primary)]'
-                                                        : 'text-[var(--text-secondary)] hover:bg-[var(--shell-nav-hover-bg)] dark:text-[var(--text-primary)] dark:hover:bg-surface-hover'
+                                                        ? 'bg-[var(--shell-nav-hover-bg)] text-[var(--text-primary)]'
+                                                        : 'text-[var(--text-secondary)] hover:bg-[var(--shell-nav-hover-bg)]'
                                                 }
                                             `}
                                             onMouseEnter={() => setHighlightedIndex(index)}
@@ -281,7 +281,7 @@ export const InlineSelectField: React.FC<InlineSelectFieldProps> = ({
                                     );
                                 })
                             ) : (
-                                <div className="px-3 py-8 text-center text-sm text-gray-500 dark:text-[var(--text-primary)]">
+                                <div className="px-3 py-8 text-center text-sm text-[var(--text-muted)]">
                                     No options found
                                 </div>
                             )}

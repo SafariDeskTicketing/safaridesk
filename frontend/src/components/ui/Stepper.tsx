@@ -42,7 +42,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStepIndex, onStepClick 
                     ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-lg shadow-primary-600/40 hover:shadow-primary-600/60'
                     : isCurrent
                       ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 ring-4 ring-blue-400/30'
-                      : 'bg-gray-200 dark:bg-surface-hover text-gray-400 dark:text-[var(--text-primary)] hover:bg-gray-300 dark:hover:bg-surface-hover'
+                      : 'bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--hover-bg)]'
                   }
                   focus:outline-none focus:ring-4 focus:ring-offset-2 
                   ${isCompleted ? 'focus:ring-primary-600/50' : isCurrent ? 'focus:ring-blue-500/50' : 'focus:ring-gray-400/50'}
@@ -53,7 +53,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStepIndex, onStepClick 
 
                 {/* Checkmark overlay for completed */}
                 {isCompleted && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-white dark:bg-surface-elevated rounded-full flex items-center justify-center">
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--card-bg)] rounded-full flex items-center justify-center">
                     <CheckCircle className="w-4 h-4 text-primary-700" />
                   </div>
                 )}
@@ -66,7 +66,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStepIndex, onStepClick 
                   ? 'text-primary-700 dark:text-primary-500'
                   : isCurrent
                     ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-500 dark:text-[var(--text-primary)]'
+                    : 'text-[var(--text-muted)]'
                 }
                 group-hover:scale-105
               `}>
@@ -82,7 +82,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStepIndex, onStepClick 
             {/* Connector Line */}
             {index < steps.length - 1 && (
               <div className="flex-1 h-1 mx-4 relative">
-                <div className="absolute inset-0 bg-gray-200 dark:bg-surface-hover rounded-full"></div>
+                <div className="absolute inset-0 bg-[var(--surface-muted)] rounded-full"></div>
                 <div
                   className={`
                     absolute inset-0 rounded-full transition-all duration-500

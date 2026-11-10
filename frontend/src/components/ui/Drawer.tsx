@@ -57,11 +57,11 @@ const Drawer: React.FC<DrawerProps> = ({
   }
 
   const themeClasses = {
-    bg: 'bg-white dark:bg-surface',
-    text: 'text-gray-900 dark:text-white',
-    border: 'border-gray-200 dark:border-subtle',
-    headerBg: 'bg-white dark:bg-surface',
-    buttonHover: 'hover:bg-gray-100 dark:hover:bg-surface-hover'
+    bg: 'bg-[var(--card-bg)]',
+    text: 'text-[var(--text-primary)]',
+    border: 'border-[var(--border-color)]',
+    headerBg: 'bg-[var(--card-bg)]',
+    buttonHover: 'hover:bg-[var(--hover-bg)]'
   }
 
   const resolvedContent = content ?? children ?? null
@@ -72,7 +72,7 @@ const Drawer: React.FC<DrawerProps> = ({
       {/* Backdrop with blur and fade animation */}
        {showBackdrop && (
         <div 
-          className={`fixed inset-0 bg-black/20 dark:bg-[var(--overlay-soft-bg)] backdrop-blur-sm transition-all duration-300 ease-out ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
+          className={`fixed inset-0 bg-[var(--overlay-soft-bg)] backdrop-blur-sm transition-all duration-300 ease-out ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
           onClick={close}
         />
       )}

@@ -75,15 +75,15 @@ const NoItems: React.FC<NoItemsProps> = ({
 
   return (
     <div className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}>
-      <div className={`mb-4 p-3 rounded-full bg-gray-100 dark:bg-surface-elevated ${config.iconColor}`}>
+      <div className={`mb-4 p-3 rounded-full bg-[var(--surface-subtle)] ${config.iconColor}`}>
         <DisplayIcon className="w-8 h-8" />
       </div>
-      
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-2">
+
+      <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
         {displayTitle}
       </h3>
-      
-      <p className="text-gray-500 dark:text-[var(--text-primary)] mb-6 max-w-md">
+
+      <p className="text-[var(--text-secondary)] mb-6 max-w-md">
         {displayMessage}
       </p>
       

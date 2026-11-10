@@ -108,7 +108,7 @@ export const ListView: React.FC<ListViewProps> = ({
   const allSelected = rows.length > 0 && rows.every((r) => selectedRowIds.has(r.id));
 
   return (
-    <div className="border border-gray-200 dark:border-subtle bg-white dark:bg-surface rounded-lg overflow-hidden shadow-sm">
+    <div className="border border-[var(--border-color)] bg-[var(--card-bg)] rounded-lg overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         {/* Header */}
         <div
@@ -149,9 +149,9 @@ export const ListView: React.FC<ListViewProps> = ({
 
         {/* Body */}
         {isLoading ? (
-          <div className="p-4 text-center text-gray-500 dark:text-[var(--text-primary)]">Loading…</div>
+          <div className="p-4 text-center text-[var(--text-muted)]">Loading…</div>
         ) : rows.length === 0 ? (
-          emptyState || <div className="p-4 text-center text-gray-500 dark:text-[var(--text-primary)]">No data</div>
+          emptyState || <div className="p-4 text-center text-[var(--text-muted)]">No data</div>
         ) : (
           <div>
             {rows.map((row) => {
@@ -160,8 +160,8 @@ export const ListView: React.FC<ListViewProps> = ({
                 <div
                   key={row.id}
                   onClick={() => onRowClick?.(row)}
-                  className={`grid w-full min-w-full max-w-full auto-cols-fr text-gray-900 dark:text-[var(--text-primary)] text-[14px] cursor-pointer hover:bg-gray-100 dark:hover:bg-surface-hover transition-colors ${
-                    selected ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-gray-50 dark:bg-surface'
+                  className={`grid w-full min-w-full max-w-full auto-cols-fr text-[var(--text-primary)] text-[14px] cursor-pointer hover:bg-[var(--hover-bg)] transition-colors ${
+                    selected ? 'bg-[var(--surface-subtle)]' : 'bg-[var(--surface-muted)]'
                   }`}
                   style={{ gridTemplateColumns: buildGridTemplate() }}
                 >
@@ -170,7 +170,7 @@ export const ListView: React.FC<ListViewProps> = ({
                       key={col.key}
                       className={`py-3 px-4 flex items-center ${
                         col.align === 'center' ? 'justify-center text-center' : 'justify-start'
-                      } ${idx > 0 ? 'border-l border-gray-200 dark:border-subtle' : ''} ${
+                      } ${idx > 0 ? 'border-l border-[var(--border-color)]' : ''} ${
                         col.key === 'checkbox' ? 'justify-center' : ''
                       }`}
                       style={

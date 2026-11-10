@@ -16,7 +16,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, icon: Icon, iconPosition = 'left', fullWidth = false, rightElement, className, id, ...props }, ref) => {
     const fallbackId = useId();
     const inputId = id ?? fallbackId;
-    const baseClasses = 'block h-[44px] w-full rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--shell-field-bg)] px-3.5 text-[14px] text-[var(--text-primary)] shadow-[var(--shell-shadow-sm)] transition-colors duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--shell-search-border)] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:text-[var(--text-disabled)] disabled:bg-[var(--surface-muted)] dark:bg-[var(--shell-field-bg)]';
+    const baseClasses = 'block h-[44px] w-full rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--shell-field-bg)] px-3.5 text-[14px] text-[var(--text-primary)] shadow-[var(--shell-shadow-sm)] transition-colors duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--shell-search-border)] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:text-[var(--text-disabled)] disabled:bg-[var(--surface-muted)]';
 
     const errorClasses = 'border-[var(--status-danger-text)] text-[var(--status-danger-text)] focus:border-[var(--status-danger-text)] focus:ring-[rgba(224,82,69,0.14)]';
 

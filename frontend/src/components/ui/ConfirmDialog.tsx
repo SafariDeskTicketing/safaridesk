@@ -74,14 +74,14 @@ const ConfirmDialog: React.FC<Props> = ({
 
                 {/* Title */}
                 <div className="text-center mb-2">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-[var(--text-primary)]">
+                    <h3 className="text-lg font-medium text-[var(--text-primary)]">
                         {title}
                     </h3>
                 </div>
 
                 {/* Message */}
                 <div className="text-center mb-6">
-                    <p className="text-sm text-gray-500 dark:text-[var(--text-primary)]">
+                    <p className="text-sm text-[var(--text-secondary)]">
                         {message}
                     </p>
                 </div>
@@ -92,7 +92,7 @@ const ConfirmDialog: React.FC<Props> = ({
                         type="button"
                         onClick={cancel}
                         disabled={state}
-                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-surface-elevated dark:text-[var(--text-primary)] dark:border-subtle dark:hover:bg-surface-hover"
+                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[var(--text-primary)] bg-[var(--card-bg)] border border-[var(--border-color)] rounded-md hover:bg-[var(--hover-bg)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                     >
                         {cancelText}
                     </button>

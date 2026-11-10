@@ -11,14 +11,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ label, error, fullWidth = false, className, id, ...props }, ref) => {
     const fallbackId = useId();
     const textareaId = id ?? fallbackId;
-    const baseClasses = 'block px-3.5 py-2.5 border border-gray-200 dark:border-subtle rounded-lg shadow-sm placeholder:text-gray-500 dark:placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200 bg-gray-50 dark:bg-surface-hover text-[14px] text-gray-900 dark:text-[var(--text-primary)]';
+    const baseClasses = 'block px-3.5 py-2.5 border border-[var(--border-color)] rounded-lg shadow-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200 bg-[var(--shell-field-bg)] text-[14px] text-[var(--text-primary)]';
     
     const errorClasses = 'border-red-300 dark:border-red-500 focus:ring-red-500';
 
     return (
       <div className={clsx('relative', fullWidth && 'w-full')}>
         {label && (
-          <label htmlFor={textareaId} className="block text-[14px] font-medium text-gray-700 dark:text-[var(--text-primary)] mb-1">
+          <label htmlFor={textareaId} className="block text-[14px] font-medium text-[var(--text-primary)] mb-1">
             {label}
           </label>
         )}

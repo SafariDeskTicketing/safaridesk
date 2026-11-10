@@ -36,7 +36,7 @@ export const LabelGroup: React.FC<LabelGroupProps> = ({
 
   if (!labels?.length) {
     return emptyText ? (
-      <span className={`${emptyTextClass} italic text-gray-500 dark:text-[var(--text-muted)]`}>
+      <span className={`${emptyTextClass} italic text-[var(--text-muted)]`}>
         {emptyText}
       </span>
     ) : null;
@@ -55,14 +55,14 @@ export const LabelGroup: React.FC<LabelGroupProps> = ({
       {hiddenCount > 0 && (
         <div className="group relative inline-flex">
           <span
-            className={`inline-flex cursor-default items-center rounded-full border border-gray-300/80 bg-white/80 ${overflowChipClass} font-medium text-gray-700 shadow-sm backdrop-blur-sm dark:border-subtle dark:bg-surface-hover/90 dark:text-[var(--text-primary)]`}
+            className={`inline-flex cursor-default items-center rounded-full border border-[var(--border-color)] bg-[var(--card-bg)] ${overflowChipClass} font-medium text-[var(--text-primary)] shadow-sm backdrop-blur-sm`}
             title={hiddenLabelNames}
             aria-label={`${hiddenCount} more labels: ${hiddenLabelNames}`}
           >
             +{hiddenCount}
           </span>
-          <div className="pointer-events-none invisible absolute left-0 top-full z-20 mt-2 min-w-[220px] max-w-[320px] translate-y-1 rounded-xl border border-gray-200 bg-white/95 p-3 opacity-0 shadow-2xl backdrop-blur-sm transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 dark:border-subtle dark:bg-surface-elevated/95">
-            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-gray-500 dark:text-[var(--text-muted)]">
+          <div className="pointer-events-none invisible absolute left-0 top-full z-20 mt-2 min-w-[220px] max-w-[320px] translate-y-1 rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] p-3 opacity-0 shadow-2xl backdrop-blur-sm transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
               More Labels
             </div>
             <div className="flex flex-wrap gap-1.5">

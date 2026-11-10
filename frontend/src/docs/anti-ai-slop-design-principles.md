@@ -89,7 +89,7 @@ An operational dashboard (ticket list, agent dashboard, SLA view, admin console)
 Don't turn an operational interface into a landing page with five pretty cards.
 
 ### B. Don't invent data to fill space
-This is one of the worst AI coding habits. If a dashboard "needs" a metric — uptime %, active user count, SLA compliance %, pending ticket count — ask: where does this number come from? Is it real? Is it useful? Can the backend actually calculate it? (SafariDesk has a live example of the failure mode this causes: the dashboard's "SLA Breached"/"SLA Compliance %" tiles silently read a dead relation and always showed zero/100% until that was traced and fixed — see `AUDIT_TRACKER.md`.) If a metric can't be backed by a real, correct query, it doesn't belong on the screen.
+This is one of the worst AI coding habits. If a dashboard "needs" a metric — uptime %, active user count, SLA compliance %, pending ticket count — ask: where does this number come from? Is it real? Is it useful? Can the backend actually calculate it? (SafariDesk has a live example of the failure mode this causes: the dashboard's "SLA Breached"/"SLA Compliance %" tiles silently read a dead relation and always showed zero/100% until that was traced and fixed — see `FIXES_LOG.md` → "SLA-breach consolidation".) If a metric can't be backed by a real, correct query, it doesn't belong on the screen.
 
 ### C. Don't make design decisions without understanding the product
 Before implementing a screen, answer:

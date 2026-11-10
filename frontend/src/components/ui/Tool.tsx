@@ -111,7 +111,7 @@ export const Tooltip = ({ children, content, className = '' }: ToolProp) => {
   }, [isVisible]);
 
   const getArrowClasses = () => {
-    const baseArrow = "absolute w-2 h-2 bg-white dark:bg-surface-elevated border-l border-t border-gray-200 dark:border-subtle transform rotate-45";
+    const baseArrow = "absolute w-2 h-2 bg-[var(--card-bg)] border-l border-t border-[var(--border-color)] transform rotate-45";
     
     switch (position.placement) {
       case 'top':
@@ -148,7 +148,7 @@ export const Tooltip = ({ children, content, className = '' }: ToolProp) => {
       {isVisible && (
         <div
           ref={tooltipRef}
-          className="fixed z-50 bg-white dark:bg-surface-elevated rounded-lg shadow-xl border border-gray-200 dark:border-subtle max-w-sm"
+          className="fixed z-50 bg-[var(--card-bg)] rounded-lg shadow-xl border border-[var(--border-color)] max-w-sm"
           style={{
             top: `${position.top}px`,
             left: `${position.left}px`,
@@ -157,7 +157,7 @@ export const Tooltip = ({ children, content, className = '' }: ToolProp) => {
           <div className={getArrowClasses()}></div>
           <div className="relative z-10">
             {typeof content === 'string' ? (
-              <div className="px-3 py-2 text-sm font-medium text-gray-800 dark:text-[var(--text-primary)]">
+              <div className="px-3 py-2 text-sm font-medium text-[var(--text-primary)]">
                 {content}
               </div>
             ) : (
