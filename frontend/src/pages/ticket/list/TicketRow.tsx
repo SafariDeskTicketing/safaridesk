@@ -47,7 +47,6 @@ export const TicketRow = memo(({
   return (
     <div
       onClick={() => onRowClick(ticket)}
-      role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
