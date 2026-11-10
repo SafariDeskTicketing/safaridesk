@@ -25,19 +25,31 @@ def get_client_ip(request) -> str | None:
     return request.META.get('REMOTE_ADDR')
 
 
-def _incr(key: str, window_seconds: int) -> int:
+def _incr(key: str, window_seconds: int) -> int | None:
     """Atomically increments the counter at `key`, creating it (TTL
     `window_seconds`) first if absent. `cache.add` + `cache.incr` are each
     atomic Redis operations (SETNX / INCR), avoiding the read-then-write
-    race a plain get-then-set counter has under concurrent requests."""
+    race a plain get-then-set counter has under concurrent requests.
+
+    Returns None if the cache backend is unreachable. Every real
+    deployment sets IGNORE_EXCEPTIONS=True on this cache (see CACHES in
+    RNSafarideskBack/settings/*.py), so a Redis outage doesn't raise here
+    - `incr`/`add` just return None - and callers must treat that as
+    "can't tell, fail open" rather than let a None comparison crash the
+    request. A rate limiter is not allowed to turn a cache outage into a
+    login outage."""
     cache.add(key, 0, window_seconds)
     try:
-        return cache.incr(key)
+        count = cache.incr(key)
     except ValueError:
         # Key expired between add() and incr() - vanishingly rare with a
         # multi-minute window, but fail safe rather than raise.
         cache.add(key, 0, window_seconds)
-        return cache.incr(key)
+        try:
+            count = cache.incr(key)
+        except ValueError:
+            return None
+    return count
 
 
 def is_rate_limited(scope: str, identifier: str | None, max_attempts: int, window_seconds: int) -> bool:
@@ -47,9 +59,12 @@ def is_rate_limited(scope: str, identifier: str | None, max_attempts: int, windo
     use this for request-volume limits (resend, reset-link requests)
     where even a "successful" request should still count. For a
     login-style flow where a successful attempt should never count
-    against the limit, use `is_blocked`/`record_failure` instead."""
+    against the limit, use `reserve_attempt`/`release_attempt` instead."""
     key = f'{_PREFIX}:{scope}:{identifier or "unknown"}'
-    return _incr(key, window_seconds) > max_attempts
+    count = _incr(key, window_seconds)
+    if count is None:
+        return False  # cache unreachable - fail open
+    return count > max_attempts
 
 
 def reserve_attempt(scope: str, identifier: str | None, max_attempts: int, window_seconds: int) -> bool:
@@ -64,7 +79,10 @@ def reserve_attempt(scope: str, identifier: str | None, max_attempts: int, windo
     legitimate login doesn't cost anything long-term; a failed attempt
     simply keeps its reservation."""
     key = f'{_PREFIX}:{scope}:{identifier or "unknown"}'
-    return _incr(key, window_seconds) <= max_attempts
+    count = _incr(key, window_seconds)
+    if count is None:
+        return True  # cache unreachable - fail open
+    return count <= max_attempts
 
 
 def release_attempt(scope: str, identifier: str | None) -> None:

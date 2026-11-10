@@ -46,6 +46,23 @@ def _too_many_attempts_response():
     )
 
 
+def _reserve_login_attempt(identifier_scope: str, identifier: str, ip_scope: str, ip_address: str | None) -> bool:
+    """Reserves one attempt slot under both `identifier_scope` and
+    `ip_scope`, so neither dimension alone lets an attacker bypass the
+    limit. Short-circuits (matching `reserve_attempt`'s own fail-open
+    behavior) without touching the IP counter if the identifier is
+    already over budget."""
+    return reserve_attempt(identifier_scope, identifier, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS) and \
+        reserve_attempt(ip_scope, ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+
+
+def _release_login_attempt(identifier_scope: str, identifier: str, ip_scope: str, ip_address: str | None) -> None:
+    """Gives back both slots `_reserve_login_attempt` consumed, for a
+    request that turned out to succeed."""
+    release_attempt(identifier_scope, identifier)
+    release_attempt(ip_scope, ip_address)
+
+
 def _issue_login_tokens(user, request=None):
     user.last_login = timezone.now()
     user.save(update_fields=['last_login'])
@@ -75,16 +92,14 @@ class LoginInitiateView(APIView):
     def post(self, request):
         username = str(request.data.get('username') or '').strip().lower()
         ip_address = get_client_ip(request)
-        if not reserve_attempt('staff_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS) or \
-                not reserve_attempt('staff_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+        if not _reserve_login_attempt('staff_login:username', username, 'staff_login:ip', ip_address):
             return _too_many_attempts_response()
 
         serializer = LoginInitiateSerializer(data=request.data)
         if serializer.is_valid():
             # Correct credentials - give back the slot reserved above so
             # a legitimate login never erodes the failure budget.
-            release_attempt('staff_login:username', username)
-            release_attempt('staff_login:ip', ip_address)
+            _release_login_attempt('staff_login:username', username, 'staff_login:ip', ip_address)
             user = serializer.context['user']
 
             # MFA is opt-in. Unknown, blank, or incomplete MFA state must not
@@ -166,14 +181,12 @@ class OTPVerifyView(APIView):
     def post(self, request):
         session_key = request.data.get('session_key') or ''
         ip_address = get_client_ip(request)
-        if not reserve_attempt('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS) or \
-                not reserve_attempt('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+        if not _reserve_login_attempt('staff_otp_verify:session', session_key, 'staff_otp_verify:ip', ip_address):
             return _too_many_attempts_response()
 
         serializer = OTPVerifySerializer(data=request.data)
         if serializer.is_valid():
-            release_attempt('staff_otp_verify:session', session_key)
-            release_attempt('staff_otp_verify:ip', ip_address)
+            _release_login_attempt('staff_otp_verify:session', session_key, 'staff_otp_verify:ip', ip_address)
             user = serializer.context['user']
             from ..serializers.MyTokenObtainSerializer import MyTokenObtainPairSerializer
             user.last_login = timezone.now()
@@ -344,8 +357,7 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         username = str(request.data.get('username') or '').strip().lower()
         ip_address = get_client_ip(request)
-        if not reserve_attempt('staff_express_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS) or \
-                not reserve_attempt('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
+        if not _reserve_login_attempt('staff_express_login:username', username, 'staff_express_login:ip', ip_address):
             return _too_many_attempts_response()
 
         # simplejwt's TokenObtainPairView.post raises on bad credentials
@@ -355,8 +367,7 @@ class LoginView(TokenObtainPairView):
         # status_code guard is defensive in case that ever changes.
         response = super().post(request, *args, **kwargs)
         if response.status_code < 400:
-            release_attempt('staff_express_login:username', username)
-            release_attempt('staff_express_login:ip', ip_address)
+            _release_login_attempt('staff_express_login:username', username, 'staff_express_login:ip', ip_address)
         return response
 
 
