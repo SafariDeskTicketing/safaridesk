@@ -579,26 +579,26 @@ export const ActivityComment: React.FC<ActivityCommentProps> = ({
                           const getFileTypeInfo = (extension: string) => {
                             switch (extension) {
                               case 'pdf':
-                                return { Icon: FileText, color: 'from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-900/10', borderColor: 'border-red-200 dark:border-red-800', badgeColor: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300', iconColor: 'text-red-600 dark:text-red-400', label: 'PDF Document' };
+                                return { Icon: FileText, color: 'bg-red-50 dark:bg-red-900/10', borderColor: 'border-red-200 dark:border-red-800', badgeColor: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300', iconColor: 'text-red-600 dark:text-red-400', label: 'PDF Document' };
                               case 'doc':
                               case 'docx':
-                                return { Icon: FileText, color: 'from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10', borderColor: 'border-blue-200 dark:border-blue-800', badgeColor: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300', iconColor: 'text-blue-600 dark:text-blue-400', label: 'Word Document' };
+                                return { Icon: FileText, color: 'bg-blue-50 dark:bg-blue-900/10', borderColor: 'border-blue-200 dark:border-blue-800', badgeColor: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300', iconColor: 'text-blue-600 dark:text-blue-400', label: 'Word Document' };
                               case 'xls':
                               case 'xlsx':
-                                return { Icon: FileSpreadsheet, color: 'from-primary-50 to-primary-100/50 dark:from-primary-900/20 dark:to-primary-900/10', borderColor: 'border-primary-200 dark:border-primary-800', badgeColor: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300', iconColor: 'text-primary-600 dark:text-primary-400', label: 'Excel Spreadsheet' };
+                                return { Icon: FileSpreadsheet, color: 'bg-primary-50 dark:bg-primary-900/10', borderColor: 'border-primary-200 dark:border-primary-800', badgeColor: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300', iconColor: 'text-primary-600 dark:text-primary-400', label: 'Excel Spreadsheet' };
                               case 'zip':
                               case 'rar':
                               case '7z':
-                                return { Icon: FileArchive, color: 'from-yellow-50 to-yellow-100/50 dark:from-yellow-900/20 dark:to-yellow-900/10', borderColor: 'border-yellow-200 dark:border-yellow-800', badgeColor: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300', iconColor: 'text-yellow-600 dark:text-yellow-400', label: 'Archive File' };
+                                return { Icon: FileArchive, color: 'bg-yellow-50 dark:bg-yellow-900/10', borderColor: 'border-yellow-200 dark:border-yellow-800', badgeColor: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300', iconColor: 'text-yellow-600 dark:text-yellow-400', label: 'Archive File' };
                               case 'txt':
-                                return { Icon: FileCode, color: 'from-gray-50 to-gray-100/50 dark:from-surface-elevated-20 dark:to-surface-elevated-10', borderColor: 'border-gray-200 dark:border-subtle', badgeColor: 'bg-gray-100 dark:bg-surface-30 text-gray-700 dark:text-[var(--text-primary)]', iconColor: 'text-gray-600 dark:text-[var(--text-primary)]', label: 'Text File' };
+                                return { Icon: FileCode, color: 'bg-gray-50 dark:bg-surface-elevated-10', borderColor: 'border-gray-200 dark:border-subtle', badgeColor: 'bg-gray-100 dark:bg-surface-30 text-gray-700 dark:text-[var(--text-primary)]', iconColor: 'text-gray-600 dark:text-[var(--text-primary)]', label: 'Text File' };
                               case 'ppt':
                               case 'pptx':
-                                return { Icon: FileText, color: 'from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10', borderColor: 'border-purple-200 dark:border-purple-800', badgeColor: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300', iconColor: 'text-purple-600 dark:text-purple-400', label: 'PowerPoint Presentation' };
+                                return { Icon: FileText, color: 'bg-purple-50 dark:bg-purple-900/10', borderColor: 'border-purple-200 dark:border-purple-800', badgeColor: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300', iconColor: 'text-purple-600 dark:text-purple-400', label: 'PowerPoint Presentation' };
                               case 'csv':
-                                return { Icon: FileCode, color: 'from-indigo-50 to-indigo-100/50 dark:from-indigo-900/20 dark:to-indigo-900/10', borderColor: 'border-indigo-200 dark:border-indigo-800', badgeColor: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300', iconColor: 'text-indigo-600 dark:text-indigo-400', label: 'CSV File' };
+                                return { Icon: FileCode, color: 'bg-indigo-50 dark:bg-indigo-900/10', borderColor: 'border-indigo-200 dark:border-indigo-800', badgeColor: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300', iconColor: 'text-indigo-600 dark:text-indigo-400', label: 'CSV File' };
                               default:
-                                return { Icon: File, color: 'from-slate-50 to-slate-100/50 dark:from-slate-800/20 dark:to-slate-800/10', borderColor: 'border-slate-200 dark:border-slate-700', badgeColor: 'bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300', iconColor: 'text-slate-600 dark:text-slate-400', label: 'File' };
+                                return { Icon: File, color: 'bg-slate-50 dark:bg-slate-800/10', borderColor: 'border-slate-200 dark:border-slate-700', badgeColor: 'bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300', iconColor: 'text-slate-600 dark:text-slate-400', label: 'File' };
                             }
                           };
 
@@ -610,7 +610,7 @@ export const ActivityComment: React.FC<ActivityCommentProps> = ({
                               href={attachment.file_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={`block bg-gradient-to-br ${fileInfo.color} border ${fileInfo.borderColor} rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.02] group`}
+                              className={`block ${fileInfo.color} border ${fileInfo.borderColor} rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.02] group`}
                               title={`Download ${decodedFilename}`}
                             >
                               <div className="flex items-start gap-3">

@@ -797,7 +797,7 @@
 }
 
 .kb-content blockquote {
-  border-left: 4px solid theme('colors.primary.600');
+  border-left: 3px solid theme('colors.primary.600');
   padding-left: 1rem;
   margin-top: 1.5em;
   margin-bottom: 1.5em;

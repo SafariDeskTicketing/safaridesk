@@ -838,7 +838,7 @@ const TicketInfo: React.FC = () => {
 								<button
 									onClick={() => setIsReopenModalOpen(true)}
 									disabled={isSubmitting}
-									className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+									className="inline-flex items-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
 								>
 									<RotateCcw className="w-4 h-4 mr-2" />
 									{isSubmitting ? "Reopening..." : "Reopen Ticket"}
@@ -849,7 +849,7 @@ const TicketInfo: React.FC = () => {
 										<button
 											onClick={handleAssignToMe}
 											disabled={isAssigning}
-											className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+											className="inline-flex items-center px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
 										>
 											<Plus className="w-4 h-4 mr-2" />
 											{isAssigning ? "Assigning..." : "Assign to me"}
@@ -1321,7 +1321,7 @@ const TicketInfo: React.FC = () => {
 					{/* Creator and Ticket Info Grid */}
 					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 						{/* Creator Info Card */}
-						<div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+						<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
 							<div className="flex items-center mb-3">
 								<div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
 									<User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -1366,7 +1366,7 @@ const TicketInfo: React.FC = () => {
 						</div>
 
 						{/* Assignment Info Card */}
-						<div className="bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20 rounded-lg p-4 border border-primary-200 dark:border-primary-800">
+						<div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4 border border-primary-200 dark:border-primary-800">
 							<div className="flex items-center mb-3">
 								<div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mr-3">
 									<UserCheck className="w-4 h-4 text-primary-600 dark:text-primary-400" />
@@ -1466,7 +1466,7 @@ const TicketInfo: React.FC = () => {
 						</div>
 
 						{/* Timeline Info Card */}
-						<div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+						<div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
 							<div className="flex items-center mb-3">
 								<div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mr-3">
 									<Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />

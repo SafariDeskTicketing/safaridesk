@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Card } from './Card';
 
 interface PopoverProps {
   trigger: React.ReactNode;
@@ -208,15 +209,15 @@ const Tip: React.FC<PopoverProps> = ({
     const baseClasses = 'absolute w-0 h-0 border-solid';
     switch (actualPosition) {
       case 'top':
-        return `${baseClasses} border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white top-full left-1/2 -translate-x-1/2`;
+        return `${baseClasses} border-l-6 border-r-6 border-t-6 border-l-transparent border-r-transparent border-t-[var(--card-bg)] top-full left-1/2 -translate-x-1/2`;
       case 'bottom':
-        return `${baseClasses} border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white bottom-full left-1/2 -translate-x-1/2`;
+        return `${baseClasses} border-l-6 border-r-6 border-b-6 border-l-transparent border-r-transparent border-b-[var(--card-bg)] bottom-full left-1/2 -translate-x-1/2`;
       case 'left':
-        return `${baseClasses} border-t-8 border-b-8 border-l-8 border-t-transparent border-b-transparent border-l-white left-full top-1/2 -translate-y-1/2`;
+        return `${baseClasses} border-t-6 border-b-6 border-l-6 border-t-transparent border-b-transparent border-l-[var(--card-bg)] left-full top-1/2 -translate-y-1/2`;
       case 'right':
-        return `${baseClasses} border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-white right-full top-1/2 -translate-y-1/2`;
+        return `${baseClasses} border-t-6 border-b-6 border-r-6 border-t-transparent border-b-transparent border-r-[var(--card-bg)] right-full top-1/2 -translate-y-1/2`;
       default:
-        return `${baseClasses} border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white bottom-full left-1/2 -translate-x-1/2`;
+        return `${baseClasses} border-l-6 border-r-6 border-b-6 border-l-transparent border-r-transparent border-b-[var(--card-bg)] bottom-full left-1/2 -translate-x-1/2`;
     }
   };
 
@@ -241,12 +242,10 @@ const Tip: React.FC<PopoverProps> = ({
             left: `${popoverPosition.left}px`,
           }}
         >
-          <div
-            className={`bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm relative ${contentClassName}`}
-          >
+          <Card className={`p-4 max-w-sm relative ${contentClassName}`}>
             <div className={getArrowClasses()}></div>
             {content}
-          </div>
+          </Card>
         </div>
       )}
     </>

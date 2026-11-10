@@ -23,7 +23,7 @@ import { Card } from '../components/ui/Card';
 
 const NotFoundPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-surface dark:via-surface-elevated dark:to-surface text-gray-900 dark:text-[var(--text-primary)] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-surface text-gray-900 dark:text-[var(--text-primary)] flex flex-col items-center justify-center px-4">
       {/* Main Content Container */}
       <div className="max-w-md w-full text-center">
         {/* 404 Icon */}
@@ -38,7 +38,7 @@ const NotFoundPage: React.FC = () => {
 
         {/* 404 Text */}
         <div className="mb-6">
-          <h1 className="text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 mb-2">
+          <h1 className="text-8xl font-bold text-red-500 dark:text-red-400 mb-2">
             404
           </h1>
           <div className="flex items-center justify-center mb-4">
@@ -85,7 +85,7 @@ const NotFoundPage: React.FC = () => {
           
           <Link
             to="/"
-            className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+            className="flex items-center justify-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
           >
             <Home className="w-4 h-4 mr-2" />
             Go to Homepage

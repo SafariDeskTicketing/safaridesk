@@ -73,9 +73,8 @@ const IndexPage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-surface dark:via-surface-elevated dark:to-surface py-20 relative overflow-hidden">
+      <section className="bg-gray-50 dark:bg-surface py-20 relative overflow-hidden">
         {/* Animated Background Elements */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-400/10 to-blue-500/10"></div>
         <div className="absolute top-20 left-10 w-20 h-20 bg-primary-200 rounded-full opacity-20 animate-pulse"></div>
         <div className="absolute top-40 right-20 w-16 h-16 bg-blue-200 rounded-full opacity-30 animate-bounce" style={{ animationDelay: '1s' }}></div>
         <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-purple-200 rounded-full opacity-25 animate-pulse" style={{ animationDelay: '2s' }}></div>
@@ -202,11 +201,6 @@ const IndexPage: React.FC = () => {
 
       {/* Features Section */}
       <section id="features" className="py-20 bg-white dark:bg-surface-elevated relative overflow-hidden">
-        {/* Floating Background Elements */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-primary-200 to-blue-200 rounded-full opacity-10 animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-24 h-24 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full opacity-10 animate-bounce" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-to-br from-yellow-200 to-orange-200 rounded-full opacity-10 animate-pulse" style={{ animationDelay: '2s' }}></div>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -220,7 +214,6 @@ const IndexPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature Cards */}
             <div className="bg-gray-50 dark:bg-surface-hover rounded-lg p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-400/5 to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
                 <div className="flex items-center mb-4">
                   <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg mr-3 group-hover:scale-110 transition-transform duration-300">
@@ -240,7 +233,6 @@ const IndexPage: React.FC = () => {
             </div>
 
             <div className="bg-gray-50 dark:bg-surface-hover rounded-lg p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
                 <div className="flex items-center mb-4">
                   <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3 group-hover:scale-110 transition-transform duration-300">
@@ -260,7 +252,6 @@ const IndexPage: React.FC = () => {
             </div>
 
             <div className="bg-gray-50 dark:bg-surface-hover rounded-lg p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/5 to-pink-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
                 <div className="flex items-center mb-4">
                   <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3 group-hover:scale-110 transition-transform duration-300">
@@ -280,7 +271,6 @@ const IndexPage: React.FC = () => {
             </div>
 
             <div className="bg-gray-50 dark:bg-surface-hover rounded-lg p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-400/5 to-red-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
                 <div className="flex items-center mb-4">
                   <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-3 group-hover:scale-110 transition-transform duration-300">
@@ -300,7 +290,6 @@ const IndexPage: React.FC = () => {
             </div>
 
             <div className="bg-gray-50 dark:bg-surface-hover rounded-lg p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-400/5 to-pink-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
                 <div className="flex items-center mb-4">
                   <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg mr-3 group-hover:scale-110 transition-transform duration-300">
@@ -320,7 +309,6 @@ const IndexPage: React.FC = () => {
             </div>
 
             <div className="bg-gray-50 dark:bg-surface-hover rounded-lg p-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/5 to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
                 <div className="flex items-center mb-4">
                   <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-3 group-hover:scale-110 transition-transform duration-300">
@@ -556,7 +544,7 @@ const IndexPage: React.FC = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-surface-elevated dark:to-surface">
+      <section className="py-20 bg-blue-50 dark:bg-surface-elevated">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -805,7 +793,7 @@ const IndexPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-primary-100 to-blue-100 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg p-8">
+            <div className="bg-primary-100 dark:bg-primary-900/20 rounded-lg p-8">
               <div className="text-center">
                 <Award className="w-16 h-16 text-primary-600 mx-auto mb-4" />
                 <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Award-Winning Support</h4>
@@ -829,7 +817,7 @@ const IndexPage: React.FC = () => {
       </section>
 
       {/* Use Cases Section */}
-      <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-surface-elevated dark:to-surface">
+      <section className="py-20 bg-indigo-50 dark:bg-surface-elevated">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -988,7 +976,7 @@ const IndexPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-surface-hover dark:to-surface-elevated rounded-lg p-8">
+            <div className="bg-gray-50 dark:bg-surface-hover rounded-lg p-8">
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center p-4 bg-white dark:bg-surface-elevated rounded-lg shadow-sm">
                   <div className="text-3xl font-bold text-primary-600 mb-2">256-bit</div>
@@ -1020,7 +1008,7 @@ const IndexPage: React.FC = () => {
       </section>
 
       {/* API & Developer Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-surface dark:to-surface-elevated">
+      <section className="py-20 bg-gray-50 dark:bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -1154,7 +1142,7 @@ const IndexPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
               <div className="mb-4">
                 <img
                   src={ticketIllustration}
@@ -1169,7 +1157,7 @@ const IndexPage: React.FC = () => {
               <Button variant="outline" size="sm">Browse Docs</Button>
             </div>
 
-            <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
+            <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
               <div className="mb-4">
                 <img
                   src={projectIllustration}
@@ -1184,7 +1172,7 @@ const IndexPage: React.FC = () => {
               <Button variant="outline" size="sm">Read Articles</Button>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
               <div className="mb-4">
                 <img
                   src={timeIllustration}
@@ -1199,7 +1187,7 @@ const IndexPage: React.FC = () => {
               <Button variant="outline" size="sm">Watch Now</Button>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300 group">
               <div className="mb-4">
                 <img
                   src={assetIllustration}
@@ -1220,7 +1208,7 @@ const IndexPage: React.FC = () => {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+      <section id="contact" className="py-20 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">

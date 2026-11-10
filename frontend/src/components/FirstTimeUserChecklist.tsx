@@ -130,8 +130,7 @@ const FirstTimeUserChecklist: React.FC<ChecklistProps> = ({ onClose }) => {
 
   if (allStepsCompleted) {
     return (
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-teal-50 to-cyan-50 dark:from-primary-950/50 dark:via-teal-950/50 dark:to-cyan-950/50 rounded-3xl border border-primary-200/50 dark:border-primary-700/50 p-8 shadow-xl backdrop-blur-sm">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-400/10 to-teal-400/10 dark:from-primary-400/5 dark:to-teal-400/5"></div>
+      <div className="relative overflow-hidden bg-primary-50 dark:bg-primary-950/50 rounded-3xl border border-primary-200/50 dark:border-primary-700/50 p-8 shadow-xl backdrop-blur-sm">
         <div className="relative flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -141,7 +140,7 @@ const FirstTimeUserChecklist: React.FC<ChecklistProps> = ({ onClose }) => {
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-700 to-teal-700 dark:from-primary-300 dark:to-teal-300 bg-clip-text text-transparent">
+              <h3 className="text-2xl font-bold text-primary-700 dark:text-primary-300">
                 🎉 You're all set!
               </h3>
               <p className="text-primary-700 dark:text-primary-300 font-medium">
@@ -162,21 +161,20 @@ const FirstTimeUserChecklist: React.FC<ChecklistProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50/30 dark:from-surface dark:via-surface-elevated dark:to-blue-950/30 rounded-3xl border border-gray-200/50 dark:border-subtle-50 shadow-2xl backdrop-blur-sm">
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/5 via-purple-400/5 to-pink-400/5 dark:from-blue-400/3 dark:via-purple-400/3 dark:to-pink-400/3"></div>
-      
+    <div className="relative overflow-hidden bg-white dark:bg-surface rounded-3xl border border-gray-200/50 dark:border-subtle-50 shadow-2xl backdrop-blur-sm">
+      {/* Accent bar */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-primary-500"></div>
+
       <div className="relative p-8">
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+              <div className="p-2 rounded-xl bg-primary-600 shadow-sm">
                 <Zap className="text-white" size={24} />
               </div>
               <div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-gray-100 dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-[var(--text-primary)]">
                   Let's get started
                 </h2>
                 <p className="text-gray-600 dark:text-[var(--text-primary)] font-medium">
@@ -191,13 +189,13 @@ const FirstTimeUserChecklist: React.FC<ChecklistProps> = ({ onClose }) => {
                 <span className="text-sm font-semibold text-gray-700 dark:text-[var(--text-primary)]">
                   Progress: {completedSteps.length} of {checklistSteps.length} completed
                 </span>
-                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
                   {completionPercentage}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-surface-hover rounded-full h-3 overflow-hidden shadow-inner">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-700 ease-out shadow-sm"
+                <div
+                  className="h-full bg-primary-600 rounded-full transition-all duration-700 ease-out shadow-sm"
                   style={{ width: `${completionPercentage}%` }}
                 ></div>
               </div>
@@ -235,7 +233,7 @@ const FirstTimeUserChecklist: React.FC<ChecklistProps> = ({ onClose }) => {
                 } p-6`}>
                   
                   {isNextStep && (
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                    <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
                       Next
                     </div>
                   )}
@@ -291,7 +289,7 @@ const FirstTimeUserChecklist: React.FC<ChecklistProps> = ({ onClose }) => {
                           onClick={() => handleNavigate(step.link)}
                           className={`group inline-flex items-center px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 ${
                             isNextStep
-                              ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105'
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl hover:scale-105'
                               : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 shadow-sm hover:shadow-md'
                           }`}
                         >

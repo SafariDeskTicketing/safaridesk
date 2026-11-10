@@ -363,13 +363,13 @@ export default function TaskComments({ taskId, reloader, isCustomerView }: TaskC
     <div className="w-full p-6 h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
       <div className="space-y-6">
         {filteredComments.length === 0 ? (
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-surface-elevated dark:to-surface rounded-xl p-8 border border-gray-200 dark:border-subtle">
+          <div className="bg-gray-50 dark:bg-surface-elevated rounded-xl p-8 border border-gray-200 dark:border-subtle">
             <EmptyState />
           </div>
         ) : (
           <div className="relative">
-            {/* Enhanced Stepper line with gradient */}
-            <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-400 via-primary-500 to-primary-600 dark:from-primary-500 dark:via-primary-600 dark:to-primary-700 rounded-full shadow-sm"></div>
+            {/* Stepper line */}
+            <div className="absolute left-8 top-0 bottom-0 w-1 bg-primary-500 dark:bg-primary-600 rounded-full shadow-sm"></div>
 
             <div className="space-y-8">
               {filteredComments.map((message, index) => {
@@ -382,7 +382,7 @@ export default function TaskComments({ taskId, reloader, isCustomerView }: TaskC
                     <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white dark:bg-surface-elevated border-4 border-primary-500 rounded-full shadow-md z-20"></div>
 
                     {/* Avatar */}
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 dark:from-primary-500 dark:to-primary-700 flex items-center justify-center overflow-hidden shadow-lg ring-4 ring-white dark:ring-gray-800 transition-all duration-300 hover:scale-110">
+                    <div className="w-14 h-14 rounded-full bg-primary-500 dark:bg-primary-600 flex items-center justify-center overflow-hidden shadow-lg ring-4 ring-white dark:ring-gray-800 transition-all duration-300 hover:scale-110">
                       {message.author.avatar ? (
                         <img
                           src={message.author.avatar}
@@ -411,15 +411,15 @@ export default function TaskComments({ taskId, reloader, isCustomerView }: TaskC
                         {/* Enhanced Comment Card */}
                         <div className={`relative rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 ${
                           isSolution
-                            ? 'border-primary-300 bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20'
+                            ? 'border-primary-300 bg-primary-50 dark:bg-primary-900/20'
                             : !isInternal
-                            ? 'border-primary-300 bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20'
-                            : 'border-primary-300 bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20'
+                            ? 'border-primary-200 bg-primary-50/50 dark:bg-primary-900/10'
+                            : 'border-primary-300 bg-primary-100 dark:bg-primary-900/30'
                         }`}>
 
                           {/* Solution Badge */}
                           {isSolution && (
-                            <div className="absolute -top-3 left-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                            <div className="absolute -top-3 left-6 bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
                               ✅ SOLUTION
                             </div>
                           )}
@@ -427,10 +427,10 @@ export default function TaskComments({ taskId, reloader, isCustomerView }: TaskC
                           {/* Header */}
                           <div className={`px-6 py-4 rounded-t-2xl flex justify-between items-center ${
                             isSolution
-                              ? 'bg-gradient-to-r from-primary-100 to-primary-100 dark:from-primary-800 dark:to-primary-800'
+                              ? 'bg-primary-100 dark:bg-primary-800'
                               : !isInternal
-                              ? 'bg-gradient-to-r from-primary-100 to-primary-100 dark:from-primary-800 dark:to-primary-800'
-                              : 'bg-gradient-to-r from-primary-100 to-primary-100 dark:from-primary-800 dark:to-primary-800'
+                              ? 'bg-primary-50 dark:bg-primary-800/50'
+                              : 'bg-primary-100 dark:bg-primary-800'
                           }`}>
                             <div className="flex items-center space-x-3">
                               <h4 className="font-bold text-gray-900 dark:text-[var(--text-primary)]">
@@ -620,7 +620,7 @@ export default function TaskComments({ taskId, reloader, isCustomerView }: TaskC
                                 <div className="space-y-3">
                                   {message.replies.map((reply) => (
                                     <div key={reply.id} className="flex space-x-3 pl-4 border-l-2 border-gray-200 dark:border-subtle">
-                                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                      <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
                                         {reply.author.avatar ? (
                                           <img
                                             src={reply.author.avatar}

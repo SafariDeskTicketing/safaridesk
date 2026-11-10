@@ -275,7 +275,7 @@ const TaskInfo: React.FC<Props> = () => {
         {/* Task Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Creator Info */}
-          <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 dark:border-blue-800 dark:from-blue-900/20 dark:to-indigo-900/20">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <div className="mb-3 flex items-center">
               <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                 <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -299,7 +299,7 @@ const TaskInfo: React.FC<Props> = () => {
           </div>
 
           {/* Assignment Info */}
-          <div className="rounded-lg border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-4 dark:border-sky-800 dark:from-sky-900/20 dark:to-cyan-900/20">
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-800 dark:bg-sky-900/20">
             <div className="mb-3 flex items-center">
               <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900">
                 <UserCheck className="h-4 w-4 text-sky-600 dark:text-sky-400" />
@@ -368,7 +368,7 @@ const TaskInfo: React.FC<Props> = () => {
           </div>
 
           {/* Timeline Info */}
-          <div className="rounded-lg border border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 p-4 dark:border-purple-800 dark:from-purple-900/20 dark:to-violet-900/20">
+          <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
             <div className="mb-3 flex items-center">
               <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
                 <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
