@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
@@ -86,35 +86,32 @@ export const Modal: React.FC<ModalProps> = ({
   const [currentZIndex, setCurrentZIndex] = useState(baseZIndex); // Initialize with baseZIndex
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
-  const wasOpenRef = useRef(false);
 
-  // Track whatever has focus in the page while the modal is closed, so the
-  // instant it opens we already know what to restore focus to on close.
-  // Reading document.activeElement from inside the open effect instead would
-  // be too late — it runs after any child's autoFocus has already moved
-  // focus into the dialog, capturing the wrong element.
-  // Skip the single render where isOpen flips true -> false: by that point
-  // focus has already moved away from the real trigger as a side effect of
-  // closing itself — either still on a Cancel/Submit button inside the
-  // about-to-be-removed dialog (dialogRef still contains it), or already on
-  // document.body (a backdrop click blurs the non-focusable backdrop before
-  // onClose runs). Capturing either would overwrite the real trigger with a
-  // throwaway value, making the close effect's focus() below a no-op or a
-  // focus-to-body. Only treat document.activeElement as a legitimate next
-  // trigger once we're on a render that was *already* closed.
-  // Done in a layout effect, not render-phase: mutating wasOpenRef directly
-  // in the render body broke under StrictMode, which calls the render
-  // function twice per commit in development — the second call would see
-  // wasOpenRef already flipped by the first and wrongly treat the closing
-  // render as "already closed," capturing document.body instead of skipping.
-  // Effects (layout or passive) don't get that double-invoke on updates, only
-  // on initial mount, where this logic is idempotent anyway.
-  useLayoutEffect(() => {
-    if (!isOpen && !wasOpenRef.current && !dialogRef.current?.contains(document.activeElement)) {
-      previouslyFocusedElement.current = document.activeElement as HTMLElement | null;
-    }
-    wasOpenRef.current = isOpen;
-  });
+  // Track whatever has focus outside the dialog, so the instant it closes we
+  // already know what to restore focus to. Driven by a real `focusin`
+  // listener rather than sampling document.activeElement from a render/effect:
+  // React only re-renders this component when its own props/state change, so
+  // a render-cadence-based capture (e.g. "record activeElement on every render
+  // where the modal is closed") silently misses the common keyboard case —
+  // Tab-ing to a trigger button doesn't itself cause a re-render, so if the
+  // user then presses Enter with no *other* re-render happening in between,
+  // whatever was captured is stale, not the button that was just focused.
+  // A focusin listener fires on the real DOM event regardless of React's
+  // render timing, so it can't miss a focus change the way a render-driven
+  // sample can. The dialogRef.contains guard is still required: once the
+  // dialog opens, a child's own autoFocus (several modals in this app use
+  // one) fires a focusin for an element *inside* the dialog, which must not
+  // overwrite the real trigger captured just before it opened.
+  useEffect(() => {
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && !dialogRef.current?.contains(target)) {
+        previouslyFocusedElement.current = target;
+      }
+    };
+    document.addEventListener('focusin', handleFocusIn);
+    return () => document.removeEventListener('focusin', handleFocusIn);
+  }, []);
 
   const getFocusableElements = (): HTMLElement[] => {
     const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(
