@@ -191,7 +191,7 @@ export const SmtpSettings: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Server Configuration */}
-        <div className="bg-gray-50 dark:bg-surface-50 rounded-[var(--shell-radius)] p-6 border border-[var(--border-color)]">
+        <div className="bg-[var(--surface-muted)] rounded-[var(--shell-radius)] p-6 border border-[var(--border-color)]">
           <h3 className="text-lg font-medium text-[var(--text-primary)] mb-4 flex items-center">
             <svg
               className="w-5 h-5 mr-2 text-gray-500"
@@ -257,7 +257,7 @@ export const SmtpSettings: React.FC = () => {
         </div>
 
         {/* Security Settings */}
-        <div className="bg-gray-50 dark:bg-surface-50 rounded-[var(--shell-radius)] p-6 border border-[var(--border-color)]">
+        <div className="bg-[var(--surface-muted)] rounded-[var(--shell-radius)] p-6 border border-[var(--border-color)]">
           <h3 className="text-lg font-medium text-[var(--text-primary)] mb-4 flex items-center">
             <svg
               className="w-5 h-5 mr-2 text-gray-500"
@@ -280,7 +280,7 @@ export const SmtpSettings: React.FC = () => {
                 type="checkbox"
                 checked={formData.use_tls}
                 onChange={(e) => handleInputChange("use_tls", e.target.checked)}
-                className="rounded border-gray-300 dark:border-subtle text-primary-600 focus:ring-primary-500 dark:bg-surface-hover"
+                className="rounded border-[var(--border-color)] text-primary-600 focus:ring-primary-500 bg-[var(--card-bg)]"
               />
               <div className="ml-3">
                 <span className="text-[length:var(--font-label)] font-medium text-[var(--text-primary)]">
@@ -296,7 +296,7 @@ export const SmtpSettings: React.FC = () => {
                 type="checkbox"
                 checked={formData.use_ssl}
                 onChange={(e) => handleInputChange("use_ssl", e.target.checked)}
-                className="rounded border-gray-300 dark:border-subtle text-primary-600 focus:ring-primary-500 dark:bg-surface-hover"
+                className="rounded border-[var(--border-color)] text-primary-600 focus:ring-primary-500 bg-[var(--card-bg)]"
               />
               <div className="ml-3">
                 <span className="text-[length:var(--font-label)] font-medium text-[var(--text-primary)]">
@@ -311,7 +311,7 @@ export const SmtpSettings: React.FC = () => {
         </div>
 
         {/* Email Configuration */}
-        <div className="bg-gray-50 dark:bg-surface-50 rounded-[var(--shell-radius)] p-6 border border-[var(--border-color)]">
+        <div className="bg-[var(--surface-muted)] rounded-[var(--shell-radius)] p-6 border border-[var(--border-color)]">
           <h3 className="text-lg font-medium text-[var(--text-primary)] mb-4 flex items-center">
             <svg
               className="w-5 h-5 mr-2 text-gray-500"
@@ -435,7 +435,7 @@ export const SmtpSettings: React.FC = () => {
         title="Send Test Email"
       >
         <div className="space-y-6">
-          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-[var(--shell-radius)] p-4">
+          <div className="bg-[var(--surface-subtle)] border border-primary-200 dark:border-primary-800 rounded-[var(--shell-radius)] p-4">
             <div className="flex items-start">
               <svg
                 className="w-5 h-5 text-primary-500 mr-3 mt-0.5"

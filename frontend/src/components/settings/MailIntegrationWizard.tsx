@@ -290,15 +290,15 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
     >
       <form className="space-y-6" onSubmit={handleSave}>
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)] uppercase tracking-wide">Support email</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wide">Support email</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Email address</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Email address</label>
               <Input placeholder="support@example.com" {...form.register('email_address')} />
               {fieldError('email_address')}
             </div>
             <div>
-              <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Display name</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Display name</label>
               <Input placeholder="Support Team" {...form.register('display_name')} />
               {fieldError('display_name')}
             </div>
@@ -317,7 +317,7 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Assign to department</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Assign to department</label>
               {renderDepartmentSelect()}
             </div>
           </div>
@@ -326,20 +326,20 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
         {needsIncoming && (
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)] uppercase tracking-wide">Incoming (IMAP)</h3>
-              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-[var(--text-primary)]">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wide">Incoming (IMAP)</h3>
+              <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
                 <input type="checkbox" {...form.register('imap_use_ssl')} />
                 Use SSL
               </label>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Host</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Host</label>
                 <Input placeholder="imap.mailprovider.com" {...form.register('imap_host')} />
                 {fieldError('imap_host')}
               </div>
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Port</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Port</label>
                 <Input
                   type="number"
                   placeholder="993"
@@ -349,15 +349,15 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
                   })}
                 />
                 {fieldError('imap_port')}
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Port 993 uses SSL.</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Port 993 uses SSL.</p>
               </div>
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Username</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Username</label>
                 <Input placeholder="user@example.com" {...form.register('imap_username')} />
                 {fieldError('imap_username')}
               </div>
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Password</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Password</label>
                 <Input type="password" {...form.register('imap_password')} />
                 {fieldError('imap_password')}
               </div>
@@ -368,8 +368,8 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
         {needsOutgoing && (
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)] uppercase tracking-wide">Outgoing (SMTP)</h3>
-              <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-[var(--text-primary)]">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wide">Outgoing (SMTP)</h3>
+              <div className="flex items-center gap-4 text-sm text-[var(--text-primary)]">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" {...form.register('smtp_use_ssl')} />
                   Use SSL
@@ -382,12 +382,12 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Host</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Host</label>
                 <Input placeholder="smtp.mailprovider.com" {...form.register('smtp_host')} />
                 {fieldError('smtp_host')}
               </div>
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Port</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Port</label>
                 <Input
                   type="number"
                   placeholder="465"
@@ -397,15 +397,15 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
                   })}
                 />
                 {fieldError('smtp_port')}
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Port 465 uses SSL. Port 587 uses STARTTLS.</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Port 465 uses SSL. Port 587 uses STARTTLS.</p>
               </div>
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Username</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Username</label>
                 <Input placeholder="user@example.com" {...form.register('smtp_username')} />
                 {fieldError('smtp_username')}
               </div>
               <div>
-                <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Password</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Password</label>
                 <Input type="password" {...form.register('smtp_password')} />
                 {fieldError('smtp_password')}
               </div>
@@ -415,14 +415,14 @@ export const MailIntegrationWizard: React.FC<Props> = ({ isOpen, onClose, onComp
 
         <div className="space-y-3">
           {testResult && (
-            <div className="bg-gray-50 dark:bg-surface rounded-lg p-4 text-sm space-y-2">
+            <div className="bg-[var(--surface-muted)] rounded-lg p-4 text-sm space-y-2">
               {testResult.imap && (
-                <p className={testResult.imap.status === 'success' ? 'text-primary-600' : testResult.imap.status === 'error' ? 'text-red-600' : 'text-gray-500 dark:text-[var(--text-primary)]'}>
+                <p className={testResult.imap.status === 'success' ? 'text-primary-600' : testResult.imap.status === 'error' ? 'text-red-600' : 'text-[var(--text-muted)]'}>
                   <strong>IMAP:</strong> {testResult.imap.status} - {testResult.imap.message}
                 </p>
               )}
               {testResult.smtp && (
-                <p className={`mt-1 ${testResult.smtp.status === 'success' ? 'text-primary-600' : testResult.smtp.status === 'error' ? 'text-red-600' : 'text-gray-500 dark:text-[var(--text-primary)]'}`}>
+                <p className={`mt-1 ${testResult.smtp.status === 'success' ? 'text-primary-600' : testResult.smtp.status === 'error' ? 'text-red-600' : 'text-[var(--text-muted)]'}`}>
                   <strong>SMTP:</strong> {testResult.smtp.status} - {testResult.smtp.message}
                 </p>
               )}

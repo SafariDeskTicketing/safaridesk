@@ -341,7 +341,7 @@ export const TicketCategories: React.FC = () => {
       render: (value: string) => (
         <div className="flex items-center space-x-2">
           <Tags className="h-4 w-4 text-gray-400" />
-          <span className="font-medium text-gray-900 dark:text-[var(--text-primary)]">
+          <span className="font-medium text-[var(--text-primary)]">
             {value}
           </span>
         </div>
@@ -353,7 +353,7 @@ export const TicketCategories: React.FC = () => {
       sortable: true,
       render: (value: string) => (
         <span
-          className="text-gray-600 dark:text-[var(--text-primary)] text-sm truncate max-w-xs"
+          className="text-[var(--text-secondary)] text-sm truncate max-w-xs"
           title={value}
         >
           {value}
@@ -365,7 +365,7 @@ export const TicketCategories: React.FC = () => {
       header: "Department",
       sortable: true,
       render: (_value: string, row: TicketCategory) => (
-        <span className="text-gray-600 dark:text-[var(--text-primary)] text-sm">
+        <span className="text-[var(--text-secondary)] text-sm">
           {row.department_name || "Unassigned"}
         </span>
       ),
@@ -435,8 +435,8 @@ export const TicketCategories: React.FC = () => {
 
         {/* Bulk Actions */}
         {!isLoading && !error && categories.length > 0 && selectedCategoryIds.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3 rounded-[var(--shell-radius)] border border-gray-200 bg-gray-50 px-4 py-3 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-            <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-[var(--text-primary)]">
+          <div className="flex flex-wrap items-center gap-3 rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--surface-muted)] px-4 py-3 text-[var(--text-primary)]">
+            <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
               <input
                 type="checkbox"
                 className="rounded"
@@ -448,7 +448,7 @@ export const TicketCategories: React.FC = () => {
               />
               Select all
             </label>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-[var(--text-muted)]">
               {selectedCategoryIds.length} selected
             </span>
             <div className="flex items-center gap-2">
@@ -509,8 +509,8 @@ export const TicketCategories: React.FC = () => {
 
           {/* Custom pagination info when searching */}
           {searchTerm && (
-            <div className="px-6 py-3 border-t border-gray-200 dark:border-[var(--border-color)]">
-              <div className="text-sm text-gray-700 dark:text-[var(--text-primary)]">
+            <div className="px-6 py-3 border-t border-[var(--border-color)]">
+              <div className="text-sm text-[var(--text-primary)]">
                 Showing {filteredAndSortedCategories.length} filtered results
                 from {totalCount} total categories
               </div>
@@ -524,10 +524,10 @@ export const TicketCategories: React.FC = () => {
         <div className="surface-card p-6">
           <div className="text-center">
             <Tags className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-[var(--text-primary)]">
+            <h3 className="mt-2 text-sm font-medium text-[var(--text-primary)]">
               No ticket categories
             </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-[var(--text-primary)]">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Get started by creating a new ticket category.
             </p>
             <div className="mt-6">
@@ -578,14 +578,14 @@ export const TicketCategories: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description <span className="text-xs text-gray-500">(minimum 10 characters)</span>
+            <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">
+              Description <span className="text-xs text-[var(--text-muted)]">(minimum 10 characters)</span>
             </label>
             <textarea
               placeholder="Enter category description (at least 10 characters)"
               value={newCategoryDescription}
               onChange={(e) => setNewCategoryDescription(e.target.value)}
-              className="w-full px-2 py-1 border border-gray-300 dark:border-[var(--border-color)] rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 text-sm"
+              className="w-full px-2 py-1 border border-[var(--border-color)] rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-[var(--surface-muted)] text-[var(--text-primary)] text-sm"
               rows={2}
             />
             {newCategoryDescription && newCategoryDescription.trim().length < 10 && (
@@ -661,8 +661,8 @@ export const TicketCategories: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)] mb-2">
-              Description <span className="text-xs text-gray-500">(minimum 10 characters)</span>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              Description <span className="text-xs text-[var(--text-muted)]">(minimum 10 characters)</span>
             </label>
             <textarea
               placeholder="Enter category description (at least 10 characters)"
@@ -674,7 +674,7 @@ export const TicketCategories: React.FC = () => {
                     : null,
                 )
               }
-              className="w-full px-3 py-2 border border-gray-300 dark:border-[var(--border-color)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-surface-hover dark:text-[var(--text-primary)]"
+              className="w-full px-3 py-2 border border-[var(--border-color)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-[var(--surface-muted)] text-[var(--text-primary)]"
               rows={3}
             />
             {editingCategory?.description && editingCategory.description.trim().length < 10 && (
@@ -706,7 +706,7 @@ export const TicketCategories: React.FC = () => {
         title="Delete Ticket Category"
       >
         <div>
-          <p className="text-gray-500 dark:text-[var(--text-primary)]">
+          <p className="text-[var(--text-muted)]">
             This will permanently delete the selected ticket category. Tickets that used this category
             will be shown as "Uncategorized".
           </p>

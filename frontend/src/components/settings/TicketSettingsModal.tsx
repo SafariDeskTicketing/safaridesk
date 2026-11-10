@@ -83,7 +83,7 @@ const TicketSettingsModal: React.FC<TicketSettingsModalProps> = ({ isOpen, onClo
       <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
         {/* ID Format */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)] mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Ticket ID Format
           </label>
           <Input
@@ -97,7 +97,7 @@ const TicketSettingsModal: React.FC<TicketSettingsModalProps> = ({ isOpen, onClo
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)] mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Ticket Title Format
           </label>
           <Input
@@ -113,7 +113,7 @@ const TicketSettingsModal: React.FC<TicketSettingsModalProps> = ({ isOpen, onClo
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-subtle">
+      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[var(--border-color)]">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>

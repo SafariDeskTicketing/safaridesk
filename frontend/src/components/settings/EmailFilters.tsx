@@ -135,7 +135,7 @@ export const EmailFilters: React.FC = () => {
   return (
     <div className="max-w-3xl">
       {/* Sub-tabs */}
-      <div className="flex gap-4 border-b border-gray-200 dark:border-[var(--border-color)] mb-5">
+      <div className="flex gap-4 border-b border-[var(--border-color)] mb-5">
         {(['rules', 'log'] as Tab[]).map(tab => (
           <button
             key={tab}
@@ -162,14 +162,14 @@ export const EmailFilters: React.FC = () => {
 
       {activeTab === 'rules' && (
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-            One rule per line. Lines starting with <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">#</code> are comments.
+          <p className="text-xs text-[var(--text-secondary)] mb-3">
+            One rule per line. Lines starting with <code className="bg-[var(--surface-muted)] px-1 rounded">#</code> are comments.
           </p>
-          <div className="text-xs text-gray-400 dark:text-gray-500 mb-1 flex gap-4">
+          <div className="text-xs text-[var(--text-muted)] mb-1 flex gap-4">
             <span>Syntax:</span>
-            <span><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">noreply</code> — contains match</span>
-            <span><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">@domain.com</code> — whole domain</span>
-            <span><code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">user@domain.com</code> — exact email</span>
+            <span><code className="bg-[var(--surface-muted)] px-1 rounded">noreply</code> — contains match</span>
+            <span><code className="bg-[var(--surface-muted)] px-1 rounded">@domain.com</code> — whole domain</span>
+            <span><code className="bg-[var(--surface-muted)] px-1 rounded">user@domain.com</code> — exact email</span>
           </div>
 
           {loadingRules ? (
@@ -181,7 +181,7 @@ export const EmailFilters: React.FC = () => {
                 onChange={e => setEditorValue(e.target.value)}
                 rows={18}
                 spellCheck={false}
-                className="w-full font-mono text-xs border border-gray-200 dark:border-[var(--border-color)] rounded-md p-3 bg-gray-50 dark:bg-[var(--bg-secondary)] text-gray-800 dark:text-gray-200 resize-y focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full font-mono text-xs border border-[var(--border-color)] rounded-md p-3 bg-[var(--surface-muted)] text-[var(--text-primary)] resize-y focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               <div className="flex items-center justify-between mt-2">
                 <span className="text-xs text-gray-400">
@@ -191,7 +191,7 @@ export const EmailFilters: React.FC = () => {
                   <button
                     onClick={handleReset}
                     disabled={savingRules}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50"
+                    className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Restore defaults
@@ -219,14 +219,14 @@ export const EmailFilters: React.FC = () => {
       {activeTab === 'log' && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-[var(--text-secondary)]">
               Last 50 blocked emails. Use this to spot false positives.
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={loadLog}
                 disabled={loadingLog}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <RefreshCw className={`w-3 h-3 ${loadingLog ? 'animate-spin' : ''}`} />
               </button>
@@ -251,9 +251,9 @@ export const EmailFilters: React.FC = () => {
               <p className="text-xs">No emails blocked yet</p>
             </div>
           ) : (
-            <div className="border border-gray-200 dark:border-[var(--border-color)] rounded-md overflow-hidden">
+            <div className="border border-[var(--border-color)] rounded-md overflow-hidden">
               <table className="w-full text-xs">
-                <thead className="bg-gray-50 dark:bg-[var(--bg-secondary)]">
+                <thead className="bg-[var(--surface-muted)]">
                   <tr>
                     <th className="text-left px-3 py-2 font-medium text-gray-500">Sender</th>
                     <th className="text-left px-3 py-2 font-medium text-gray-500">Subject</th>
@@ -262,16 +262,16 @@ export const EmailFilters: React.FC = () => {
                     <th className="text-left px-3 py-2 font-medium text-gray-500">Blocked at</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-[var(--border-color)]">
+                <tbody className="divide-y divide-[var(--border-color)]">
                   {log.map(entry => (
-                    <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-[var(--bg-secondary)]">
-                      <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300 max-w-[180px] truncate">
+                    <tr key={entry.id} className="hover:bg-[var(--hover-bg)]">
+                      <td className="px-3 py-2 font-mono text-[var(--text-primary)] max-w-[180px] truncate">
                         {entry.sender}
                       </td>
                       <td className="px-3 py-2 text-gray-500 max-w-[180px] truncate" title={entry.subject}>
                         {entry.subject || '—'}
                       </td>
-                      <td className="px-3 py-2 font-mono text-gray-600 dark:text-gray-400">
+                      <td className="px-3 py-2 font-mono text-[var(--text-secondary)]">
                         {entry.rule_matched}
                       </td>
                       <td className="px-3 py-2">
@@ -287,7 +287,7 @@ export const EmailFilters: React.FC = () => {
                 </tbody>
               </table>
               {logCount > 50 && (
-                <div className="px-3 py-2 text-xs text-gray-400 bg-gray-50 dark:bg-[var(--bg-secondary)] border-t border-gray-100 dark:border-[var(--border-color)]">
+                <div className="px-3 py-2 text-xs text-gray-400 bg-[var(--surface-muted)] border-t border-[var(--border-color)]">
                   Showing 50 of {logCount} entries
                 </div>
               )}

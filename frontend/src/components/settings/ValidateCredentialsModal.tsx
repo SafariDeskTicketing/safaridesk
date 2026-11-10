@@ -61,7 +61,7 @@ export const ValidateCredentialsModal: React.FC<Props> = ({ isOpen, onClose }) =
     if (!status) return '';
     if (status === 'success') return 'text-primary-600';
     if (status === 'error') return 'text-red-600';
-    return 'text-gray-600';
+    return 'text-[var(--text-secondary)]';
   };
 
   return (
@@ -71,19 +71,19 @@ export const ValidateCredentialsModal: React.FC<Props> = ({ isOpen, onClose }) =
           <h4 className="font-semibold mb-2">IMAP Settings (Incoming)</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Host</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Host</label>
               <Input {...register('imap_host')} placeholder="imap.mailprovider.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Port</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Port</label>
               <Input type="number" {...register('imap_port', { valueAsNumber: true })} placeholder="993" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Username</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Username</label>
               <Input {...register('imap_username')} placeholder="user@example.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Password</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Password</label>
               <Input type="password" {...register('imap_password')} />
             </div>
             <label className="flex items-center space-x-2">
@@ -97,19 +97,19 @@ export const ValidateCredentialsModal: React.FC<Props> = ({ isOpen, onClose }) =
           <h4 className="font-semibold mb-2">SMTP Settings (Outgoing)</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Host</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Host</label>
               <Input {...register('smtp_host')} placeholder="smtp.mailprovider.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Port</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Port</label>
               <Input type="number" {...register('smtp_port', { valueAsNumber: true })} placeholder="465" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Username</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Username</label>
               <Input {...register('smtp_username')} placeholder="user@example.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)]">Password</label>
+              <label className="block text-sm font-medium text-[var(--text-primary)]">Password</label>
               <Input type="password" {...register('smtp_password')} />
             </div>
             <label className="flex items-center space-x-2">
@@ -131,7 +131,7 @@ export const ValidateCredentialsModal: React.FC<Props> = ({ isOpen, onClose }) =
       </form>
 
       {result && (
-        <div className="mt-6 bg-gray-50 dark:bg-surface p-4 rounded-lg">
+        <div className="mt-6 bg-[var(--surface-muted)] p-4 rounded-lg">
           <h4 className="font-semibold mb-2">Results</h4>
           <p className={renderStatus(result.imap?.status)}>
             IMAP: {result.imap?.status ?? 'skipped'} - {result.imap?.message}

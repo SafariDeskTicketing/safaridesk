@@ -93,14 +93,14 @@ export const Settings: React.FC = () => {
   return (
     <div className="text-sm px-4 md:px-8 py-4 flex justify-center">
       <div className="w-full max-w-full">
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-[var(--border-color)] p-6 space-y-6">
+        <div className="bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)] p-6 space-y-6">
 
         {/* General Settings */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">General</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">General</h3>
           <div className="space-y-3">
             <div className="flex items-center gap-4">
-              <label className="w-32 text-sm font-medium text-gray-700 dark:text-gray-300">Template Set:</label>
+              <label className="w-32 text-sm font-medium text-[var(--text-primary)]">Template Set:</label>
               <div className="w-48">
                 <Select
                   value={configData.defaultTemplateSet}
@@ -112,7 +112,7 @@ export const Settings: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <label className="w-32 text-sm font-medium text-gray-700 dark:text-gray-300">Email Fetching:</label>
+              <label className="w-32 text-sm font-medium text-[var(--text-primary)]">Email Fetching:</label>
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -121,21 +121,21 @@ export const Settings: React.FC = () => {
                   className="rounded h-3 w-3 text-primary-600"
                   aria-label="Enable Email Fetching"
                 />
-                <span className="ml-1 text-xs text-gray-600 dark:text-gray-300">Enable</span>
+                <span className="ml-1 text-xs text-[var(--text-secondary)]">Enable</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Signature Settings */}
-        <div className="border-t border-gray-200 dark:border-[var(--border-color)] pt-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Email Signature</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        <div className="border-t border-[var(--border-color)] pt-6">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Email Signature</h3>
+          <p className="text-sm text-[var(--text-secondary)] mb-3">
             Appears at the end of all outgoing emails.
           </p>
           <div className="space-y-3">
             <div className="flex items-start gap-4">
-              <label className="w-32 text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">Greeting:</label>
+              <label className="w-32 text-sm font-medium text-[var(--text-primary)] pt-2">Greeting:</label>
               <div className="w-48">
                 <Input
                   value={signatureData.signature_greeting}
@@ -149,7 +149,7 @@ export const Settings: React.FC = () => {
             </div>
 
             <div className="flex items-start gap-4">
-              <label className="w-32 text-sm font-medium text-gray-700 dark:text-gray-300 pt-2">Name:</label>
+              <label className="w-32 text-sm font-medium text-[var(--text-primary)] pt-2">Name:</label>
               <div className="w-48">
                 <Input
                   value={signatureData.signature_name}
@@ -166,11 +166,11 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Preview */}
-        <div className="border-t border-gray-200 dark:border-[var(--border-color)] pt-6">
+        <div className="border-t border-[var(--border-color)] pt-6">
           <div className="flex items-start gap-4">
-            <label className="w-32 text-sm font-semibold text-gray-900 dark:text-gray-100 pt-2">Preview:</label>
+            <label className="w-32 text-sm font-semibold text-[var(--text-primary)] pt-2">Preview:</label>
             <div className="w-48">
-              <div className="bg-gray-50 dark:bg-[var(--app-bg)] p-3 rounded text-sm text-gray-700 dark:text-gray-300">
+              <div className="bg-[var(--surface-muted)] p-3 rounded text-sm text-[var(--text-primary)]">
                 <p>{signatureData.signature_greeting}</p>
                 <p className="font-semibold">{signatureData.signature_name || '(Your Business Name)'}</p>
               </div>
@@ -179,7 +179,7 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Save Button */}
-        <div className="pt-6 border-t border-gray-200 dark:border-[var(--border-color)] flex justify-end">
+        <div className="pt-6 border-t border-[var(--border-color)] flex justify-end">
           <Button onClick={handleSaveChanges} disabled={isSaving} size="sm" className="h-8 px-4 text-sm">
             {isSaving ? <RefreshCw className="animate-spin h-3 w-3" /> : 'Save Changes'}
           </Button>

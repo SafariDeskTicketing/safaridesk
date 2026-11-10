@@ -219,7 +219,7 @@ export const EmailTemplates: React.FC = () => {
     <div className="text-sm space-y-3 px-3 py-2">
       <Card className="rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-[var(--text-primary)]">Email Template Categories</h3>
+          <h3 className="text-lg font-medium text-[var(--text-primary)]">Email Template Categories</h3>
           <button
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2"
             onClick={openAddCategory}
@@ -233,12 +233,12 @@ export const EmailTemplates: React.FC = () => {
           {categories.map((category) => (
             <div
               key={category.id}
-              className="border border-gray-200 dark:border-[var(--border-color)] rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-surface-hover"
+              className="border border-[var(--border-color)] rounded-lg p-4 cursor-pointer hover:bg-[var(--hover-bg)]"
               onClick={() => openCategoryModal(category)}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-[var(--text-primary)]">{category.name}</h4>
+                  <h4 className="font-medium text-[var(--text-primary)]">{category.name}</h4>
                   <p className="text-sm text-gray-500">{category.templates.length} templates</p>
                 </div>
                 <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
@@ -291,7 +291,7 @@ export const EmailTemplates: React.FC = () => {
         title="Confirm Delete"
       >
         <div className="space-y-4">
-          <p className="text-gray-700 dark:text-[var(--text-primary)]">
+          <p className="text-[var(--text-primary)]">
             Are you sure you want to delete <strong>{confirmDelete?.name}</strong>?
             {confirmDelete?.type === 'category' && ' This will also delete all templates inside it.'}
           </p>
@@ -327,8 +327,8 @@ export const EmailTemplates: React.FC = () => {
 
                 {/* Add Template form */}
                 {isAddingTemplate ? (
-                  <div className="border border-gray-200 dark:border-[var(--border-color)] rounded-lg p-4 space-y-4">
-                    <h4 className="font-medium text-gray-900 dark:text-[var(--text-primary)]">New Template</h4>
+                  <div className="border border-[var(--border-color)] rounded-lg p-4 space-y-4">
+                    <h4 className="font-medium text-[var(--text-primary)]">New Template</h4>
                     <Input
                       label="Name"
                       value={newTemplate.name}
@@ -389,9 +389,9 @@ export const EmailTemplates: React.FC = () => {
                     return acc;
                   }, {} as Record<string, Template[]>)
                 ).map(([type, templates]) => (
-                  <div key={type} className="border border-gray-200 dark:border-[var(--border-color)] rounded-lg">
+                  <div key={type} className="border border-[var(--border-color)] rounded-lg">
                     <button
-                      className="w-full flex items-center justify-between p-4 text-left font-medium text-gray-900 dark:text-[var(--text-primary)]"
+                      className="w-full flex items-center justify-between p-4 text-left font-medium text-[var(--text-primary)]"
                       onClick={() => setOpenAccordion(openAccordion === type ? null : type)}
                     >
                       <span className="capitalize">{type} Templates</span>
@@ -399,9 +399,9 @@ export const EmailTemplates: React.FC = () => {
                     </button>
 
                     {openAccordion === type && (
-                      <div className="p-4 border-t border-gray-200 dark:border-[var(--border-color)] space-y-4">
+                      <div className="p-4 border-t border-[var(--border-color)] space-y-4">
                         {templates.map((template) => (
-                          <div key={template.id} className="border border-gray-200 dark:border-[var(--border-color)] rounded-lg p-4">
+                          <div key={template.id} className="border border-[var(--border-color)] rounded-lg p-4">
                             {editingTemplate?.id === template.id ? (
                               <div className="space-y-4">
                                 <Input
@@ -432,8 +432,8 @@ export const EmailTemplates: React.FC = () => {
                             ) : (
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-gray-900 dark:text-[var(--text-primary)]">{template.name}</h4>
-                                  <p className="text-sm text-gray-600 dark:text-[var(--text-primary)] truncate">{template.subject}</p>
+                                  <h4 className="font-medium text-[var(--text-primary)]">{template.name}</h4>
+                                  <p className="text-sm text-[var(--text-secondary)] truncate">{template.subject}</p>
                                   {template.description && (
                                     <p className="text-xs text-gray-500 mt-1">{template.description}</p>
                                   )}
@@ -468,7 +468,7 @@ export const EmailTemplates: React.FC = () => {
               {/* Variables sidebar */}
               <div className="md:col-span-1">
                 <Card className="sticky top-0 rounded-lg p-6">
-                  <h4 className="font-medium text-gray-900 dark:text-[var(--text-primary)] mb-3">Supported Variables</h4>
+                  <h4 className="font-medium text-[var(--text-primary)] mb-3">Supported Variables</h4>
                   <div className="max-h-[800px] overflow-y-auto pr-2">
                     {isPlaceholdersLoading ? (
                       <VariablesSkeleton />
@@ -482,14 +482,14 @@ export const EmailTemplates: React.FC = () => {
                             (!editingTemplate && openAccordion === 'task' && group.toLowerCase() === 'tasks');
                           return (
                             <div key={group}>
-                              <h5 className="font-medium text-sm text-gray-700 dark:text-[var(--text-primary)] mb-2 capitalize">{group}</h5>
+                              <h5 className="font-medium text-sm text-[var(--text-primary)] mb-2 capitalize">{group}</h5>
                               <div className="flex flex-wrap gap-2">
                                 {vars.map((variable) => {
                                   const full = `{{${variable}}}`;
                                   return (
                                     <span
                                       key={variable}
-                                      className={`px-2 py-1 rounded-md text-xs ${isEnabled ? 'bg-gray-100 dark:bg-surface-hover text-gray-800 dark:text-[var(--text-primary)] cursor-pointer hover:bg-gray-200' : 'bg-gray-200 dark:bg-surface-hover text-gray-500 cursor-not-allowed'}`}
+                                      className={`px-2 py-1 rounded-md text-xs ${isEnabled ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] cursor-pointer hover:bg-[var(--hover-bg)]' : 'bg-[var(--surface-muted)] text-[var(--text-muted)] cursor-not-allowed'}`}
                                       onClick={() => isEnabled && handleVariableClick(full)}
                                     >
                                       {full}
@@ -517,11 +517,11 @@ const VariablesSkeleton = () => (
   <div className="space-y-4 animate-pulse">
     {[...Array(5)].map((_, i) => (
       <div key={i}>
-        <div className="h-4 bg-gray-200 dark:bg-surface-hover rounded w-1/3 mb-2"></div>
+        <div className="h-4 bg-[var(--surface-muted)] rounded w-1/3 mb-2"></div>
         <div className="flex flex-wrap gap-2">
-          <div className="h-6 w-20 bg-gray-200 dark:bg-surface-hover rounded-md"></div>
-          <div className="h-6 w-24 bg-gray-200 dark:bg-surface-hover rounded-md"></div>
-          <div className="h-6 w-16 bg-gray-200 dark:bg-surface-hover rounded-md"></div>
+          <div className="h-6 w-20 bg-[var(--surface-muted)] rounded-md"></div>
+          <div className="h-6 w-24 bg-[var(--surface-muted)] rounded-md"></div>
+          <div className="h-6 w-16 bg-[var(--surface-muted)] rounded-md"></div>
         </div>
       </div>
     ))}
@@ -532,22 +532,22 @@ const ModalSkeleton = () => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     <div className="md:col-span-2 space-y-4">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="border border-gray-200 dark:border-[var(--border-color)] rounded-lg p-4 animate-pulse">
-          <div className="h-4 bg-gray-200 dark:bg-surface-hover rounded w-3/4 mb-2"></div>
-          <div className="h-3 bg-gray-200 dark:bg-surface-hover rounded w-1/2"></div>
+        <div key={i} className="border border-[var(--border-color)] rounded-lg p-4 animate-pulse">
+          <div className="h-4 bg-[var(--surface-muted)] rounded w-3/4 mb-2"></div>
+          <div className="h-3 bg-[var(--surface-muted)] rounded w-1/2"></div>
         </div>
       ))}
     </div>
     <div className="md:col-span-1">
       <Card className="sticky top-0 rounded-lg p-6 animate-pulse">
-        <div className="h-5 bg-gray-200 dark:bg-surface-hover rounded w-1/2 mb-4"></div>
+        <div className="h-5 bg-[var(--surface-muted)] rounded w-1/2 mb-4"></div>
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i}>
-              <div className="h-4 bg-gray-200 dark:bg-surface-hover rounded w-1/3 mb-2"></div>
+              <div className="h-4 bg-[var(--surface-muted)] rounded w-1/3 mb-2"></div>
               <div className="flex flex-wrap gap-2">
-                <div className="h-6 w-20 bg-gray-200 dark:bg-surface-hover rounded-md"></div>
-                <div className="h-6 w-24 bg-gray-200 dark:bg-surface-hover rounded-md"></div>
+                <div className="h-6 w-20 bg-[var(--surface-muted)] rounded-md"></div>
+                <div className="h-6 w-24 bg-[var(--surface-muted)] rounded-md"></div>
               </div>
             </div>
           ))}

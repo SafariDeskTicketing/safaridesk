@@ -4,14 +4,14 @@ import { Input } from "../ui/Input";
 
 export const BusinessSettings: React.FC = () => {
   return (
-    <div className="bg-white dark:bg-surface-elevated rounded-lg border border-gray-200 dark:border-subtle p-6">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)] mb-6">
+    <div className="bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)] p-6">
+      <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
         Business Settings
       </h2>
 
       <div className="space-y-6">
         <div>
-          <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)] mb-3">
+          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
             Company Information
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -23,7 +23,7 @@ export const BusinessSettings: React.FC = () => {
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)] mb-3">
+          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
             Address
           </h3>
           <div className="space-y-4">
@@ -42,7 +42,7 @@ export const BusinessSettings: React.FC = () => {
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-gray-900 dark:text-[var(--text-primary)] mb-3">
+          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
             Business Hours
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

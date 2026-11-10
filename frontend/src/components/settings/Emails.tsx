@@ -122,9 +122,9 @@ export const Emails: React.FC = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-surface-elevated rounded-lg border border-gray-200 dark:border-subtle p-6">
+    <div className="bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)] p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[length:var(--font-section-title)] font-semibold text-gray-900 dark:text-[var(--text-primary)]">
+        <h2 className="text-[length:var(--font-section-title)] font-semibold text-[var(--text-primary)]">
           Department Emails
         </h2>
         <Button onClick={handleAddClick}>

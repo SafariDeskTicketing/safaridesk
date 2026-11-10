@@ -297,12 +297,12 @@ export const CustomDomainsSettings: React.FC = () => {
       {/* Domains List */}
       <div className="space-y-4">
         {domains.length === 0 ? (
-          <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-[var(--shell-radius)] border border-[var(--border-color)]">
+          <div className="text-center py-8 bg-[var(--card-bg)] rounded-[var(--shell-radius)] border border-[var(--border-color)]">
             <Globe className="h-10 w-10 text-gray-400 mx-auto mb-2" />
             <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1">
               No custom domains yet
             </h3>
-            <p className="text-[length:var(--font-meta)] text-gray-600 dark:text-gray-400 mb-2">
+            <p className="text-[length:var(--font-meta)] text-[var(--text-secondary)] mb-2">
               Add your first custom domain to get started
             </p>
             <button
@@ -317,7 +317,7 @@ export const CustomDomainsSettings: React.FC = () => {
           domains.map(domain => (
             <div
               key={domain.id}
-              className="bg-white dark:bg-surface-elevated rounded-[var(--shell-radius)] border border-[var(--border-color)] overflow-hidden"
+              className="bg-[var(--card-bg)] rounded-[var(--shell-radius)] border border-[var(--border-color)] overflow-hidden"
             >
               {/* Domain Header */}
               <div className="p-3">
@@ -338,7 +338,7 @@ export const CustomDomainsSettings: React.FC = () => {
                         }`}>
                           {getStatusText(domain)}
                         </span>
-                        <span className="text-[length:var(--font-meta)] text-gray-500 dark:text-[var(--text-secondary)]">
+                        <span className="text-[length:var(--font-meta)] text-[var(--text-muted)]">
                           Method: {domain.verification_method === 'dns_txt' ? 'TXT' : 'CNAME'}
                         </span>
                       </div>
@@ -350,7 +350,7 @@ export const CustomDomainsSettings: React.FC = () => {
                       <>
                         <button
                           onClick={() => checkVerification(domain.id)}
-                          className="p-2 text-gray-600 hover:text-gray-900 dark:text-[var(--text-primary)] dark:hover:text-gray-200"
+                          className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           title="Check DNS Status"
                         >
                           <RefreshCw className="h-5 w-5" />
@@ -373,7 +373,7 @@ export const CustomDomainsSettings: React.FC = () => {
                     </button>
                     <button
                       onClick={() => toggleExpanded(domain.id)}
-                      className="p-2 text-gray-600 hover:text-gray-900 dark:text-[var(--text-primary)] dark:hover:text-gray-200"
+                      className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     >
                       {expandedDomainId === domain.id ? (
                         <ChevronUp className="h-5 w-5" />
@@ -387,10 +387,10 @@ export const CustomDomainsSettings: React.FC = () => {
 
               {/* Expanded Details */}
               {expandedDomainId === domain.id && (
-                <div className="border-t border-[var(--border-color)] bg-gray-50 dark:bg-surface-50 p-3 space-y-3">
+                <div className="border-t border-[var(--border-color)] bg-[var(--surface-muted)] p-3 space-y-3">
                   {/* Verification Instructions */}
                   {!domain.is_verified && (
-                    <div className="bg-white dark:bg-surface-elevated rounded-[var(--shell-radius)] p-3 space-y-3">
+                    <div className="bg-[var(--card-bg)] rounded-[var(--shell-radius)] p-3 space-y-3">
                       <h4 className="font-semibold text-[var(--text-primary)] flex items-center">
                         <AlertCircle className="h-5 w-5 text-blue-600 mr-2" />
                         DNS Verification Record
@@ -398,23 +398,23 @@ export const CustomDomainsSettings: React.FC = () => {
                       
                       <div className="space-y-2">
                         <div>
-                          <label className="text-[length:var(--font-meta)] text-gray-600 dark:text-[var(--text-secondary)] uppercase">
+                          <label className="text-[length:var(--font-meta)] text-[var(--text-secondary)] uppercase">
                             Record Type
                           </label>
-                          <div className="flex items-center justify-between mt-1 p-2 bg-gray-50 dark:bg-surface rounded border border-[var(--border-color)]">
+                          <div className="flex items-center justify-between mt-1 p-2 bg-[var(--surface-muted)] rounded border border-[var(--border-color)]">
                             <code className="text-[length:var(--font-body)]">{domain.verification_method === 'dns_txt' ? 'TXT' : 'CNAME'}</code>
                           </div>
                         </div>
 
                         <div>
-                          <label className="text-[length:var(--font-meta)] text-gray-600 dark:text-[var(--text-secondary)] uppercase">
+                          <label className="text-[length:var(--font-meta)] text-[var(--text-secondary)] uppercase">
                             Record Name
                           </label>
-                          <div className="flex items-center justify-between mt-1 p-2 bg-gray-50 dark:bg-surface rounded border border-[var(--border-color)]">
+                          <div className="flex items-center justify-between mt-1 p-2 bg-[var(--surface-muted)] rounded border border-[var(--border-color)]">
                             <code className="text-[length:var(--font-body)] break-all">{domain.verification_record_name}</code>
                             <button
                               onClick={() => copyToClipboard(domain.verification_record_name, 'Record name')}
-                              className="ml-2 p-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                              className="ml-2 p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                               title="Copy record name"
                             >
                               <Copy className="h-4 w-4" />
@@ -423,14 +423,14 @@ export const CustomDomainsSettings: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="text-[length:var(--font-meta)] text-gray-600 dark:text-[var(--text-secondary)] uppercase">
+                          <label className="text-[length:var(--font-meta)] text-[var(--text-secondary)] uppercase">
                             Record Value
                           </label>
-                          <div className="flex items-center justify-between mt-1 p-2 bg-gray-50 dark:bg-surface rounded border border-[var(--border-color)]">
+                          <div className="flex items-center justify-between mt-1 p-2 bg-[var(--surface-muted)] rounded border border-[var(--border-color)]">
                             <code className="text-[length:var(--font-body)] break-all">{domain.verification_record_value}</code>
                             <button
                               onClick={() => copyToClipboard(domain.verification_record_value, 'Record value')}
-                              className="ml-2 p-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                              className="ml-2 p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                               title="Copy record value"
                             >
                               <Copy className="h-4 w-4" />
@@ -439,10 +439,10 @@ export const CustomDomainsSettings: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="text-[length:var(--font-meta)] text-gray-600 dark:text-[var(--text-secondary)] uppercase">
+                          <label className="text-[length:var(--font-meta)] text-[var(--text-secondary)] uppercase">
                             TTL (Time To Live)
                           </label>
-                          <div className="flex items-center justify-between mt-1 p-2 bg-gray-50 dark:bg-surface rounded border border-[var(--border-color)]">
+                          <div className="flex items-center justify-between mt-1 p-2 bg-[var(--surface-muted)] rounded border border-[var(--border-color)]">
                             <code className="text-[length:var(--font-body)]">3600 (or default)</code>
                           </div>
                         </div>
@@ -470,11 +470,11 @@ export const CustomDomainsSettings: React.FC = () => {
 
                   {/* Setup Guide */}
                   {setupGuides[domain.id] && (
-                    <div className="bg-white dark:bg-surface-elevated rounded-[var(--shell-radius)] p-3">
+                    <div className="bg-[var(--card-bg)] rounded-[var(--shell-radius)] p-3">
                       <h4 className="font-semibold text-[var(--text-primary)] mb-3">
                         Setup Instructions
                       </h4>
-                      <div className="text-[length:var(--font-body)] text-gray-600 dark:text-[var(--text-primary)] space-y-2">
+                      <div className="text-[length:var(--font-body)] text-[var(--text-secondary)] space-y-2">
                         <p>1. Log in to your DNS provider</p>
                         <p>2. Add the verification record shown above</p>
                         <p>3. Wait for DNS propagation (10-30 minutes)</p>
@@ -491,7 +491,7 @@ export const CustomDomainsSettings: React.FC = () => {
                   )}
 
                   {/* Metadata */}
-                  <div className="text-[length:var(--font-meta)] text-gray-500 dark:text-[var(--text-secondary)] space-y-1">
+                  <div className="text-[length:var(--font-meta)] text-[var(--text-muted)] space-y-1">
                     <p>Added: {new Date(domain.created_at).toLocaleString()}</p>
                     {domain.verified_at && (
                       <p>Verified: {new Date(domain.verified_at).toLocaleString()}</p>
@@ -509,15 +509,15 @@ export const CustomDomainsSettings: React.FC = () => {
 
       {/* Add Domain Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-[var(--overlay-bg)] flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-surface-elevated rounded-[var(--shell-radius)] max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-[var(--overlay-bg)] flex items-center justify-center p-4 z-50">
+          <div className="bg-[var(--card-bg)] rounded-[var(--shell-radius)] max-w-md w-full p-6">
             <h3 className="mb-4 text-[length:var(--font-section-title)] font-semibold text-[var(--text-primary)]">
               Add Custom Domain
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[length:var(--font-label)] font-medium text-gray-700 dark:text-[var(--text-primary)] mb-2">
+                <label className="block text-[length:var(--font-label)] font-medium text-[var(--text-primary)] mb-2">
                   Domain Name
                 </label>
                 <input
@@ -525,15 +525,15 @@ export const CustomDomainsSettings: React.FC = () => {
                   value={newDomain}
                   onChange={(e) => setNewDomain(e.target.value)}
                   placeholder="support.yourcompany.com"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-[var(--border-color)] rounded-[var(--shell-radius)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-surface-hover text-gray-900 dark:text-[var(--text-primary)]"
+                  className="w-full px-3 py-2 border border-[var(--border-color)] rounded-[var(--shell-radius)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--card-bg)] text-[var(--text-primary)]"
                 />
-                <p className="mt-1 text-[length:var(--font-meta)] text-gray-500 dark:text-[var(--text-secondary)]">
+                <p className="mt-1 text-[length:var(--font-meta)] text-[var(--text-muted)]">
                   Enter your custom subdomain (e.g., support.yourcompany.com)
                 </p>
               </div>
 
               <div>
-                <label className="block text-[length:var(--font-label)] font-medium text-gray-700 dark:text-[var(--text-primary)] mb-2">
+                <label className="block text-[length:var(--font-label)] font-medium text-[var(--text-primary)] mb-2">
                   Verification Method
                 </label>
                 <div className="space-y-2">
@@ -545,7 +545,7 @@ export const CustomDomainsSettings: React.FC = () => {
                       onChange={(e) => setVerificationMethod(e.target.value as 'dns_txt')}
                       className="mr-2"
                     />
-                    <span className="text-[length:var(--font-body)] text-gray-700 dark:text-[var(--text-primary)]">
+                    <span className="text-[length:var(--font-body)] text-[var(--text-primary)]">
                       TXT Record (Recommended)
                     </span>
                   </label>
@@ -557,7 +557,7 @@ export const CustomDomainsSettings: React.FC = () => {
                       onChange={(e) => setVerificationMethod(e.target.value as 'dns_cname')}
                       className="mr-2"
                     />
-                    <span className="text-[length:var(--font-body)] text-gray-700 dark:text-[var(--text-primary)]">
+                    <span className="text-[length:var(--font-body)] text-[var(--text-primary)]">
                       CNAME Record
                     </span>
                   </label>
@@ -579,7 +579,7 @@ export const CustomDomainsSettings: React.FC = () => {
                   setNewDomain('');
                 }}
                 disabled={submitting}
-                className="px-4 py-2 text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-100 dark:hover:bg-surface-hover rounded-[var(--shell-radius)] transition-colors"
+                className="px-4 py-2 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-[var(--shell-radius)] transition-colors"
               >
                 Cancel
               </button>

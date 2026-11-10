@@ -79,7 +79,7 @@ const TaskSettingsModal: React.FC<TaskSettingsModalProps> = ({ isOpen, onClose }
       <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
         {/* ID Format */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-[var(--text-primary)] mb-1">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
             Task ID Format
           </label>
           <Input
@@ -87,14 +87,14 @@ const TaskSettingsModal: React.FC<TaskSettingsModalProps> = ({ isOpen, onClose }
             onChange={(e) => setConfig({ ...config, id_format: e.target.value })}
             placeholder="TSK {##}"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-[var(--text-muted)] mt-1">
             Example: TSK 01, TSK 02. <code>{`{##}`}</code> is the sequence number. Optional tokens: <code>{`{YYYY}`}</code> year, <code>{`{MM}`}</code> month, <code>{`{DD}`}</code> day.
           </p>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-subtle">
+      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[var(--border-color)]">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>

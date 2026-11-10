@@ -594,8 +594,8 @@ export const DepartmentsPage: React.FC = () => {
   ];
 
   const paginationInfo = (
-    <div className="flex items-center justify-between border-t border-[var(--border-color)] px-4 py-3 bg-gray-50 dark:bg-[#202020]">
-      <span className="text-[length:var(--font-body)] text-gray-600 dark:text-gray-400">
+    <div className="flex items-center justify-between border-t border-[var(--border-color)] px-4 py-3 bg-[var(--surface-muted)]">
+      <span className="text-[length:var(--font-body)] text-[var(--text-secondary)]">
         <span className="font-semibold text-[var(--text-primary)]">{(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
         <span className="font-semibold text-[var(--text-primary)]">{totalCount}</span>
       </span>
@@ -603,11 +603,11 @@ export const DepartmentsPage: React.FC = () => {
         <button
           onClick={() => fetchDepartments(Math.max(currentPage - 1, 1))}
           disabled={currentPage === 1}
-          className="px-4 py-2 text-[length:var(--font-body)] font-medium rounded-[var(--shell-radius)] border transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-white dark:bg-gray-800 border-gray-300 dark:border-[var(--border-color)] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:hover:bg-white dark:disabled:hover:bg-gray-800"
+          className="px-4 py-2 text-[length:var(--font-body)] font-medium rounded-[var(--shell-radius)] border transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--card-bg)] border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--hover-bg)] disabled:hover:bg-[var(--card-bg)]"
         >
           Previous
         </button>
-        <span className="text-[length:var(--font-body)] text-gray-600 dark:text-gray-400">
+        <span className="text-[length:var(--font-body)] text-[var(--text-secondary)]">
           <span className="font-semibold text-[var(--text-primary)]">{currentPage}</span> / {Math.ceil(totalCount / pageSize)}
         </span>
         <button
@@ -617,7 +617,7 @@ export const DepartmentsPage: React.FC = () => {
               : currentPage + 1)
           }
           disabled={currentPage >= Math.ceil(totalCount / pageSize)}
-          className="px-4 py-2 text-[length:var(--font-body)] font-medium rounded-[var(--shell-radius)] border transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-white dark:bg-gray-800 border-gray-300 dark:border-[var(--border-color)] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:hover:bg-white dark:disabled:hover:bg-gray-800"
+          className="px-4 py-2 text-[length:var(--font-body)] font-medium rounded-[var(--shell-radius)] border transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--card-bg)] border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--hover-bg)] disabled:hover:bg-[var(--card-bg)]"
         >
           Next
         </button>
@@ -673,7 +673,7 @@ export const DepartmentsPage: React.FC = () => {
             <h3 className="mt-2 text-base font-semibold text-[var(--text-primary)]">
               No departments
             </h3>
-            <p className="mt-1 text-[length:var(--font-meta)] text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-[length:var(--font-meta)] text-[var(--text-secondary)]">
               Get started by creating a new department.
             </p>
             <div className="mt-4">
@@ -739,7 +739,7 @@ export const DepartmentsPage: React.FC = () => {
                   className={`flex-1 px-4 py-3 text-[length:var(--font-body)] font-medium text-center border-b-2 cursor-pointer ${
                     activeDrawerTab === tab.id
                       ? "border-primary-600 text-primary-600 dark:text-primary-400"
-                      : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}
                 >
                   {tab.label}
@@ -750,7 +750,7 @@ export const DepartmentsPage: React.FC = () => {
             {activeDrawerTab === "general" && (
               <section className="space-y-6">
                 <div className="max-w-2xl">
-                  <label className="block text-[length:var(--font-label)] text-gray-700 dark:text-[var(--text-primary)] mb-1">
+                  <label className="block text-[length:var(--font-label)] text-[var(--text-primary)] mb-1">
                     Department name
                   </label>
                   <Input
@@ -766,7 +766,7 @@ export const DepartmentsPage: React.FC = () => {
                 </div>
 
                 <div className="max-w-2xl">
-                  <label className="block text-[length:var(--font-label)] text-gray-700 dark:text-[var(--text-primary)] mb-1">
+                  <label className="block text-[length:var(--font-label)] text-[var(--text-primary)] mb-1">
                     Support email
                   </label>
                   <Select
@@ -838,7 +838,7 @@ export const DepartmentsPage: React.FC = () => {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
-                      className="w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-[var(--shell-radius)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 dark:bg-surface-hover text-gray-900 dark:text-[var(--text-primary)]"
+                      className="w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-[var(--shell-radius)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--surface-muted)] text-[var(--text-primary)]"
                       placeholder="Search agents"
                       value={agentSearch}
                       onChange={(e) => setAgentSearch(e.target.value)}
@@ -856,7 +856,7 @@ export const DepartmentsPage: React.FC = () => {
                 </div>
 
                 {filteredDepartmentAgents.length === 0 ? (
-                  <p className="text-[length:var(--font-body)] text-gray-500 dark:text-[var(--text-secondary)]">
+                  <p className="text-[length:var(--font-body)] text-[var(--text-secondary)]">
                     {departmentAgents.length === 0
                       ? "No agents assigned to this department."
                       : "No agents match your search."}
@@ -866,7 +866,7 @@ export const DepartmentsPage: React.FC = () => {
                     {filteredDepartmentAgents.map((agent) => (
                       <div
                         key={agent.id}
-                        className="flex items-center justify-between border border-gray-200 dark:border-[var(--border-color)] rounded-lg px-4 py-3"
+                        className="flex items-center justify-between border border-[var(--border-color)] rounded-lg px-4 py-3"
                       >
                         <div>
                           <p className="font-medium text-[var(--text-primary)]">
@@ -890,7 +890,7 @@ export const DepartmentsPage: React.FC = () => {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
-                      className="w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-[var(--shell-radius)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 dark:bg-surface-hover text-gray-900 dark:text-[var(--text-primary)]"
+                      className="w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-[var(--shell-radius)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--surface-muted)] text-[var(--text-primary)]"
                       placeholder="Search categories"
                       value={categorySearch}
                       onChange={(e) => setCategorySearch(e.target.value)}
@@ -908,7 +908,7 @@ export const DepartmentsPage: React.FC = () => {
                 </div>
 
                 {filteredDepartmentCategories.length === 0 ? (
-                  <p className="text-[length:var(--font-body)] text-gray-500 dark:text-[var(--text-secondary)]">
+                  <p className="text-[length:var(--font-body)] text-[var(--text-secondary)]">
                     {departmentCategories.length === 0
                       ? "No categories linked to this department."
                       : "No categories match your search."}

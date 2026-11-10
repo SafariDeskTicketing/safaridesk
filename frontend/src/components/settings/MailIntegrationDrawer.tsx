@@ -256,12 +256,12 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
     >
       <form onSubmit={handleSubmit(handleRoutingSave)} className="space-y-8 max-w-2xl mx-auto">
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)] uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wide">
             Support email
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">Support email name</label>
+              <label className="block text-sm text-[var(--text-primary)] mb-1">Support email name</label>
               <Input {...register('display_name')} placeholder="Support Team" />
             </div>
             <div>
@@ -295,7 +295,7 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
                 placeholder="No default - assign manually"
                 allowSearch
               />
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
                 Tickets from this mailbox will be automatically assigned to this technician.
               </p>
             </div>
@@ -317,10 +317,10 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-[var(--text-primary)] uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wide">
                 Email server
               </h3>
-              <p className="text-sm text-gray-600 dark:text-[var(--text-primary)]">{providerLabels[currentProvider]}</p>
+              <p className="text-sm text-[var(--text-secondary)]">{providerLabels[currentProvider]}</p>
             </div>
             <div className="flex items-center gap-2">
               {(currentProvider === 'gmail' || currentProvider === 'office365') && (
@@ -351,11 +351,11 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
           )}
 
           {currentProvider === 'safaridesk' && (
-            <div className="bg-gray-50 dark:bg-surface rounded-lg p-4 space-y-3">
+            <div className="bg-[var(--surface-muted)] rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-500">Alias</p>
-                  <p className="text-sm text-gray-700 dark:text-[var(--text-primary)] font-mono">
+                  <p className="text-sm text-[var(--text-primary)] font-mono">
                     {integration.forwarding_address || integration.email_address || 'No alias generated yet'}
                   </p>
                 </div>
@@ -390,7 +390,7 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
                   {integration.connection_status || 'unknown'}
                 </span>
                 {integration.last_success_at && (
-                  <span className="text-gray-600 dark:text-[var(--text-primary)]">
+                  <span className="text-[var(--text-secondary)]">
                     Last seen {formatDate(integration.last_success_at)}
                   </span>
                 )}
@@ -411,11 +411,11 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">IMAP host</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">IMAP host</label>
                   <Input {...register('imap_host')} placeholder="imap.mailprovider.com" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">IMAP port</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">IMAP port</label>
                   <Input
                     type="number"
                     {...register('imap_port', {
@@ -424,25 +424,25 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
                     })}
                     placeholder="993"
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Port 993 uses SSL.</p>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)]">Port 993 uses SSL.</p>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">IMAP username</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">IMAP username</label>
                   <Input {...register('imap_username')} placeholder="user@example.com" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">IMAP password</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">IMAP password</label>
                   <Input type="password" {...register('imap_password')} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">SMTP host</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">SMTP host</label>
                   <Input {...register('smtp_host')} placeholder="smtp.mailprovider.com" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">SMTP port</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">SMTP port</label>
                   <Input
                     type="number"
                     {...register('smtp_port', {
@@ -451,28 +451,28 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
                     })}
                     placeholder="465"
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Port 465 uses SSL. Port 587 uses STARTTLS.</p>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)]">Port 465 uses SSL. Port 587 uses STARTTLS.</p>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">SMTP username</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">SMTP username</label>
                   <Input {...register('smtp_username')} placeholder="user@example.com" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-[var(--text-primary)] mb-1">SMTP password</label>
+                  <label className="block text-sm text-[var(--text-primary)] mb-1">SMTP password</label>
                   <Input type="password" {...register('smtp_password')} />
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-5">
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-[var(--text-primary)]">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
                   <input type="checkbox" {...register('imap_use_ssl')} />
                   Use SSL for IMAP
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-[var(--text-primary)]">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
                   <input type="checkbox" {...register('smtp_use_ssl')} />
                   Use SSL for SMTP
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-[var(--text-primary)]">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
                   <input type="checkbox" {...register('smtp_use_tls')} />
                   Use TLS (STARTTLS)
                 </label>
@@ -486,7 +486,7 @@ export const MailIntegrationDrawer: React.FC<Props> = ({ integration, isOpen, on
                 </Button>
               </div>
               {customResult && (
-                <div className="bg-gray-50 dark:bg-surface rounded-lg p-4 text-sm">
+                <div className="bg-[var(--surface-muted)] rounded-lg p-4 text-sm">
                   {customResult.imap && (
                     <p className={customResult.imap.status === 'success' ? 'text-primary-600' : 'text-red-600'}>
                       IMAP: {customResult.imap.status} - {customResult.imap.message}

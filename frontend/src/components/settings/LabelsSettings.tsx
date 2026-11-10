@@ -225,7 +225,7 @@ export const LabelsSettings: React.FC = () => {
         fullWidth
       />
       <div>
-        <label className="mb-1 block text-[length:var(--font-label)] font-medium text-gray-700 dark:text-[var(--text-primary)]">
+        <label className="mb-1 block text-[length:var(--font-label)] font-medium text-[var(--text-primary)]">
           Description
         </label>
         <textarea
@@ -233,15 +233,15 @@ export const LabelsSettings: React.FC = () => {
           value={formState.description}
           onChange={(event) => setFormState((prev) => ({ ...prev, description: event.target.value }))}
           placeholder="Used for defects and regressions."
-          className="w-full rounded-[var(--shell-radius)] border border-gray-300 bg-white px-3 py-2 text-[length:var(--font-body)] text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-subtle dark:bg-surface-elevated dark:text-[var(--text-primary)]"
+          className="w-full rounded-[var(--shell-radius)] border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-[length:var(--font-body)] text-[var(--text-primary)] shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
       <div className="space-y-3">
         <div>
-          <label className="mb-2 block text-[length:var(--font-label)] font-medium text-gray-700 dark:text-[var(--text-primary)]">
+          <label className="mb-2 block text-[length:var(--font-label)] font-medium text-[var(--text-primary)]">
             Color
           </label>
-          <p className="mb-3 text-[length:var(--font-meta)] text-gray-500 dark:text-[var(--text-muted)]">
+          <p className="mb-3 text-[length:var(--font-meta)] text-[var(--text-muted)]">
             Click a swatch to choose the label color. Use the hex field only if you want a custom tone.
           </p>
           <div className="grid grid-cols-6 gap-2 md:grid-cols-9" role="radiogroup" aria-label="Label colors">
@@ -254,8 +254,8 @@ export const LabelsSettings: React.FC = () => {
                   onClick={() => setFormState((prev) => ({ ...prev, color }))}
                   className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all hover:-translate-y-0.5 ${
                     isSelected
-                      ? 'border-gray-900 ring-2 ring-offset-2 ring-gray-400 dark:border-white dark:ring-gray-500 dark:ring-offset-surface-elevated'
-                      : 'border-gray-200 hover:border-gray-300 dark:border-subtle dark:hover:border-gray-500'
+                      ? 'border-[var(--text-primary)] ring-2 ring-offset-2 ring-[var(--text-muted)] ring-offset-[var(--card-bg)]'
+                      : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
                   }`}
                   style={{ backgroundColor: `${color}20` }}
                   title={color}
@@ -301,7 +301,7 @@ export const LabelsSettings: React.FC = () => {
           />
         </div>
       </div>
-      <label className="flex items-center gap-3 text-[length:var(--font-body)] text-gray-700 dark:text-[var(--text-primary)]">
+      <label className="flex items-center gap-3 text-[length:var(--font-body)] text-[var(--text-primary)]">
         <input
           type="checkbox"
           checked={formState.is_active}
@@ -342,13 +342,13 @@ export const LabelsSettings: React.FC = () => {
             onChange={(event) => setSearchTerm(event.target.value)}
             className="h-9 max-w-sm text-[length:var(--font-body)]"
           />
-          <div className="text-[length:var(--font-body)] text-gray-500 dark:text-[var(--text-muted)]">
+          <div className="text-[length:var(--font-body)] text-[var(--text-muted)]">
             {searchTerm ? `${filteredLabels.length} filtered` : `${totalCount} total`}
           </div>
         </div>
 
         <div className="surface-card overflow-hidden">
-          <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_120px_120px] gap-4 border-b border-[var(--border-color)] px-5 py-3 text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-gray-500 dark:text-[var(--text-muted)]">
+          <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_120px_120px] gap-4 border-b border-[var(--border-color)] px-5 py-3 text-[length:var(--font-meta)] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
             <span>Label</span>
             <span>Description</span>
             <span>Status</span>
@@ -356,9 +356,9 @@ export const LabelsSettings: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="px-5 py-10 text-[length:var(--font-body)] text-gray-500 dark:text-[var(--text-muted)]">Loading labels...</div>
+            <div className="px-5 py-10 text-[length:var(--font-body)] text-[var(--text-muted)]">Loading labels...</div>
           ) : filteredLabels.length === 0 ? (
-            <div className="px-5 py-10 text-[length:var(--font-body)] text-gray-500 dark:text-[var(--text-muted)]">No labels found.</div>
+            <div className="px-5 py-10 text-[length:var(--font-body)] text-[var(--text-muted)]">No labels found.</div>
           ) : (
             filteredLabels.map((labelItem) => (
               <div
@@ -367,15 +367,15 @@ export const LabelsSettings: React.FC = () => {
               >
                 <div className="min-w-0 space-y-1">
                   <LabelBadge label={labelItem} size="md" />
-                  <div className="text-[length:var(--font-meta)] text-gray-500 dark:text-[var(--text-muted)]">
+                  <div className="text-[length:var(--font-meta)] text-[var(--text-muted)]">
                     {labelItem.color}
                   </div>
                 </div>
-                <div className="min-w-0 text-[length:var(--font-body)] text-gray-600 dark:text-[var(--text-primary)]">
+                <div className="min-w-0 text-[length:var(--font-body)] text-[var(--text-secondary)]">
                   {labelItem.description || 'No description'}
                 </div>
                 <div className="flex items-center">
-                  <label className="inline-flex items-center gap-2 text-[length:var(--font-body)] text-gray-700 dark:text-[var(--text-primary)]">
+                  <label className="inline-flex items-center gap-2 text-[length:var(--font-body)] text-[var(--text-primary)]">
                     <input
                       type="checkbox"
                       checked={labelItem.is_active}
@@ -395,7 +395,7 @@ export const LabelsSettings: React.FC = () => {
         </div>
 
         {!searchTerm && totalPages > 1 && (
-          <div className="flex items-center justify-between text-[length:var(--font-body)] text-gray-600 dark:text-[var(--text-muted)]">
+          <div className="flex items-center justify-between text-[length:var(--font-body)] text-[var(--text-secondary)]">
             <span>
               Page {currentPage} of {totalPages}
             </span>
@@ -451,7 +451,7 @@ export const LabelsSettings: React.FC = () => {
 
       <Modal isOpen={Boolean(deletingLabel)} onClose={() => setDeletingLabel(null)} title="Delete Label" size="sm">
         <div className="space-y-4">
-          <p className="text-[length:var(--font-body)] text-gray-600 dark:text-[var(--text-primary)]">
+          <p className="text-[length:var(--font-body)] text-[var(--text-secondary)]">
             Delete <span className="font-semibold">{deletingLabel?.name}</span>? Existing ticket and task history may still reference it.
           </p>
           <div className="flex justify-end gap-2">
