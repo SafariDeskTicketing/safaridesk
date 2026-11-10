@@ -52,17 +52,26 @@ def is_rate_limited(scope: str, identifier: str | None, max_attempts: int, windo
     return _incr(key, window_seconds) > max_attempts
 
 
-def is_blocked(scope: str, identifier: str | None, max_attempts: int) -> bool:
-    """Read-only check: True if `identifier` already has `max_attempts`
-    recorded failures under `scope`. Pair with `record_failure`, called
-    only when the attempt actually fails, so successful requests (e.g. a
-    legitimate login) never erode the budget."""
+def reserve_attempt(scope: str, identifier: str | None, max_attempts: int, window_seconds: int) -> bool:
+    """Atomically reserves one attempt slot for `identifier` under
+    `scope`, returning False if that would exceed `max_attempts` within
+    `window_seconds`. Every caller serializes through Redis's atomic
+    INCR, so a burst of simultaneous requests can't all pass a read-only
+    check before any of them is recorded the way a separate
+    check-then-record pair would - each concurrent caller individually
+    consumes (and, unless released, keeps) one slot. Call
+    `release_attempt` once the request turns out to have succeeded, so a
+    legitimate login doesn't cost anything long-term; a failed attempt
+    simply keeps its reservation."""
     key = f'{_PREFIX}:{scope}:{identifier or "unknown"}'
-    return cache.get(key, 0) >= max_attempts
+    return _incr(key, window_seconds) <= max_attempts
 
 
-def record_failure(scope: str, identifier: str | None, window_seconds: int) -> None:
-    """Increments the failure counter `is_blocked` reads, creating it with
-    `window_seconds` TTL on first use."""
+def release_attempt(scope: str, identifier: str | None) -> None:
+    """Gives back a slot `reserve_attempt` consumed, for a request that
+    turned out to succeed."""
     key = f'{_PREFIX}:{scope}:{identifier or "unknown"}'
-    _incr(key, window_seconds)
+    try:
+        cache.decr(key)
+    except ValueError:
+        pass  # key already expired/gone - nothing to give back

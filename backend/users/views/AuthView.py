@@ -14,7 +14,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from RNSafarideskBack.settings import DOMAIN_NAME
 from shared.tasks import send_otp
-from shared.utils.rate_limit import get_client_ip, is_blocked, is_rate_limited, record_failure
+from shared.utils.rate_limit import get_client_ip, is_rate_limited, release_attempt, reserve_attempt
 from tenant.services.audit import actor_name, log_audit_event
 from users.models import Users, Business
 from users.serializers.AuthSerializer import LoginInitiateSerializer, OTPVerifySerializer, ResendOTPSerializer, \
@@ -75,14 +75,18 @@ class LoginInitiateView(APIView):
     def post(self, request):
         username = str(request.data.get('username') or '').strip().lower()
         ip_address = get_client_ip(request)
-        if is_blocked('staff_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS) or \
-                is_blocked('staff_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS):
+        if not reserve_attempt('staff_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS) or \
+                not reserve_attempt('staff_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
             return _too_many_attempts_response()
 
         serializer = LoginInitiateSerializer(data=request.data)
         if serializer.is_valid():
+            # Correct credentials - give back the slot reserved above so
+            # a legitimate login never erodes the failure budget.
+            release_attempt('staff_login:username', username)
+            release_attempt('staff_login:ip', ip_address)
             user = serializer.context['user']
-            
+
             # MFA is opt-in. Unknown, blank, or incomplete MFA state must not
             # create a challenge that the user did not explicitly configure.
             mfa_method = (getattr(user, 'mfa_method', 'none') or 'none').strip().lower()
@@ -140,11 +144,9 @@ class LoginInitiateView(APIView):
                 "detail": "OTP sent to your email.",
             }, status=status.HTTP_200_OK)
         
-        # Wrong credentials - record against the failure budget (a
-        # successful attempt above never reaches this point, so correct
-        # logins never erode it).
-        record_failure('staff_login:username', username, AUTH_RATE_LIMIT_WINDOW_SECONDS)
-        record_failure('staff_login:ip', ip_address, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+        # Wrong credentials - the attempt reserved above is already
+        # counted and intentionally not released, so it keeps counting
+        # against the budget.
 
         # Extract error message and error_code from validation errors
         errors = serializer.errors
@@ -164,12 +166,14 @@ class OTPVerifyView(APIView):
     def post(self, request):
         session_key = request.data.get('session_key') or ''
         ip_address = get_client_ip(request)
-        if is_blocked('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_MAX_ATTEMPTS) or \
-                is_blocked('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS):
+        if not reserve_attempt('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS) or \
+                not reserve_attempt('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
             return _too_many_attempts_response()
 
         serializer = OTPVerifySerializer(data=request.data)
         if serializer.is_valid():
+            release_attempt('staff_otp_verify:session', session_key)
+            release_attempt('staff_otp_verify:ip', ip_address)
             user = serializer.context['user']
             from ..serializers.MyTokenObtainSerializer import MyTokenObtainPairSerializer
             user.last_login = timezone.now()
@@ -202,8 +206,8 @@ class OTPVerifyView(APIView):
             )
             return Response(data)
 
-        record_failure('staff_otp_verify:session', session_key, AUTH_RATE_LIMIT_WINDOW_SECONDS)
-        record_failure('staff_otp_verify:ip', ip_address, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+        # Wrong/expired OTP - the attempt reserved above is intentionally
+        # kept, not released, so it counts against the budget.
         return Response({"message": "Invalid or expired OTP!"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -340,14 +344,19 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         username = str(request.data.get('username') or '').strip().lower()
         ip_address = get_client_ip(request)
-        if is_blocked('staff_express_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS) or \
-                is_blocked('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS):
+        if not reserve_attempt('staff_express_login:username', username, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS) or \
+                not reserve_attempt('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_SECONDS):
             return _too_many_attempts_response()
 
+        # simplejwt's TokenObtainPairView.post raises on bad credentials
+        # rather than returning a 4xx Response, so the reservation above
+        # (not a post-hoc check here) is what actually enforces the limit
+        # on failure - this only needs to release it on success. The
+        # status_code guard is defensive in case that ever changes.
         response = super().post(request, *args, **kwargs)
-        if response.status_code >= 400:
-            record_failure('staff_express_login:username', username, AUTH_RATE_LIMIT_WINDOW_SECONDS)
-            record_failure('staff_express_login:ip', ip_address, AUTH_RATE_LIMIT_WINDOW_SECONDS)
+        if response.status_code < 400:
+            release_attempt('staff_express_login:username', username)
+            release_attempt('staff_express_login:ip', ip_address)
         return response
 
 
