@@ -217,7 +217,7 @@ const Tip: React.FC<PopoverProps> = ({
       case 'right':
         return `${baseClasses} border-t-[6px] border-b-[6px] border-r-[6px] border-t-transparent border-b-transparent border-r-[var(--card-bg)] right-full top-1/2 -translate-y-1/2`;
       default:
-        return `${baseClasses} border-l-6 border-r-6 border-b-6 border-l-transparent border-r-transparent border-b-[var(--card-bg)] bottom-full left-1/2 -translate-x-1/2`;
+        return `${baseClasses} border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-[var(--card-bg)] bottom-full left-1/2 -translate-x-1/2`;
     }
   };
 
