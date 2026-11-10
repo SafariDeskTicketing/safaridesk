@@ -72,7 +72,7 @@ const ResizableImageComponent = ({ node, updateAttributes }: any) => {
           }}
         />
         <div
-          className="resize-handle bg-primary-600"
+          className="resize-handle"
           style={{
             position: 'absolute',
             right: '-6px',

@@ -895,7 +895,7 @@
   right: 0;
   width: 16px;
   height: 16px;
-  background: #20b8cd;
+  background: hsl(var(--primary-600-hsl));
   cursor: nw-resize;
   opacity: 0.75;
   transition: opacity 0.2s ease;
