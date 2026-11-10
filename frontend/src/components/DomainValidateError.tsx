@@ -75,7 +75,7 @@ const DomainErrorComponent = () => {
         </Card>
 
         {/* Technical Details (Collapsible) */}
-        <details className="mt-4 bg-white dark:bg-surface-elevated rounded-lg shadow border border-gray-200 dark:border-subtle">
+        <Card as="details" className="mt-4 rounded-lg">
           <summary className="p-4 cursor-pointer text-sm font-medium text-gray-700 dark:text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-surface-hover rounded-lg transition-colors">
             Technical Details
           </summary>
@@ -93,7 +93,7 @@ const DomainErrorComponent = () => {
               <span className="font-semibold">User Agent:</span> {navigator.userAgent.slice(0, 50)}...
             </div>
           </div>
-        </details>
+        </Card>
       </div>
     </div>
   );

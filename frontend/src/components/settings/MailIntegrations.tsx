@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { ChevronDown, Settings as SettingsIcon, Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 import { MailIntegrationWizard } from './MailIntegrationWizard';
 import { MailIntegrationDrawer } from './MailIntegrationDrawer';
 import ConfirmDialog from '../ui/ConfirmDialog';
@@ -324,10 +325,11 @@ export const MailIntegrations: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button
+        <Card
+          as="button"
           type="button"
           onClick={handleGmailConnect}
-          className="group bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-[var(--border-color)] hover:border-red-400 dark:hover:border-red-500 rounded-xl p-4 text-left transition-all duration-200 hover:shadow-lg"
+          className="group rounded-xl p-4 text-left transition-all duration-200 hover:border-red-400 hover:shadow-lg dark:hover:border-red-500"
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -343,12 +345,13 @@ export const MailIntegrations: React.FC = () => {
           <div className="flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:gap-2 transition-all">
             Sign in <span className="group-hover:translate-x-1 transition-transform">→</span>
           </div>
-        </button>
+        </Card>
 
-        <button
+        <Card
+          as="button"
           type="button"
           onClick={handleMicrosoftConnect}
-          className="group bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-[var(--border-color)] hover:border-blue-400 dark:hover:border-blue-500 rounded-xl p-4 text-left transition-all duration-200 hover:shadow-lg"
+          className="group rounded-xl p-4 text-left transition-all duration-200 hover:border-blue-400 hover:shadow-lg dark:hover:border-blue-500"
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -364,15 +367,16 @@ export const MailIntegrations: React.FC = () => {
           <div className="flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:gap-2 transition-all">
             Sign in <span className="group-hover:translate-x-1 transition-transform">→</span>
           </div>
-        </button>
+        </Card>
 
-        <button
+        <Card
+          as="button"
           type="button"
           onClick={() => {
             setWizardDirection(selectedDirection);
             setIsWizardOpen(true);
           }}
-          className="group bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-[var(--border-color)] hover:border-purple-400 dark:hover:border-purple-500 rounded-xl p-4 text-left transition-all duration-200 hover:shadow-lg"
+          className="group rounded-xl p-4 text-left transition-all duration-200 hover:border-purple-400 hover:shadow-lg dark:hover:border-purple-500"
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -386,12 +390,13 @@ export const MailIntegrations: React.FC = () => {
           <div className="flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:gap-2 transition-all">
             Configure <span className="group-hover:translate-x-1 transition-transform">→</span>
           </div>
-        </button>
+        </Card>
 
-        <button
+        <Card
+          as="button"
           type="button"
           onClick={handleSafariDeskConnect}
-          className="group bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-[var(--border-color)] hover:border-primary-400 dark:hover:border-primary-500 rounded-xl p-4 text-left transition-all duration-200 hover:shadow-lg"
+          className="group rounded-xl p-4 text-left transition-all duration-200 hover:border-primary-400 hover:shadow-lg dark:hover:border-primary-500"
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -405,7 +410,7 @@ export const MailIntegrations: React.FC = () => {
           <div className="flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:gap-2 transition-all">
             Generate <span className="group-hover:translate-x-1 transition-transform">→</span>
           </div>
-        </button>
+        </Card>
       </div>
     </div>
   );

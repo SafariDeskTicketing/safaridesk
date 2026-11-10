@@ -4,6 +4,7 @@ import { ActivityCallLogData } from "./ActivityStream";
 import { format } from "date-fns";
 import { sanitizeHTML } from "../../utils/sanitize";
 import { formatUserDisplayName } from "../../utils/displayHelpers";
+import { Card } from "../ui/Card";
 
 interface ActivityCallLogProps {
 	callLog: ActivityCallLogData;
@@ -49,7 +50,7 @@ export const ActivityCallLog: React.FC<ActivityCallLogProps> = ({
 			</div>
 
 			{/* Call Log Card */}
-			<div className="border border-green-200 dark:border-green-800/50 rounded-lg bg-white dark:bg-surface-elevated shadow-sm hover:shadow-md transition-shadow">
+			<Card className="rounded-lg border-green-200 hover:shadow-md transition-shadow dark:border-green-800/50">
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 py-2 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800/50 rounded-t-lg">
 					<div className="flex items-center gap-2 text-sm min-w-0 flex-1">
@@ -158,7 +159,7 @@ export const ActivityCallLog: React.FC<ActivityCallLogProps> = ({
 						)}
 					</div>
 				)}
-			</div>
+			</Card>
 		</div>
 	);
 };

@@ -467,7 +467,7 @@ export const EmailTemplates: React.FC = () => {
 
               {/* Variables sidebar */}
               <div className="md:col-span-1">
-                <div className="sticky top-0 bg-white dark:bg-surface-elevated rounded-lg shadow-sm border border-gray-200 dark:border-[var(--border-color)] p-6">
+                <Card className="sticky top-0 rounded-lg p-6">
                   <h4 className="font-medium text-gray-900 dark:text-[var(--text-primary)] mb-3">Supported Variables</h4>
                   <div className="max-h-[800px] overflow-y-auto pr-2">
                     {isPlaceholdersLoading ? (
@@ -503,7 +503,7 @@ export const EmailTemplates: React.FC = () => {
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               </div>
             </div>
           )}
@@ -539,7 +539,7 @@ const ModalSkeleton = () => (
       ))}
     </div>
     <div className="md:col-span-1">
-      <div className="sticky top-0 bg-white dark:bg-surface-elevated rounded-lg shadow-sm border border-gray-200 dark:border-[var(--border-color)] p-6 animate-pulse">
+      <Card className="sticky top-0 rounded-lg p-6 animate-pulse">
         <div className="h-5 bg-gray-200 dark:bg-surface-hover rounded w-1/2 mb-4"></div>
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
@@ -552,7 +552,7 @@ const ModalSkeleton = () => (
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   </div>
 );

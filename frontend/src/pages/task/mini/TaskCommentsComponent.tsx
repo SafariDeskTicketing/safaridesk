@@ -487,7 +487,7 @@ export default function TaskComments({ taskId, reloader, isCustomerView }: TaskC
                                     const isImage = isImageFile(fileExtension);
 
                                     return (
-                                      <div key={attachment.id} className="group relative bg-white dark:bg-surface-elevated rounded-xl border border-gray-200 dark:border-subtle p-4 hover:shadow-md transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-600">
+                                      <Card key={attachment.id} className="group relative rounded-xl p-4 hover:shadow-md transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-600">
                                         <div className="flex items-start space-x-3">
                                           <div className="text-2xl flex-shrink-0">{fileIcon}</div>
                                           <div className="flex-1 min-w-0">
@@ -519,7 +519,7 @@ export default function TaskComments({ taskId, reloader, isCustomerView }: TaskC
                                             <Download size={14} />
                                           </button>
                                         </div>
-                                      </div>
+                                      </Card>
                                     );
                                   })}
                                 </div>

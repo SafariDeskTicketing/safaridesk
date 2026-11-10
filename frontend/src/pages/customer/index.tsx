@@ -121,11 +121,12 @@ const ServicePortalContent: React.FC = () => {
           { title: 'Create a ticket', label: 'Support request', icon: PlusCircle, action: () => setIsModalOpen(true) },
           { title: 'Chat with support', label: 'Live help', icon: MessageCircle, action: openChat },
         ].map(({ title, label, icon: Icon, action }) => (
-          <button
+          <Card
+            as="button"
             key={title}
             type="button"
             onClick={action}
-            className="group flex min-h-[116px] items-start justify-between rounded-lg border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-primary-300 hover:shadow-md dark:border-subtle dark:bg-surface-elevated dark:hover:bg-surface-hover"
+            className="group flex min-h-[116px] items-start justify-between rounded-lg p-5 text-left transition hover:border-primary-300 hover:shadow-md dark:hover:bg-surface-hover"
           >
             <span>
               <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200">
@@ -135,7 +136,7 @@ const ServicePortalContent: React.FC = () => {
               <span className="mt-1 block text-sm text-slate-500 dark:text-[var(--text-muted)]">{label}</span>
             </span>
             <ArrowRight className="mt-1 h-5 w-5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-primary-600" />
-          </button>
+          </Card>
         ))}
       </section>
 

@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import '../editor/safaridesk-editor.css'; // Import SafariDesk editor styles
 import { formatUserDisplayName } from '../../utils/displayHelpers';
+import { Card } from '../ui/Card';
 
 // Helper function to detect if URL is an image
 const isImageUrl = (url: string): boolean => {
@@ -298,7 +299,7 @@ export const ActivityComment: React.FC<ActivityCommentProps> = ({
       </div>
 
       {/* Comment Card - GitHub-like styling */}
-      <div className="border border-gray-200 dark:border-subtle rounded-lg bg-white dark:bg-surface-elevated shadow-sm hover:shadow-md transition-shadow">
+      <Card className="rounded-lg hover:shadow-md transition-shadow">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-surface-50 border-b border-gray-200 dark:border-subtle rounded-t-lg">
           <div className="flex items-center gap-2 text-sm min-w-0 flex-1 relative">
@@ -684,7 +685,7 @@ export const ActivityComment: React.FC<ActivityCommentProps> = ({
             </div>
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

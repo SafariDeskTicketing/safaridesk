@@ -1,12 +1,13 @@
 import React from 'react';
 import { clsx } from 'clsx';
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardProps extends React.HTMLAttributes<HTMLElement> {
   muted?: boolean;
+  as?: React.ElementType;
 }
 
-export const Card: React.FC<CardProps> = ({ className, muted = false, ...props }) => (
-  <div
+export const Card: React.FC<CardProps> = ({ className, muted = false, as: Component = 'div', ...props }) => (
+  <Component
     className={clsx(
       muted ? 'sd-surface-muted' : 'sd-surface',
       className

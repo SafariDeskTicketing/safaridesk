@@ -297,11 +297,12 @@ const KnowledgeBasePage: React.FC = () => {
                           ? { backgroundColor: cat.color + '1a', color: cat.color }
                           : { backgroundColor: 'var(--status-info-bg)', color: 'var(--status-info-text)' };
                         return (
-                          <button
+                          <Card
+                            as="button"
                             key={cat.id}
                             type="button"
                             onClick={() => handleCategoryClick(cat.slug)}
-                            className="group flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:border-primary-300 hover:shadow-md dark:border-subtle dark:bg-surface-elevated dark:hover:bg-surface-hover"
+                            className="group flex items-start gap-4 rounded-xl p-5 text-left transition-all hover:border-primary-300 hover:shadow-md dark:hover:bg-surface-hover"
                           >
                             <span
                               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
@@ -323,7 +324,7 @@ const KnowledgeBasePage: React.FC = () => {
                               </span>
                             </span>
                             <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary-600" />
-                          </button>
+                          </Card>
                         );
                       })}
                     </div>

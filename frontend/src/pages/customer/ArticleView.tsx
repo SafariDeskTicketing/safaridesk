@@ -269,7 +269,7 @@ const ArticleView: React.FC = () => {
               </div>
             ) : null}
 
-            <main className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-subtle dark:bg-surface-elevated sm:p-8">
+            <Card as="main" className="rounded-lg p-6 sm:p-8">
               <div
                 className="kb-content prose prose-slate max-w-none text-slate-800 dark:prose-invert dark:text-[var(--text-primary)] prose-headings:tracking-normal prose-a:text-primary-700 prose-img:rounded-lg"
                 style={{
@@ -278,7 +278,7 @@ const ArticleView: React.FC = () => {
                 }}
                 dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentArticle.content || '') }}
               />
-            </main>
+            </Card>
 
             {ratingsEnabled && (
               <section className="mt-8 border-t border-slate-200 pt-6 dark:border-subtle">

@@ -189,8 +189,8 @@ const StatusCard: React.FC<StatusCardProps> = ({ title, status, dueTime, complet
   const isOverdue = status.toLowerCase() === 'overdue';
   
   return (
-    <div className={`bg-white dark:bg-surface-elevated rounded-xl p-6 border transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
-      isNextResponse ? 'border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-900/20 dark:to-surface-elevated' : 'border-gray-200 dark:border-subtle'
+    <Card className={`rounded-xl p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
+      isNextResponse ? 'border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-900/20 dark:to-surface-elevated' : ''
     }`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -216,7 +216,7 @@ const StatusCard: React.FC<StatusCardProps> = ({ title, status, dueTime, complet
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };
 
