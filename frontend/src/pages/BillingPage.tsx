@@ -1,4 +1,5 @@
 import React from "react";
+import { Card } from "../components/ui/Card";
 
 const dummyBillingInfo = {
   plan: "Pro",
@@ -11,7 +12,7 @@ const dummyBillingInfo = {
 
 export default function BillingPage() {
   return (
-    <div className="max-w-xl mx-auto mt-10 p-8 bg-white rounded-lg shadow-md">
+    <Card className="max-w-xl mx-auto mt-10 p-8 rounded-lg">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Billing & Subscription</h2>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -40,6 +41,6 @@ export default function BillingPage() {
         </div>
       </div>
       <button className="mt-8 w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Manage Subscription</button>
-    </div>
+    </Card>
   );
 }

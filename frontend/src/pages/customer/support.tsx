@@ -2,6 +2,7 @@ import TicketFormSkeleton from "../../components/loader/TicketFormSkeleton"; // 
 import { CustomerLayout } from './layout/CustomerLayout'; // Import CustomerLayout
 import { CreateTicketModal } from '../../components/tickets/CreateTicketModal';
 import { useValidateDomain } from '../../hooks/useValidateDomain';
+import { Card } from '../../components/ui/Card';
 
 const Support = () => {
   const { isLoadingDomain, domainError, categories, departments } = useValidateDomain();
@@ -18,7 +19,7 @@ const Support = () => {
   if (domainError || categories.length === 0 || departments.length === 0) {
     return (
       <CustomerLayout>
-        <div className="mx-auto my-8 max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-subtle dark:bg-surface-elevated">
+        <Card className="mx-auto my-8 max-w-3xl rounded-2xl p-6 text-center">
           {domainError && (
             <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
               <strong className="font-semibold">Error: </strong> This help center url is not recognized.
@@ -29,7 +30,7 @@ const Support = () => {
               <strong className="font-semibold">Loading: </strong> Preparing help center form...
             </div>
           )}
-        </div>
+        </Card>
       </CustomerLayout>
     );
   }
@@ -46,14 +47,14 @@ const Support = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-subtle dark:bg-surface-elevated">
+        <Card className="rounded-2xl p-3">
           <CreateTicketModal
             loadFromApi={false}
             categories={categories}
             departments={departments}
             variant="customer"
           />
-        </div>
+        </Card>
       </div>
     </CustomerLayout>
   );

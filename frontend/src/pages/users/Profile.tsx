@@ -108,7 +108,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, trend, co
   };
 
   return (
-    <div className="group rounded-xl border border-[var(--border-color)] bg-white p-4 shadow-[var(--shell-shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shell-shadow-md)]">
+    <Card className="group rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shell-shadow-md)]">
       <div className="flex items-start justify-between">
         <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${colors[color]} ring-1 ring-black/5`}>
           <Icon className="w-4 h-4" />
@@ -124,7 +124,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, trend, co
         <h3 className="text-[length:var(--font-stat-value)] font-semibold text-[var(--text-primary)]">{value}</h3>
         <p className="mt-1 text-[length:var(--font-meta)] text-[var(--text-secondary)]">{title}</p>
       </div>
-    </div>
+    </Card>
   );
 };
 

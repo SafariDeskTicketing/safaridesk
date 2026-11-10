@@ -3,6 +3,7 @@ import { AlertOctagon, Download, Eye, X, Paperclip } from 'lucide-react';
 import { APIS } from '../../../services/apis';
 import http from '../../../services/http';
 import { errorNotification } from '../../../components/ui/Toast';
+import { Card } from '../../../components/ui/Card';
 import { AxiosError } from 'axios';
 import type { Ticket } from '../../../types';
 
@@ -152,7 +153,7 @@ export default function TicketAttachments({ ticketId }: TicketAttachmentsProps) 
 
   if (loadingFiles) {
     return (
-      <div className="bg-white dark:bg-surface-elevated rounded-lg shadow-sm border border-gray-200 dark:border-subtle p-6">
+      <Card className="rounded-lg p-6">
         <div className="flex items-center mb-4">
           <Paperclip size={20} className="mr-2 text-primary-600 dark:text-primary-400" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-[var(--text-primary)]">Attachments</h3>
@@ -162,7 +163,7 @@ export default function TicketAttachments({ ticketId }: TicketAttachmentsProps) 
             <AttachmentSkeleton key={index} />
           ))}
         </div>
-      </div>
+      </Card>
     );
   }
 

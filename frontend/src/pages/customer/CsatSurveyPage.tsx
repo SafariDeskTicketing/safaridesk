@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Frown, HeartHandshake, Loader2, Smile, Star } from 'lucide-react';
 import http from '../../services/http';
 import { APIS } from '../../services/apis';
+import { Card } from '../../components/ui/Card';
 
 type Emotion = 'happy' | 'sad' | '';
 
@@ -185,7 +186,7 @@ const CsatSurveyPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-subtle bg-white dark:bg-surface-elevated p-5 space-y-5 shadow-sm">
+        <Card className="rounded-2xl p-5 space-y-5">
           {submitted ? (
             <div className="py-6 text-center space-y-3">
               <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/40">
@@ -302,7 +303,7 @@ const CsatSurveyPage: React.FC = () => {
               </div>
             </>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

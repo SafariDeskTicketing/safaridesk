@@ -11,6 +11,7 @@ import { CustomerLayout } from './layout/CustomerLayout';
 import { useValidateDomain } from '../../hooks/useValidateDomain';
 import { KBArticle, KBCategory } from '../../types/knowledge';
 import { buildPublicArticleUrl } from '../../utils/kbArticle';
+import { Card } from '../../components/ui/Card';
 import { formatShortDate } from '../../utils/displayHelpers';
 
 const getResponseResults = <T,>(data: T[] | { results?: T[] } | undefined): T[] => {
@@ -348,7 +349,7 @@ const KnowledgeBasePage: React.FC = () => {
                         Popular articles
                       </h2>
                     </div>
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-subtle dark:bg-surface-elevated">
+                    <Card className="overflow-hidden rounded-xl">
                       {popularArticles.map(article => (
                         <Link
                           key={article.id}
@@ -371,7 +372,7 @@ const KnowledgeBasePage: React.FC = () => {
                           <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary-600" />
                         </Link>
                       ))}
-                    </div>
+                    </Card>
                   </section>
                 )}
               </div>
@@ -445,7 +446,7 @@ const KnowledgeBasePage: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-subtle dark:bg-surface-elevated">
+                  <Card className="overflow-hidden rounded-xl">
                     {articles.map(article => (
                       <Link
                         key={article.id}
@@ -472,7 +473,7 @@ const KnowledgeBasePage: React.FC = () => {
                         <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary-600" />
                       </Link>
                     ))}
-                  </div>
+                  </Card>
                 )}
               </div>
             )}

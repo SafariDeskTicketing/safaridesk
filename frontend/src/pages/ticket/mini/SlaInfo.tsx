@@ -4,6 +4,7 @@ import { AxiosError } from 'axios';
 import http from '../../../services/http';
 import { APIS } from '../../../services/apis';
 import { errorNotification } from '../../../components/ui/Toast';
+import { Card } from '../../../components/ui/Card';
 
 // Types for SLA data
 type SlaAnalysis = {
@@ -312,15 +313,15 @@ const SlaInfo: React.FC<SlaInfoProps> = ({ ticketId }) => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-surface-elevated rounded-xl p-6 border border-gray-200 dark:border-subtle hover:shadow-lg transition-all duration-300">
+        <Card className="rounded-xl p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center space-x-3 mb-2">
             <Activity className="h-6 w-6 text-blue-500" />
             <span className="text-sm font-medium text-gray-600 dark:text-[var(--text-muted)]">Status</span>
           </div>
           <p className="text-lg font-bold text-gray-900 dark:text-[var(--text-primary)]">{sla_analysis.current_ticket_status}</p>
-        </div>
+        </Card>
 
-        <div className="bg-white dark:bg-surface-elevated rounded-xl p-6 border border-gray-200 dark:border-subtle hover:shadow-lg transition-all duration-300">
+        <Card className="rounded-xl p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center space-x-3 mb-2">
             <TrendingUp className="h-6 w-6 text-purple-500" />
             <span className="text-sm font-medium text-gray-600 dark:text-[var(--text-muted)]">Priority</span>
@@ -328,23 +329,23 @@ const SlaInfo: React.FC<SlaInfoProps> = ({ ticketId }) => {
           <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold border ${getPriorityColor(sla_status.priority)}`}>
             {sla_status.priority}
           </span>
-        </div>
+        </Card>
 
-        <div className="bg-white dark:bg-surface-elevated rounded-xl p-6 border border-gray-200 dark:border-subtle hover:shadow-lg transition-all duration-300">
+        <Card className="rounded-xl p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center space-x-3 mb-2">
             <Timer className="h-6 w-6 text-primary-500" />
             <span className="text-sm font-medium text-gray-600 dark:text-[var(--text-muted)]">Time Elapsed</span>
           </div>
           <p className="text-lg font-bold text-gray-900 dark:text-[var(--text-primary)]">{sla_analysis.time_since_created_formatted}</p>
-        </div>
+        </Card>
 
-        <div className="bg-white dark:bg-surface-elevated rounded-xl p-6 border border-gray-200 dark:border-subtle hover:shadow-lg transition-all duration-300">
+        <Card className="rounded-xl p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center space-x-3 mb-2">
             <Calendar className="h-6 w-6 text-amber-500" />
             <span className="text-sm font-medium text-gray-600 dark:text-[var(--text-muted)]">Method</span>
           </div>
           <p className="text-lg font-bold text-gray-900 dark:text-[var(--text-primary)]">{sla_analysis.evaluation_method}</p>
-        </div>
+        </Card>
       </div>
 
       {/* SLA Details */}

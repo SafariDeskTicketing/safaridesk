@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Check, Loader2, X, AlertTriangle } from 'lucide-react';
+import { Card } from '../ui/Card';
 import { 
   getSlackOAuthUrl, 
   getSlackIntegration, 
@@ -194,7 +195,7 @@ const SlackIntegrationComponent: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+      <Card className="rounded-lg">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -515,7 +516,7 @@ const SlackIntegrationComponent: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

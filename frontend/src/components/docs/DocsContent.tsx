@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Card } from '../ui/Card';
 
 interface DocsContentProps {
   content: string;
@@ -122,7 +123,7 @@ const DocsContent: React.FC<DocsContentProps> = ({ content, title, description }
   return (
     <div className="min-h-screen">
       {/* Content Header */}
-      <div className="mb-8 rounded-[20px] border border-[var(--border-color)] bg-white px-6 py-5 shadow-[var(--shell-shadow-sm)]">
+      <Card className="mb-8 rounded-[20px] px-6 py-5">
         <h1 className="mb-4 text-4xl font-bold text-[var(--text-primary)]">
           {title}
         </h1>
@@ -131,14 +132,14 @@ const DocsContent: React.FC<DocsContentProps> = ({ content, title, description }
             {description}
           </p>
         )}
-      </div>
+      </Card>
 
       {/* Markdown Content */}
-      <div className="rounded-[20px] border border-[var(--border-color)] bg-white px-6 py-6 shadow-[var(--shell-shadow-sm)]">
+      <Card className="rounded-[20px] px-6 py-6">
         <ReactMarkdown components={markdownComponents}>
           {content}
         </ReactMarkdown>
-      </div>
+      </Card>
 
       {/* Navigation Footer */}
       <div className="mt-16 border-t border-[var(--border-color)] pt-8">

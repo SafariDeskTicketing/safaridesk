@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from './ui/Button';
+import { Card } from './ui/Card';
 import { Modal } from './ui/Modal';
 import { X } from 'lucide-react';
 import ManageOptionsModal from './ManageOptionsModal';
@@ -39,16 +40,16 @@ const CategoryVendorManagementModal: React.FC<CategoryVendorManagementModalProps
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Categories Section */}
-        <div className="flex flex-col items-center justify-center p-6 border rounded-lg shadow-sm bg-gray-50 dark:bg-surface-hover">
+        <Card muted className="flex flex-col items-center justify-center p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 dark:text-[var(--text-primary)] mb-4">Categories</h3>
           <Button onClick={() => setShowCategoryModal(true)} className="w-full">Manage Categories</Button>
-        </div>
+        </Card>
 
         {/* Vendors Section */}
-        <div className="flex flex-col items-center justify-center p-6 border rounded-lg shadow-sm bg-gray-50 dark:bg-surface-hover">
+        <Card muted className="flex flex-col items-center justify-center p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 dark:text-[var(--text-primary)] mb-4">Vendors</h3>
           <Button onClick={() => setShowVendorModal(true)} className="w-full">Manage Vendors</Button>
-        </div>
+        </Card>
       </div>
 
       {/* Nested Modals */}

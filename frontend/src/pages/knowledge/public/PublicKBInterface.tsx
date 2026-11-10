@@ -14,6 +14,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { Card } from '../../../components/ui/Card';
 import { useKnowledgeStore } from '../../../stores/knowledgeStore';
 import { KBCategory } from '../../../types/knowledge';
 import SEOMetaTags from '../shared/SEOMetaTags';
@@ -187,7 +188,7 @@ const PublicKBInterface: React.FC = () => {
 
   const CategoryCard: React.FC<{ category: KBCategory }> = ({ category }) => {
     return (
-      <div className="bg-white dark:bg-surface-elevated rounded-lg border border-gray-200 dark:border-subtle p-6 hover:shadow-lg transition-all duration-200 group">
+      <Card className="rounded-lg p-6 hover:shadow-lg transition-all duration-200 group">
         <div className="flex items-center gap-3 mb-3">
           <div 
             className="p-3 rounded-lg flex items-center justify-center"
@@ -222,7 +223,7 @@ const PublicKBInterface: React.FC = () => {
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </Link>
-      </div>
+      </Card>
     );
   };
 
@@ -325,9 +326,9 @@ const PublicKBInterface: React.FC = () => {
                   const hasValidImage = featuredImage && typeof featuredImage === 'string';
                   
                   return (
-                    <div 
+                    <Card
                       key={article.slug}
-                      className="bg-white dark:bg-surface-elevated rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group"
+                      className="rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 group"
                     >
                       {hasValidImage ? (
                         <div className="relative h-64 lg:h-80 overflow-hidden">
@@ -405,7 +406,7 @@ const PublicKBInterface: React.FC = () => {
                           )}
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>

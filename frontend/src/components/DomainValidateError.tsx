@@ -1,5 +1,6 @@
 import { AlertTriangle, ExternalLink } from "lucide-react";
 import { useState } from "react";
+import { Card } from "./ui/Card";
 
 const DomainErrorComponent = () => {
  
@@ -10,7 +11,7 @@ const DomainErrorComponent = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-surface dark:to-surface-elevated p-4">
       <div className="max-w-md w-full">
-        <div className="text-center p-8 bg-white dark:bg-surface-elevated rounded-xl shadow-2xl border border-gray-200 dark:border-subtle">
+        <Card className="text-center p-8 rounded-xl">
           {/* Error Icon */}
           <div className="mx-auto flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mb-6">
             <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
@@ -71,7 +72,7 @@ const DomainErrorComponent = () => {
               </a>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Technical Details (Collapsible) */}
         <details className="mt-4 bg-white dark:bg-surface-elevated rounded-lg shadow border border-gray-200 dark:border-subtle">

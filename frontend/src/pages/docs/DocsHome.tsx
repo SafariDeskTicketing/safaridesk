@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Card } from '../../components/ui/Card';
 
 const DocsHome: React.FC = () => {
   const quickLinks = [
@@ -129,9 +130,9 @@ const DocsHome: React.FC = () => {
       {/* Quick Links Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         {quickLinks.map((section, index) => (
-          <div
+          <Card
             key={index}
-            className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-200 hover:shadow-lg hover:border-gray-300 dark:border-subtle dark:bg-surface-elevated dark:hover:border-gray-500"
+            className="rounded-lg p-6 transition-all duration-200 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-500"
           >
             <div className="flex items-center mb-4">
               <div className="p-2 rounded-lg mr-3 bg-primary-100 text-primary-600 dark:bg-primary-900/20 dark:text-primary-300">
@@ -158,7 +159,7 @@ const DocsHome: React.FC = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
         ))}
       </div>
 

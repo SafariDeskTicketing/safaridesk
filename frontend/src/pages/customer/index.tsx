@@ -13,6 +13,7 @@ import ChatbotWidget from '../../components/chatbot/ChatbotWidget';
 import { Modal } from '../../components/ui/Modal';
 import { CreateTicketModal } from '../../components/tickets/CreateTicketModal';
 import { buildPublicArticleUrl } from '../../utils/kbArticle';
+import { Card } from '../../components/ui/Card';
 
 
 // Service Portal Content for Non-Authenticated Users
@@ -151,7 +152,7 @@ const ServicePortalContent: React.FC = () => {
       </div>
 
       <section className="grid gap-8 pb-12 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-subtle dark:bg-surface-elevated">
+        <Card className="rounded-lg">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-subtle">
             <div>
               <h2 className="text-lg font-semibold text-slate-950 dark:text-[var(--text-primary)]">Latest articles</h2>
@@ -187,9 +188,9 @@ const ServicePortalContent: React.FC = () => {
             <div className="p-6 text-sm text-slate-500 dark:text-[var(--text-muted)]">No public articles have been published yet.</div>
           )}
           </div>
-        </div>
+        </Card>
         <aside className="space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-subtle dark:bg-surface-elevated">
+          <Card className="rounded-lg p-5">
             <div className="mb-4 flex items-center gap-3">
               <LifeBuoy className="h-5 w-5 text-primary-700 dark:text-primary-300" />
               <h2 className="text-base font-semibold text-slate-950 dark:text-[var(--text-primary)]">Contact support</h2>
@@ -202,8 +203,8 @@ const ServicePortalContent: React.FC = () => {
                 Start chat <MessageCircle className="h-4 w-4" />
               </button>
             </div>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-subtle dark:bg-surface-elevated">
+          </Card>
+          <Card className="rounded-lg p-5">
             <h2 className="text-base font-semibold text-slate-950 dark:text-[var(--text-primary)]">Common requests</h2>
             <div className="mt-4 space-y-2">
               {(categories.length > 0
@@ -220,7 +221,7 @@ const ServicePortalContent: React.FC = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
         </aside>
       </section>
       {/* Chatbot Widget */}

@@ -20,6 +20,7 @@ import {
 import Button from '../../../components/ui/Button';
 import CreateTaskModal from '../../../components/tasks/CreateTaskModal';
 import { Modal } from '../../../components/ui/Modal';
+import { Card } from '../../../components/ui/Card';
 import http from '../../../services/http';
 import { APIS } from '../../../services/apis';
 import { AxiosError } from 'axios';
@@ -60,7 +61,7 @@ type TicketTasksProps = {
 
 // Loading skeleton component
 const TaskSkeleton = () => (
-  <div className="bg-white dark:bg-surface-elevated rounded-lg shadow-sm border border-gray-200 dark:border-subtle p-6 animate-pulse">
+  <Card className="rounded-lg p-6 animate-pulse">
     <div className="flex items-start justify-between mb-4">
       <div className="flex items-center space-x-3">
         <div className="w-5 h-5 bg-gray-200 dark:bg-surface-hover rounded-full"></div>
@@ -76,7 +77,7 @@ const TaskSkeleton = () => (
       <div className="h-4 bg-gray-200 dark:bg-surface-hover rounded w-24"></div>
       <div className="h-4 bg-gray-200 dark:bg-surface-hover rounded w-32"></div>
     </div>
-  </div>
+  </Card>
 );
 
 // Image preview modal
@@ -336,9 +337,9 @@ export default function TicketTasks({ ticketId, onTaskCountChange, refreshTrigge
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tasks.map((task: Task) => (
-          <div
+          <Card
             key={task.id}
-            className={`bg-white dark:bg-surface-elevated rounded-lg shadow-md border p-6 flex flex-col ${selectedTasks.has(task.id)
+            className={`rounded-lg p-6 flex flex-col ${selectedTasks.has(task.id)
               ? 'border-primary-500 dark:border-primary-500 ring-2 ring-primary-100 dark:ring-primary-800'
               : 'border-gray-200 dark:border-subtle'
               }`}
@@ -535,7 +536,7 @@ export default function TicketTasks({ ticketId, onTaskCountChange, refreshTrigge
                 )}
               </div>
             )}
-          </div>
+          </Card>
         ))}
       </div>
 

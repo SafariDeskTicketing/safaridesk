@@ -4,6 +4,7 @@ import { Flag, Paperclip, Download, Eye, X, MessageCircle, MoreVertical, Copy, E
 import http from '../../../services/http';
 import { APIS } from '../../../services/apis';
 import { errorNotification, successNotification } from '../../../components/ui/Toast';
+import { Card } from '../../../components/ui/Card';
 import { AxiosError } from 'axios';
 
 // Types
@@ -54,7 +55,7 @@ type TaskCommentsProps = {
 const CommentSkeleton = () => (
   <div className="relative">
     <div className="absolute left-6 w-4 h-4 rounded-full bg-primary-200 dark:bg-primary-700 animate-pulse z-10"></div>
-    <div className="ml-16 bg-white dark:bg-surface-elevated rounded-lg shadow-sm border border-gray-200 dark:border-subtle p-6">
+    <Card className="ml-16 rounded-lg p-6">
       <div className="flex items-start space-x-4">
         <div className="w-10 h-10 bg-primary-200 dark:bg-primary-700 rounded-full animate-pulse"></div>
         <div className="flex-1">
@@ -68,7 +69,7 @@ const CommentSkeleton = () => (
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   </div>
 );
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { MessageSquare, User, Upload, X, File, Image, Clock, CheckCircle, Download, ExternalLink } from 'lucide-react'
 import { AttachmentTrigger } from '../../../components/ui/AttachmentTrigger'
+import { Card } from '../../../components/ui/Card'
 
 interface UserType {
   id: number
@@ -291,7 +292,7 @@ const ActivityStream: React.FC<ActivityStreamProps> = ({
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="bg-gray-50 dark:bg-surface-hover rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-subtle transition-shadow duration-200">
+                    <Card muted className="rounded-2xl p-6">
                       {/* Header */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
@@ -356,7 +357,7 @@ const ActivityStream: React.FC<ActivityStreamProps> = ({
                           )}
                         </div>
                       )}
-                    </div>
+                    </Card>
                   </div>
                 </div>
               ))

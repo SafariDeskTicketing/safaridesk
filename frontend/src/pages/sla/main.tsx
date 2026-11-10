@@ -16,6 +16,7 @@ import {
 import Drawer from '../../components/ui/Drawer';
 import { Modal } from '../../components/ui/Modal';
 import ToggleSwitch from '../../components/ui/ToggleSwitch';
+import { Card } from '../../components/ui/Card';
 import BusinessHoursForm from './mini/BusinessHoursForm';
 import PolicyComponent from './mini/PoliciesComponent';
 import BusinessHoursInline from './mini/BusinessHoursInline';
@@ -211,7 +212,7 @@ export const SlaPage: React.FC = () => {
             {/* Feature Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* SLA Policies Card */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+              <Card className="rounded-lg p-6 hover:shadow-lg transition-shadow">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
                   <Target size={24} className="text-blue-600 dark:text-blue-400" />
                 </div>
@@ -219,10 +220,10 @@ export const SlaPage: React.FC = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Define response and resolution time targets for different priorities
                 </p>
-              </div>
+              </Card>
 
               {/* Business Hours Card */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+              <Card className="rounded-lg p-6 hover:shadow-lg transition-shadow">
                 <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mb-4">
                   <Briefcase size={24} className="text-primary-600 dark:text-primary-400" />
                 </div>
@@ -230,10 +231,10 @@ export const SlaPage: React.FC = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Set your working hours to calculate SLA times accurately
                 </p>
-              </div>
+              </Card>
 
               {/* Holidays Card */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+              <Card className="rounded-lg p-6 hover:shadow-lg transition-shadow">
                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
                   <Calendar size={24} className="text-purple-600 dark:text-purple-400" />
                 </div>
@@ -241,7 +242,7 @@ export const SlaPage: React.FC = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Manage holidays when SLA timers should pause automatically
                 </p>
-              </div>
+              </Card>
             </div>
 
             {/* Bottom message */}
@@ -276,7 +277,7 @@ export const SlaPage: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-[var(--border-color)]">
+            <Card className="rounded-xl">
               {/* Tab Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[var(--border-color)]">
                 <div className="flex-1">
@@ -332,7 +333,7 @@ export const SlaPage: React.FC = () => {
                   <HolidayComponent reload={reloadTrigger} />
                 )}
               </div>
-            </div>
+            </Card>
           </>
         )}
 

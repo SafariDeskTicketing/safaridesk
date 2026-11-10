@@ -19,6 +19,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home, Search, ArrowLeft, FileX, AlertTriangle } from 'lucide-react';
+import { Card } from '../components/ui/Card';
 
 const NotFoundPage: React.FC = () => {
   return (
@@ -52,7 +53,7 @@ const NotFoundPage: React.FC = () => {
         </div>
 
         {/* Suggestions Box */}
-        <div className="bg-white dark:bg-surface-elevated rounded-xl shadow-lg border border-gray-200 dark:border-subtle p-6 mb-8">
+        <Card className="rounded-xl p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-[var(--text-primary)] mb-4">
             What you can do:
           </h3>
@@ -70,7 +71,7 @@ const NotFoundPage: React.FC = () => {
               <span>Visit our homepage to start fresh</span>
             </li>
           </ul>
-        </div>
+        </Card>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

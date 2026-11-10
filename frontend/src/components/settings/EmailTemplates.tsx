@@ -8,6 +8,7 @@ import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import Button from '../ui/Button';
 import Select from '../ui/Select';
+import { Card } from '../ui/Card';
 
 interface Template {
   id: number;
@@ -216,7 +217,7 @@ export const EmailTemplates: React.FC = () => {
 
   return (
     <div className="text-sm space-y-3 px-3 py-2">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-[var(--border-color)] p-4">
+      <Card className="rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900 dark:text-[var(--text-primary)]">Email Template Categories</h3>
           <button
@@ -260,7 +261,7 @@ export const EmailTemplates: React.FC = () => {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Add / Rename Category Modal */}
       <Modal

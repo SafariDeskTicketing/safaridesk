@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CreateTicketModal } from '../../components/tickets/CreateTicketModal';
+import { Card } from '../../components/ui/Card';
 
 export const CreateTicketPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,13 +26,13 @@ export const CreateTicketPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-subtle dark:bg-surface-elevated">
+        <Card className="rounded-2xl">
           <CreateTicketModal
             loadFromApi
             onclose={() => navigate('/tickets')}
             onSuccess={() => navigate('/tickets')}
           />
-        </div>
+        </Card>
       </div>
     </div>
   );

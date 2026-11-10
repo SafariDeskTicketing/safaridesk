@@ -19,6 +19,7 @@ import { KBArticle } from '../../types/knowledge';
 import http from '../../services/http';
 import { APIS } from '../../services/apis';
 import { buildPublicArticleUrl } from '../../utils/kbArticle';
+import { Card } from '../../components/ui/Card';
 
 const formatDate = (dateString: string): string => {
   try {
@@ -281,7 +282,7 @@ const ArticleView: React.FC = () => {
 
             {ratingsEnabled && (
               <section className="mt-8 border-t border-slate-200 pt-6 dark:border-subtle">
-                <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-subtle dark:bg-surface-elevated">
+                <Card className="rounded-lg p-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-slate-950 dark:text-[var(--text-primary)]">
@@ -329,14 +330,14 @@ const ArticleView: React.FC = () => {
                       <span className="text-red-600 dark:text-red-300">{feedbackError}</span>
                     )}
                   </div>
-                </div>
+                </Card>
               </section>
             )}
           </article>
 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             {relatedArticles.length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-subtle dark:bg-surface-elevated">
+              <Card className="rounded-lg p-5">
                 <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-[var(--text-primary)]">Related articles</h2>
                 <div className="space-y-1">
                   {relatedArticles.map(article => (
@@ -352,10 +353,10 @@ const ArticleView: React.FC = () => {
                     </Link>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
 
-            <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-subtle dark:bg-surface-elevated">
+            <Card className="rounded-lg p-5">
               <div className="mb-4 flex items-center gap-3">
                 <FileText className="h-5 w-5 text-primary-700 dark:text-primary-300" />
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-[var(--text-primary)]">Need more help?</h2>
@@ -368,7 +369,7 @@ const ArticleView: React.FC = () => {
                 Create a ticket
                 <ArrowRight className="h-4 w-4" />
               </button>
-            </div>
+            </Card>
           </aside>
         </div>
       </div>
