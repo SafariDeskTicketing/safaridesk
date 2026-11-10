@@ -244,7 +244,7 @@ const AssetManagementPage: React.FC = () => {
             onToggleSelected={toggleSelected}
             onToggleSelectAll={toggleSelectAll}
           />
-          <div className="flex items-center justify-between border-t border-[var(--border-color)] px-4 py-3 bg-gray-50 dark:bg-[#202020]">
+          <div className="flex items-center justify-between border-t border-[var(--border-color)] px-4 py-3 bg-gray-50 dark:bg-surface">
             <span className="text-[length:var(--font-body)] text-gray-600 dark:text-gray-400">
               {isFetching ? 'Loading…' : rangeLabel}
             </span>

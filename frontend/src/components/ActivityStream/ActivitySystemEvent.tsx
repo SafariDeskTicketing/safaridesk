@@ -362,13 +362,13 @@ function getPriorityColor(priority: string): string {
   switch (priority.toLowerCase()) {
     case 'critical':
     case 'urgent':
-      return 'text-[#d93f0b]';
+      return 'text-red-600 dark:text-red-400';
     case 'high':
-      return 'text-[#fbca04]';
+      return 'text-orange-600 dark:text-orange-400';
     case 'medium':
-      return 'text-[#006b75]';
+      return 'text-yellow-600 dark:text-yellow-400';
     case 'low':
-      return 'text-[#7ae53d]';
+      return 'text-primary-600 dark:text-primary-400';
     default:
       return 'text-gray-600 dark:text-[var(--text-primary)]';
   }

@@ -72,7 +72,7 @@ const ResizableImageComponent = ({ node, updateAttributes }: any) => {
           }}
         />
         <div
-          className="resize-handle"
+          className="resize-handle bg-primary-600"
           style={{
             position: 'absolute',
             right: '-6px',
@@ -80,7 +80,6 @@ const ResizableImageComponent = ({ node, updateAttributes }: any) => {
             transform: 'translateY(-50%)',
             width: '10px',
             height: '20px',
-            backgroundColor: '#20b8cd',
             cursor: 'ew-resize',
             borderRadius: '2px'
           }}
