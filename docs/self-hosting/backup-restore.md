@@ -301,6 +301,32 @@ Placeholder links:
 
 ---
 
+## Security Notes
+
+A database backup (`db-YYYYmmdd-HHMMSS.sql`) is a plain, unencrypted `pg_dump` of the
+whole database at the file level - Django-level encryption (`access_token_encrypted`
+columns on Slack/Teams integrations, see `util/security/encryption.py`) protects a
+column's *value* once it is stored encrypted, but does nothing for a dump taken while
+that value was still plaintext.
+
+Slack and Teams OAuth tokens were stored in plaintext (`access_token`/`refresh_token`
+columns) before migration `shared/0019_encrypt_slack_teams_tokens`, which renamed those
+columns and encrypted the existing rows in place. **Any backup taken before that
+migration ran against a given environment still holds those tokens in plaintext**,
+regardless of how old the backup file itself is relative to today. If such a backup
+exists (on this server, an off-site copy, or a cloud snapshot), either:
+
+- Securely delete it once no longer needed for recovery, or
+- Restore it to an isolated environment, re-run migrations so the tokens get encrypted
+  in place, and re-export; and
+- Rotate (revoke and reinstall) the affected Slack/Teams app credentials if there's any
+  chance the old backup was ever copied somewhere outside your control.
+
+Backups taken after that migration are not affected - the dumped column values are
+already Fernet ciphertext.
+
+---
+
 ## Retention
 
 Choose a retention policy before production use.
